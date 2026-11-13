@@ -1,12 +1,9 @@
-/**
- * @file  ConnectionManager.h
- * @brief 连接生命周期与断线重连调度。
- * @details 把「记住服务器地址、按固定间隔重试、次数用尽后放弃」这套逻辑
- *          从 MainWindow 里抽出来。MainWindow 只负责界面反应，不再自己
- *          维护重试计数与定时器。
- *
- *          它**不决定**重连成功后要不要回原房间——那属于业务编排，
- *          由外部监听 `reconnected` 信号后自行处理，处理完调用 `markRestored()`。
+/*
+ * 文件名:    ConnectionManager.h
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  连接生命周期与断线重连调度。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
  */
 
 #pragma once
@@ -31,9 +28,9 @@ class ConnectionManager : public QObject {
     Q_OBJECT
 
 public:
-    /// @brief 默认最大重连次数。
+    /* 默认最大重连次数。 */
     static constexpr int kMaxAttempts = 6;
-    /// @brief 默认重连间隔（毫秒）。
+    /* 默认重连间隔（毫秒）。 */
     static constexpr int kIntervalMs = 3000;
 
     /**
@@ -50,26 +47,26 @@ public:
      */
     void connectTo(const QString& host, quint16 port);
 
-    /// @brief 主动断开，并停止重连调度。
+    /* 主动断开，并停止重连调度。 */
     void disconnectFrom();
 
     /**
      * @brief 开关自动重连。
      * @param on false 时断线不再重试（用于主动登出）。
      */
-    void setAutoReconnect(bool on) { autoReconnect_ = on; }
+    void setAutoReconnect(bool on) { m_nAutoReconnect = on; }
 
-    /// @brief 是否正处于重连流程中。
-    bool isReconnecting() const { return reconnecting_; }
+    /* 是否正处于重连流程中。 */
+    bool isReconnecting() const { return m_nReconnecting; }
 
-    /// @brief 已尝试的重连次数（0 表示未在重连）。
-    int attempt() const { return attempt_; }
+    /* 已尝试的重连次数（0 表示未在重连）。 */
+    int attempt() const { return m_nAttempt; }
 
-    /// @brief 最近一次连接使用的主机名。
-    QString host() const { return host_; }
+    /* 最近一次连接使用的主机名。 */
+    QString host() const { return m_strHost; }
 
-    /// @brief 最近一次连接使用的端口。
-    quint16 port() const { return port_; }
+    /* 最近一次连接使用的端口。 */
+    quint16 port() const { return m_uPort; }
 
     /**
      * @brief 通知管理器「业务已恢复完毕」。
@@ -96,13 +93,13 @@ signals:
      */
     void reconnectScheduled(int attempt, int maxAttempts, int delayMs);
 
-    /// @brief 重试次数用尽，放弃重连。
+    /* 重试次数用尽，放弃重连。 */
     void reconnectFailed(const QString& reason);
 
-    /// @brief socket 已重新连上，外部应重新登录并恢复业务状态。
+    /* socket 已重新连上，外部应重新登录并恢复业务状态。 */
     void reconnected();
 
-    /// @brief 业务恢复完成。
+    /* 业务恢复完成。 */
     void restored();
 
 private slots:
@@ -113,14 +110,22 @@ private:
     void scheduleRetry();
     void resetState();
 
-    ChatTransport* transport_ = nullptr;  ///< 传输层（不持有）
-    QTimer*        timer_ = nullptr;      ///< 重连定时器
+    /* < 传输层（不持有） */
+    ChatTransport* m_pTransport = nullptr;
+    /* < 重连定时器 */
+    QTimer*        m_pTimer = nullptr;
 
-    QString host_;                        ///< 记住的主机名
-    quint16 port_ = 0;                    ///< 记住的端口
-    int     attempt_ = 0;                 ///< 已尝试次数
-    bool    reconnecting_ = false;        ///< 是否处于重连流程
-    bool    autoReconnect_ = true;        ///< 是否自动重连
+    /* < 记住的主机名 */
+    QString m_strHost;
+    /* < 记住的端口 */
+    quint16 m_uPort = 0;
+    /* < 已尝试次数 */
+    int     m_nAttempt = 0;
+    /* < 是否处于重连流程 */
+    bool    m_nReconnecting = false;
+    /* < 是否自动重连 */
+    bool    m_nAutoReconnect = true;
 };
 
-}  // namespace net
+/* namespace net */
+}

@@ -1,9 +1,9 @@
-/**
- * @file  RegisterDialog.h
- * @brief 自助注册对话框。
- * @details 自己维护一条**临时连接**（独立的 `ProtocolBridge`）：
- *          注册发生在登录之前，此时主连接还不存在，而且注册失败不该影响
- *          主窗口的连接状态。用完即销毁，干净利落。
+/*
+ * 文件名:    RegisterDialog.h
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  自助注册对话框。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
  */
 
 #pragma once
@@ -17,7 +17,7 @@ class QPlainTextEdit;
 class QPushButton;
 class QLineEdit;
 class QTimer;
-class ProtocolBridge;
+class CProtocolBridge;
 
 /**
  * @brief 注册新账号。
@@ -26,7 +26,7 @@ class ProtocolBridge;
  *          注册成功后对话框返回 `Accepted`，调用方用 `username()` / `password()`
  *          回填登录表单，省得用户再敲一遍。
  */
-class RegisterDialog : public QDialog {
+class CRegisterDialog : public QDialog {
     Q_OBJECT
 
 public:
@@ -36,18 +36,18 @@ public:
      * @param port   服务器端口。
      * @param parent 父窗口。
      */
-    RegisterDialog(const QString& host, quint16 port, QWidget* parent = nullptr);
+    CRegisterDialog(const QString& host, quint16 port, QWidget* parent = nullptr);
 
-    ~RegisterDialog() override;
+    ~CRegisterDialog() override;
 
-    /// @brief 注册成功的登录名（未成功时为空）。
+    /* 注册成功的登录名（未成功时为空）。 */
     QString username() const;
 
-    /// @brief 注册时填的密码（用于回填登录表单）。
+    /* 注册时填的密码（用于回填登录表单）。 */
     QString password() const;
 
 private:
-    /// @brief 校验输入并发起注册。
+    /* 校验输入并发起注册。 */
     void submit();
 
     /**
@@ -62,21 +62,34 @@ private:
      */
     void showError(const QString& text);
 
-    /// @brief 清理临时连接。
+    /* 清理临时连接。 */
     void teardown();
 
-    QString host_;              ///< 服务器地址
-    quint16 port_ = 0;          ///< 服务器端口
-    ProtocolBridge* bridge_ = nullptr;  ///< 临时连接（仅注册期间存在）
-    QTimer*         timeoutTimer_ = nullptr; ///< 连接/响应超时
+    /* < 服务器地址 */
+    QString m_strHost;
+    /* < 服务器端口 */
+    quint16 m_uPort = 0;
+    /* < 临时连接（仅注册期间存在） */
+    CProtocolBridge* m_pBridge = nullptr;
+    /* < 连接/响应超时 */
+    QTimer*         m_pTimeoutTimer = nullptr;
 
-    QLineEdit*      userEdit_ = nullptr;   ///< 登录名
-    QLineEdit*      passEdit_ = nullptr;   ///< 密码
-    QLineEdit*      pass2Edit_ = nullptr;  ///< 确认密码
-    QLineEdit*      nickEdit_ = nullptr;   ///< 昵称（可选）
-    QLineEdit*      ageEdit_ = nullptr;    ///< 年龄（可选，留空=0）
-    QPlainTextEdit* descEdit_ = nullptr;   ///< 简介（可选）
-    QPushButton*    submitBtn_ = nullptr;  ///< 注册按钮
-    QPushButton*    cancelBtn_ = nullptr;  ///< 取消按钮
-    QLabel*         statusLabel_ = nullptr;///< 状态提示
+    /* < 登录名 */
+    QLineEdit*      m_pUserEdit = nullptr;
+    /* < 密码 */
+    QLineEdit*      m_pPassEdit = nullptr;
+    /* < 确认密码 */
+    QLineEdit*      m_pPass2Edit = nullptr;
+    /* < 昵称（可选） */
+    QLineEdit*      m_pNickEdit = nullptr;
+    /* < 年龄（可选，留空=0） */
+    QLineEdit*      m_pAgeEdit = nullptr;
+    /* < 简介（可选） */
+    QPlainTextEdit* m_pDescEdit = nullptr;
+    /* < 注册按钮 */
+    QPushButton*    m_pSubmitBtn = nullptr;
+    /* < 取消按钮 */
+    QPushButton*    m_pCancelBtn = nullptr;
+    /* < 状态提示 */
+    QLabel*         m_pStatusLabel = nullptr;
 };

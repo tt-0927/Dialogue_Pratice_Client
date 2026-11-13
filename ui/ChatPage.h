@@ -1,13 +1,9 @@
-/**
- * @file  ChatPage.h
- * @brief 聊天界面（纯视图）。
- * @details 重构后本类只负责三件事：
- *          1. 搭建与维护控件；
- *          2. 监听 ChatModel / ChatController 的信号并刷新界面；
- *          3. 把用户操作转发出去（发消息、录音、播放）。
- *
- *          数据在 `business::ChatModel`，业务编排在 `business::ChatController`，
- *          本类不含任何翻译/建议/转写的触发逻辑。
+/*
+ * 文件名:    ChatPage.h
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  聊天界面（纯视图）。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
  */
 
 #pragma once
@@ -22,9 +18,9 @@
 
 #include "business/ChatTypes.h"
 
-class Avatar;
-class MessageBubble;
-class MicButton;
+class CAvatar;
+class CMessageBubble;
+class CMicButton;
 class QFrame;
 class QLabel;
 class QPushButton;
@@ -32,17 +28,18 @@ class QResizeEvent;
 class QScrollArea;
 class QTimer;
 class QVBoxLayout;
-class SendButton;
-class SuggestionBar;
-class TranslationCard;
-class TtsService;
-class VoiceRecorder;
+class CSendButton;
+class CSuggestionBar;
+class CTranslationCard;
+class CTtsService;
+class CVoiceRecorder;
 
 namespace business {
 class ChatController;
 class ChatModel;
-struct ChatItem;
-}  // namespace business
+struct ChatItem_S;
+/* namespace business */
+}
 
 /**
  * @brief 输入框：Enter 发送，Shift+Enter 换行。
@@ -54,11 +51,11 @@ public:
     explicit ComposerEdit(QWidget* parent = nullptr);
 
 signals:
-    /// @brief 用户按下 Enter（未按 Shift）。
+    /* 用户按下 Enter（未按 Shift）。 */
     void submit();
 
 protected:
-    /// @brief 拦截 Enter，其余键交给基类处理。
+    /* 拦截 Enter，其余键交给基类处理。 */
     void keyPressEvent(QKeyEvent* event) override;
 };
 
@@ -76,7 +73,7 @@ public:
     explicit ChatPage(QWidget* parent = nullptr);
     ~ChatPage() override;
 
-    // ---- 由 MainWindow 驱动的生命周期与消息投递 ----
+    /* ---- 由 CMainWindow 驱动的生命周期与消息投递 ---- */
 
     /**
      * @brief 首次进入房间：清空消息区并显示入房提示。
@@ -86,7 +83,7 @@ public:
      * @param selfId   本人会话 id。
      * @param selfName 本人昵称。
      */
-    void enterRoom(const QString& room, bool created, const QVector<MemberInfo>& members,
+    void enterRoom(const QString& room, bool created, const QVector<MemberInfo_S>& members,
                    qint64 selfId, const QString& selfName);
 
     /**
@@ -96,7 +93,7 @@ public:
      * @param selfId   新分配的会话 id。
      * @param selfName 本人昵称。
      */
-    void resumeRoom(const QString& room, const QVector<MemberInfo>& members,
+    void resumeRoom(const QString& room, const QVector<MemberInfo_S>& members,
                     qint64 selfId, const QString& selfName);
 
     /**
@@ -125,7 +122,7 @@ public:
      * @brief 批量合并历史消息。
      * @param messages 历史消息列表。
      */
-    void mergeHistory(const QVector<ChatMessage>& messages);
+    void mergeHistory(const QVector<ChatMessage_S>& messages);
 
     /**
      * @brief 追加一条系统提示。
@@ -152,55 +149,55 @@ public:
      */
     void setOnline(bool online);
 
-    /// @brief 清空房间数据（离开房间或登出）。
+    /* 清空房间数据（离开房间或登出）。 */
     void clearRoom();
 
     /**
      * @brief 应用服务端下发的 LLM 配置。
      * @param json 服务端随 LoginResp 下发的原始 JSON。
-     * @details 由 MainWindow 在登录成功后转发；内部交给 ChatController 处理。
+     * @details 由 CMainWindow 在登录成功后转发；内部交给 ChatController 处理。
      */
     void applyRemoteConfig(const QByteArray& json);
 
-    /// @brief 当前房间号，空串表示不在房间。
+    /* 当前房间号，空串表示不在房间。 */
     QString room() const;
 
 signals:
-    /// @brief 用户点击返回箭头。
+    /* 用户点击返回箭头。 */
     void backRequested();
 
-    /// @brief 用户要发送文本。
+    /* 用户要发送文本。 */
     void sendRequested(const QString& text);
 
-    /// @brief 用户录完一段语音，请求发送。
+    /* 用户录完一段语音，请求发送。 */
     void sendVoiceRequested(const QByteArray& audio, int durationMs);
 
-    /// @brief 需要主窗口弹出提示条。
+    /* 需要主窗口弹出提示条。 */
     void notice(const QString& text, bool error);
 
 protected:
-    /// @brief 宽度变化时刷新响应式元素（占位文案等）。
+    /* 宽度变化时刷新响应式元素（占位文案等）。 */
     void resizeEvent(QResizeEvent* event) override;
 
 private:
-    // ---- 构建 ----
+    /* ---- 构建 ---- */
     void buildHeader(QVBoxLayout* columnLayout);
     void buildMessageArea(QVBoxLayout* columnLayout);
     void buildComposer(QVBoxLayout* columnLayout);
     void buildMemberPanel();
     void wireSignals();
 
-    // ---- 渲染 ----
+    /* ---- 渲染 ---- */
     /**
      * @brief 渲染一条消息（含日期分隔）。
      * @param item 消息数据。
      */
-    void renderItem(const business::ChatItem& item);
+    void renderItem(const business::ChatItem_S& item);
 
-    /// @brief 清空视图后按模型全量重画。
+    /* 清空视图后按模型全量重画。 */
     void rebuildView();
 
-    /// @brief 删除所有消息控件（保留底部弹簧）。
+    /* 删除所有消息控件（保留底部弹簧）。 */
     void clearView();
 
     /**
@@ -215,10 +212,10 @@ private:
      */
     void appendDateSeparatorIfNeeded(qint64 ts);
 
-    /// @brief 滚到底部（布局结算后可能再触发一次）。
+    /* 滚到底部（布局结算后可能再触发一次）。 */
     void scrollToBottom();
 
-    /// @brief 立即滚到底部。
+    /* 立即滚到底部。 */
     void forceScrollToBottom();
 
     /**
@@ -229,11 +226,11 @@ private:
      */
     static void pinHeight(QWidget* widget);
 
-    // ---- 交互 ----
-    /// @brief 读取输入框并发出 sendRequested。
+    /* ---- 交互 ---- */
+    /* 读取输入框并发出 sendRequested。 */
     void sendCurrentText();
 
-    /// @brief 开始或结束录音。
+    /* 开始或结束录音。 */
     void toggleRecording();
 
     /**
@@ -251,7 +248,7 @@ private:
      */
     void showVoiceStatus(const QString& text, bool error, int autoHideMs);
 
-    /// @brief 重建右侧成员列表。
+    /* 重建右侧成员列表。 */
     void rebuildMembers();
 
     /**
@@ -269,52 +266,64 @@ private:
      */
     QWidget* createMemberRow(qint64 userId, const QString& name);
 
-    /// @brief 刷新顶栏的成员计数。
+    /* 刷新顶栏的成员计数。 */
     void updateHeader();
 
-    /// @brief 通知编排器输入框当前是否为空。
+    /* 通知编排器输入框当前是否为空。 */
     void syncComposerState();
 
-    /// @brief 按当前宽度更新输入框占位文案。
+    /* 按当前宽度更新输入框占位文案。 */
     void updateComposerPlaceholder();
 
-    // ---- 数据 ----
-    business::ChatModel*      model_ = nullptr;       ///< 消息模型（持有）
-    business::ChatController* controller_ = nullptr;  ///< 业务编排（持有）
+    /* ---- 数据 ---- */
+    /* < 消息模型（持有） */
+    business::ChatModel*      model_ = nullptr;
+    /* < 业务编排（持有） */
+    business::ChatController* m_pController = nullptr;
 
-    // ---- 顶栏 ----
-    Avatar*      roomAvatar_ = nullptr;
-    QLabel*      roomTitle_ = nullptr;
-    QLabel*      roomSubtitle_ = nullptr;
-    QPushButton* memberBtn_ = nullptr;
+    /* ---- 顶栏 ---- */
+    CAvatar*      m_pRoomAvatar = nullptr;
+    QLabel*      m_pRoomTitle = nullptr;
+    QLabel*      m_pRoomSubtitle = nullptr;
+    QPushButton* m_pMemberBtn = nullptr;
 
-    // ---- 消息区 ----
-    QScrollArea* scroll_ = nullptr;
-    QWidget*     canvas_ = nullptr;
-    QVBoxLayout* chatLayout_ = nullptr;
-    QHash<qint64, MessageBubble*> bubbles_;   ///< seq -> 气泡，用于局部刷新
-    QPointer<MessageBubble> playingBubble_;   ///< 正在播放 TTS 的气泡
-    QDate        lastDate_;                   ///< 最后渲染的日期，用于分隔条
-    bool         pendingScroll_ = false;      ///< 是否仍处于「贴底」状态
-    bool         stickToBottom_ = true;       ///< 用户是否停在底部（滚动条到底）
-    QTimer*      scrollSettleTimer_ = nullptr; ///< 贴底状态的结算计时（每次滚动都重置）
+    /* ---- 消息区 ---- */
+    QScrollArea* m_pScroll = nullptr;
+    QWidget*     m_pCanvas = nullptr;
+    QVBoxLayout* m_pChatLayout = nullptr;
+    /* < seq -> 气泡，用于局部刷新 */
+    QHash<qint64, CMessageBubble*> m_uBubbles;
+    /* < 正在播放 TTS 的气泡 */
+    QPointer<CMessageBubble> m_stPlayingBubble;
+    /* < 最后渲染的日期，用于分隔条 */
+    QDate        m_stLastDate;
+    /* < 是否仍处于「贴底」状态 */
+    bool         m_nPendingScroll = false;
+    /* < 用户是否停在底部（滚动条到底） */
+    bool         m_nStickToBottom = true;
+    /* < 贴底状态的结算计时（每次滚动都重置） */
+    QTimer*      m_pScrollSettleTimer = nullptr;
 
-    // ---- 输入区 ----
-    ComposerEdit*    composer_ = nullptr;
-    SendButton*      sendBtn_ = nullptr;
-    MicButton*       micBtn_ = nullptr;
-    QLabel*          voiceStatus_ = nullptr;
-    SuggestionBar*   suggestionBar_ = nullptr;
-    TranslationCard* translationCard_ = nullptr;
-    int              voiceStatusToken_ = 0;   ///< 防止旧的自动隐藏计时误关新提示
+    /* ---- 输入区 ---- */
+    ComposerEdit*    m_pComposer = nullptr;
+    CSendButton*      m_pSendBtn = nullptr;
+    CMicButton*       m_pMicBtn = nullptr;
+    QLabel*          m_pVoiceStatus = nullptr;
+    CSuggestionBar*   m_pSuggestionBar = nullptr;
+    CTranslationCard* m_pTranslationCard = nullptr;
+    /* < 防止旧的自动隐藏计时误关新提示 */
+    int              m_nVoiceStatusToken = 0;
 
-    // ---- 服务 ----
-    VoiceRecorder* voice_ = nullptr;          ///< 录音与本地识别
-    TtsService*    tts_ = nullptr;            ///< 语音合成
-    bool           voiceAvailable_ = true;    ///< 识别模型是否可用
+    /* ---- 服务 ---- */
+    /* < 录音与本地识别 */
+    CVoiceRecorder* m_pVoice = nullptr;
+    /* < 语音合成 */
+    CTtsService*    m_pTts = nullptr;
+    /* < 识别模型是否可用 */
+    bool           m_nVoiceAvailable = true;
 
-    // ---- 成员面板 ----
-    QFrame*      memberPanel_ = nullptr;
-    QVBoxLayout* memberListLayout_ = nullptr;
-    QLabel*      memberTitle_ = nullptr;
+    /* ---- 成员面板 ---- */
+    QFrame*      m_pMemberPanel = nullptr;
+    QVBoxLayout* m_pMemberListLayout = nullptr;
+    QLabel*      m_pMemberTitle = nullptr;
 };

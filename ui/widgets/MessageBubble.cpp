@@ -1,4 +1,12 @@
-// MessageBubble.cpp
+/*
+ * 文件名:    MessageBubble.cpp
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  CMessageBubble 实现文件，包含相关接口的具体实现。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+ */
+
+/* CMessageBubble.cpp */
 #include "ui/widgets/MessageBubble.h"
 
 #include "ui/widgets/Avatar.h"
@@ -13,11 +21,11 @@
 #include <QVBoxLayout>
 
 namespace {
-/// @brief 兜底上限：调用方没传或传了非法值时用它。
+/* 兜底上限：调用方没传或传了非法值时用它。 */
 constexpr int kDefaultBubbleWidth = 520;
 }
 
-MessageBubble::MessageBubble(const QString& senderName,
+CMessageBubble::CMessageBubble(const QString& senderName,
                              const QString& text,
                              const QString& timeText,
                              bool outgoing,
@@ -28,29 +36,31 @@ MessageBubble::MessageBubble(const QString& senderName,
     : QWidget(parent) {
     const int kMaxBubbleWidth =
         (maxWidth > 80) ? maxWidth : kDefaultBubbleWidth;
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     auto* root = new QHBoxLayout(this);
     root->setContentsMargins(0, 0, 0, 0);
     root->setSpacing(8);
 
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     auto* bubble = new QFrame(this);
-    bubble_ = bubble;
+    m_pBubble = bubble;
     bubble->setObjectName(outgoing ? "BubbleOut" : "BubbleIn");
     bubble->setMaximumWidth(kMaxBubbleWidth);
     bubble->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Minimum);
 
     auto* bubbleLayout = new QVBoxLayout(bubble);
-    bubbleLayout_ = bubbleLayout;
+    m_pBubbleLayout = bubbleLayout;
     bubbleLayout->setContentsMargins(12, 8, 12, 6);
     bubbleLayout->setSpacing(2);
 
     auto* body = new QLabel(text, bubble);
-    body_ = body;
+    m_pBody = body;
     body->setObjectName("BubbleText");
     body->setWordWrap(true);
     body->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
-    // QLabel 在 wordWrap=true 时的 sizeHint 会偏窄，短句会被提前折行。
-    // 这里用字体度量算出「单行实际需要多宽」，再夹到气泡上限。
+    /* QLabel 在 wordWrap=true 时的 sizeHint 会偏窄，短句会被提前折行。 */
+    /* 这里用字体度量算出「单行实际需要多宽」，再夹到气泡上限。 */
     body->ensurePolished();
     const int maxTextWidth = kMaxBubbleWidth - 28;
     const QRect needed = body->fontMetrics().boundingRect(
@@ -58,41 +68,44 @@ MessageBubble::MessageBubble(const QString& senderName,
     body->setFixedWidth(qBound(16, needed.width() + 2, maxTextWidth));
     bubbleLayout->addWidget(body);
 
-    // 语音转写（英文原文），显示在译文上方
-    transcriptLabel_ = new QLabel(bubble);
-    transcriptLabel_->setObjectName("BubbleTranscript");
-    transcriptLabel_->setWordWrap(true);
-    transcriptLabel_->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    transcriptLabel_->setMaximumWidth(kMaxBubbleWidth - 28);
-    transcriptLabel_->setVisible(false);
-    bubbleLayout->addWidget(transcriptLabel_);
+    /* 语音转写（英文原文），显示在译文上方 */
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pTranscriptLabel = new QLabel(bubble);
+    m_pTranscriptLabel->setObjectName("BubbleTranscript");
+    m_pTranscriptLabel->setWordWrap(true);
+    m_pTranscriptLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    m_pTranscriptLabel->setMaximumWidth(kMaxBubbleWidth - 28);
+    m_pTranscriptLabel->setVisible(false);
+    bubbleLayout->addWidget(m_pTranscriptLabel);
 
-    // 译文区：分隔线 + 译文，默认隐藏
-    translationDivider_ = new QFrame(bubble);
-    translationDivider_->setObjectName("BubbleDivider");
-    translationDivider_->setFrameShape(QFrame::HLine);
-    translationDivider_->setVisible(false);
-    bubbleLayout->addWidget(translationDivider_);
+    /* 译文区：分隔线 + 译文，默认隐藏 */
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pTranslationDivider = new QFrame(bubble);
+    m_pTranslationDivider->setObjectName("BubbleDivider");
+    m_pTranslationDivider->setFrameShape(QFrame::HLine);
+    m_pTranslationDivider->setVisible(false);
+    bubbleLayout->addWidget(m_pTranslationDivider);
 
-    translationLabel_ = new QLabel(bubble);
-    translationLabel_->setObjectName("BubbleTranslation");
-    translationLabel_->setWordWrap(true);
-    translationLabel_->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    translationLabel_->setMaximumWidth(kMaxBubbleWidth - 28);
-    translationLabel_->setVisible(false);
-    bubbleLayout->addWidget(translationLabel_);
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pTranslationLabel = new QLabel(bubble);
+    m_pTranslationLabel->setObjectName("BubbleTranslation");
+    m_pTranslationLabel->setWordWrap(true);
+    m_pTranslationLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    m_pTranslationLabel->setMaximumWidth(kMaxBubbleWidth - 28);
+    m_pTranslationLabel->setVisible(false);
+    bubbleLayout->addWidget(m_pTranslationLabel);
 
-    // 底部一行：播放按钮（仅他人英文消息）+ 时间
+    /* 底部一行：播放按钮（仅他人英文消息）+ 时间 */
     auto* footer = new QHBoxLayout();
     footer->setContentsMargins(0, 0, 0, 0);
     footer->setSpacing(4);
 
     if (playable) {
-        playBtn_ = new PlayButton(bubble);
-        connect(playBtn_, &QAbstractButton::clicked, this, [this, text] {
+        m_pPlayBtn = new CPlayButton(bubble);
+        connect(m_pPlayBtn, &QAbstractButton::clicked, this, [this, text] {
             emit playRequested(text);
         });
-        footer->addWidget(playBtn_, 0, Qt::AlignVCenter);
+        footer->addWidget(m_pPlayBtn, 0, Qt::AlignVCenter);
     }
     footer->addStretch(1);
 
@@ -109,19 +122,20 @@ MessageBubble::MessageBubble(const QString& senderName,
         return;
     }
 
-    auto* avatar = new Avatar(this);
+    auto* avatar = new CAvatar(this);
     avatar->setFixedSize(32, 32);
     avatar->setFontPx(14);
     avatar->setText(senderName);
-    avatar->setColor(Avatar::colorForId(senderId));
+    avatar->setColor(CAvatar::colorForId(senderId));
 
     auto* column = new QVBoxLayout();
     column->setContentsMargins(0, 0, 0, 0);
     column->setSpacing(3);
 
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     auto* nameLabel = new QLabel(senderName, this);
     nameLabel->setObjectName("NameLabel");
-    nameLabel->setStyleSheet(QStringLiteral("color: %1;").arg(Avatar::colorForId(senderId).name()));
+    nameLabel->setStyleSheet(QStringLiteral("color: %1;").arg(CAvatar::colorForId(senderId).name()));
 
     column->addWidget(nameLabel);
     column->addWidget(bubble, 0, Qt::AlignLeft);
@@ -131,73 +145,118 @@ MessageBubble::MessageBubble(const QString& senderName,
     root->addStretch(1);
 }
 
-void MessageBubble::setTranslation(const QString& text) {
+/*
+ * 功能描述:  执行 setTranslation 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  text  参数。
+ * return:    void
+ */
+void CMessageBubble::setTranslation(const QString& text) {
     if (text.isEmpty()) {
         clearTranslation();
         return;
     }
-    translationDivider_->setVisible(true);
-    translationLabel_->setStyleSheet(QString());
-    translationLabel_->setText(text);
-    translationLabel_->setVisible(true);
+    m_pTranslationDivider->setVisible(true);
+    m_pTranslationLabel->setStyleSheet(QString());
+    m_pTranslationLabel->setText(text);
+    m_pTranslationLabel->setVisible(true);
 }
 
-void MessageBubble::setTranslationPending() {
-    translationDivider_->setVisible(true);
-    translationLabel_->setStyleSheet(QStringLiteral("color:#A0AAB8; font-size:9pt;"));
-    translationLabel_->setText(QStringLiteral("翻译中…"));
-    translationLabel_->setVisible(true);
+/*
+ * 功能描述:  执行 setTranslationPending 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * return:    void
+ */
+void CMessageBubble::setTranslationPending() {
+    m_pTranslationDivider->setVisible(true);
+    m_pTranslationLabel->setStyleSheet(QStringLiteral("color:#A0AAB8; font-size:9pt;"));
+    m_pTranslationLabel->setText(QStringLiteral("翻译中…"));
+    m_pTranslationLabel->setVisible(true);
 }
 
-void MessageBubble::setTranslationFailed() {
-    translationDivider_->setVisible(true);
-    translationLabel_->setStyleSheet(QStringLiteral("color:#E5484D; font-size:9pt;"));
-    translationLabel_->setText(QStringLiteral("翻译失败"));
-    translationLabel_->setVisible(true);
+/*
+ * 功能描述:  执行 setTranslationFailed 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * return:    void
+ */
+void CMessageBubble::setTranslationFailed() {
+    m_pTranslationDivider->setVisible(true);
+    m_pTranslationLabel->setStyleSheet(QStringLiteral("color:#E5484D; font-size:9pt;"));
+    m_pTranslationLabel->setText(QStringLiteral("翻译失败"));
+    m_pTranslationLabel->setVisible(true);
 }
 
-void MessageBubble::clearTranslation() {
-    translationDivider_->setVisible(false);
-    translationLabel_->setVisible(false);
-    translationLabel_->clear();
+/*
+ * 功能描述:  执行 clearTranslation 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * return:    void
+ */
+void CMessageBubble::clearTranslation() {
+    m_pTranslationDivider->setVisible(false);
+    m_pTranslationLabel->setVisible(false);
+    m_pTranslationLabel->clear();
 }
 
-void MessageBubble::setVoice(const QByteArray& audio, int durationMs) {
-    if (audio.isEmpty() || bubbleLayout_ == nullptr) return;
+/*
+ * 功能描述:  执行 setVoice 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  audio  参数。
+ * param [in]  durationMs  参数。
+ * return:    void
+ */
+void CMessageBubble::setVoice(const QByteArray& audio, int durationMs) {
+    if (audio.isEmpty() || m_pBubbleLayout == nullptr) return;
 
-    voiceAudio_ = audio;
-    body_->setVisible(false);
+    m_byVoiceAudio = audio;
+    m_pBody->setVisible(false);
 
-    voiceBar_ = new VoiceBar(durationMs, audio, false, bubble_);
-    // 插在正文原来的位置（正文仍是索引 0，语音条紧跟其后）
-    bubbleLayout_->insertWidget(1, voiceBar_);
-    connect(voiceBar_, &VoiceBar::playRequested, this, [this] {
-        emit voicePlayRequested(voiceAudio_);
+    m_pVoiceBar = new CVoiceBar(durationMs, audio, false, m_pBubble);
+    /* 插在正文原来的位置（正文仍是索引 0，语音条紧跟其后） */
+    m_pBubbleLayout->insertWidget(1, m_pVoiceBar);
+    connect(m_pVoiceBar, &CVoiceBar::playRequested, this, [this] {
+        emit voicePlayRequested(m_byVoiceAudio);
     });
 
 }
 
-void MessageBubble::setPlaying(bool playing) {
-    if (voiceBar_ != nullptr) {
-        voiceBar_->setPlaying(playing);
+/*
+ * 功能描述:  执行 setPlaying 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  playing  参数。
+ * return:    void
+ */
+void CMessageBubble::setPlaying(bool playing) {
+    if (m_pVoiceBar != nullptr) {
+        m_pVoiceBar->setPlaying(playing);
         return;
     }
-    if (playBtn_ != nullptr) playBtn_->setPlaying(playing);
+    if (m_pPlayBtn != nullptr) m_pPlayBtn->setPlaying(playing);
 }
 
-void MessageBubble::setTranscript(const QString& text) {
+/*
+ * 功能描述:  执行 setTranscript 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  text  参数。
+ * return:    void
+ */
+void CMessageBubble::setTranscript(const QString& text) {
     if (text.isEmpty()) {
-        transcriptLabel_->setVisible(false);
-        transcriptLabel_->clear();
+        m_pTranscriptLabel->setVisible(false);
+        m_pTranscriptLabel->clear();
         return;
     }
-    transcriptLabel_->setStyleSheet(QString());
-    transcriptLabel_->setText(text);
-    transcriptLabel_->setVisible(true);
+    m_pTranscriptLabel->setStyleSheet(QString());
+    m_pTranscriptLabel->setText(text);
+    m_pTranscriptLabel->setVisible(true);
 }
 
-void MessageBubble::setTranscriptPending() {
-    transcriptLabel_->setStyleSheet(QStringLiteral("color:#A0AAB8; font-size:9pt;"));
-    transcriptLabel_->setText(QStringLiteral("识别中…"));
-    transcriptLabel_->setVisible(true);
+/*
+ * 功能描述:  执行 setTranscriptPending 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * return:    void
+ */
+void CMessageBubble::setTranscriptPending() {
+    m_pTranscriptLabel->setStyleSheet(QStringLiteral("color:#A0AAB8; font-size:9pt;"));
+    m_pTranscriptLabel->setText(QStringLiteral("识别中…"));
+    m_pTranscriptLabel->setVisible(true);
 }

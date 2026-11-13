@@ -1,16 +1,31 @@
-// 打印 AppConfig 的解析结果，用于验证「翻译专用模型」配置是否被正确识别
+/*
+ * 文件名:    config_probe.cpp
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  config_probe 实现文件，包含相关接口的具体实现。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+ */
+
+/* 打印 AppConfig 的解析结果，用于验证「翻译专用模型」配置是否被正确识别 */
 #include "core/AppConfig.h"
 
 #include <QCoreApplication>
 
 #include <cstdio>
 
+/*
+ * 功能描述:  执行 main 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  argc  参数。
+ * param [in]  argv  参数。
+ * return:    返回值，含义见功能描述。
+ */
 int main(int argc, char** argv) {
     QCoreApplication app(argc, argv);
 
     if (argc > 1) AppConfig::setPathOverride(QString::fromLocal8Bit(argv[1]));
 
-    const AppConfig::Settings s = AppConfig::load();
+    const AppConfig::Settings_S s = AppConfig::load();
 
     std::printf("配置文件: %s\n", s.path.toUtf8().constData());
     std::printf("  主模型（对话/建议）: enabled=%d  model=%s\n",

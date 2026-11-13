@@ -1,11 +1,9 @@
-/**
- * @file  ChatModel.h
- * @brief 聊天消息模型：数据、去重、排序、成员表。
- * @details 从原 ChatPage 中剥离出来的纯数据层。它不知道任何控件，
- *          只负责「有哪些消息、每条消息处于什么状态」，变化通过信号广播。
- *
- *          去重依据是服务端分配的全局 `seq`：历史补发与实时推送可能重叠，
- *          同一 seq 只保留第一次出现的版本。
+/*
+ * 文件名:    ChatModel.h
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  聊天消息模型：数据、去重、排序、成员表。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
  */
 
 #pragma once
@@ -25,26 +23,39 @@ namespace business {
 /**
  * @brief 一条已进入模型的消息。
  *
- * @details 与 `ChatMessage` 的区别：`ChatMessage` 是「网络上的一条消息」，
+ * @details 与 `ChatMessage_S` 的区别：`ChatMessage_S` 是「网络上的一条消息」，
  *          本结构额外携带界面所需的状态（译文、转写进度）。
  */
-struct ChatItem {
-    qint64  seq = 0;        ///< 全局消息序号，0 表示本地生成的系统提示
-    qint64  from = 0;       ///< 发送者会话 id
-    qint64  ts = 0;         ///< Unix 毫秒时间戳
-    QString name;           ///< 发送者昵称
-    QString text;           ///< 文本正文；语音消息为空
-    bool    system = false; ///< 是否为系统提示（居中的灰色胶囊）
+struct ChatItem_S {
+    /* < 全局消息序号，0 表示本地生成的系统提示 */
+    qint64  seq = 0;
+    /* < 发送者会话 id */
+    qint64  from = 0;
+    /* < Unix 毫秒时间戳 */
+    qint64  ts = 0;
+    /* < 发送者昵称 */
+    QString name;
+    /* < 文本正文；语音消息为空 */
+    QString text;
+    /* < 是否为系统提示（居中的灰色胶囊） */
+    bool    system = false;
 
-    MessageKind kind = MessageKind::Text; ///< 文本或语音
-    QByteArray  audio;                    ///< 语音的 DPV1 容器
-    int         durationMs = 0;           ///< 语音时长
+    /* < 文本或语音 */
+    MessageKind_EN kind = MessageKind_EN::Text;
+    /* < 语音的 DPV1 容器 */
+    QByteArray  audio;
+    /* < 语音时长 */
+    int         durationMs = 0;
 
-    QString translation;          ///< 中文译文
-    int     translationState = 0; ///< 0 无 / 1 翻译中 / 2 完成 / 3 失败
+    /* < 中文译文 */
+    QString translation;
+    /* < 0 无 / 1 翻译中 / 2 完成 / 3 失败 */
+    int     translationState = 0;
 
-    QString transcript;          ///< 语音的英文转写
-    int     transcriptState = 0; ///< 0 无 / 1 转写中 / 2 完成 / 3 失败
+    /* < 语音的英文转写 */
+    QString transcript;
+    /* < 0 无 / 1 转写中 / 2 完成 / 3 失败 */
+    int     transcriptState = 0;
 };
 
 /**
@@ -61,7 +72,7 @@ class ChatModel : public QObject {
 public:
     explicit ChatModel(QObject* parent = nullptr);
 
-    // ---- 房间生命周期 ----
+    /* ---- 房间生命周期 ---- */
 
     /**
      * @brief 进入一个新房间，清空旧数据。
@@ -71,7 +82,7 @@ public:
      * @param members 初始成员表。
      */
     void enterRoom(const QString& room, qint64 selfId, const QString& selfName,
-                   const QVector<MemberInfo>& members);
+                   const QVector<MemberInfo_S>& members);
 
     /**
      * @brief 断线重连后回到原房间，保留已有消息。
@@ -81,18 +92,18 @@ public:
      * @param members  最新成员表。
      */
     void resumeRoom(const QString& room, qint64 selfId, const QString& selfName,
-                    const QVector<MemberInfo>& members);
+                    const QVector<MemberInfo_S>& members);
 
-    /// @brief 清空全部数据（离开房间或登出）。
+    /* 清空全部数据（离开房间或登出）。 */
     void clear();
 
-    /// @brief 当前房间号，空串表示不在房间。
-    QString room() const { return room_; }
+    /* 当前房间号，空串表示不在房间。 */
+    QString room() const { return m_strRoom; }
 
-    /// @brief 本人昵称。
-    QString selfName() const { return selfName_; }
+    /* 本人昵称。 */
+    QString selfName() const { return m_strSelfName; }
 
-    // ---- 写入 ----
+    /* ---- 写入 ---- */
 
     /**
      * @brief 追加一条文本消息。
@@ -127,7 +138,7 @@ public:
      * @retval 实际新增的条数（0 表示全是重复的）。
      * @details 合并后会按时间重排并发出 `modelReset`。
      */
-    int mergeHistory(const QVector<ChatMessage>& messages);
+    int mergeHistory(const QVector<ChatMessage_S>& messages);
 
     /**
      * @brief 追加一条系统提示。
@@ -148,7 +159,7 @@ public:
     void applySystemEvent(const QString& event, qint64 userId, const QString& name,
                           const QString& text, qint64 ts);
 
-    // ---- 状态回填 ----
+    /* ---- 状态回填 ---- */
 
     /**
      * @brief 写入译文。
@@ -180,50 +191,50 @@ public:
      */
     void setTranscriptState(qint64 seq, int state);
 
-    // ---- 查询 ----
+    /* ---- 查询 ---- */
 
-    /// @brief 全部消息（按时间正序）。
-    const QVector<ChatItem>& items() const { return items_; }
+    /* 全部消息（按时间正序）。 */
+    const QVector<ChatItem_S>& items() const { return m_aItems; }
 
     /**
      * @brief 按序号查找。
      * @param seq 消息序号。
      * @retval 指针，不存在时返回 nullptr；`modelReset` 后指针失效。
      */
-    ChatItem* find(qint64 seq);
-    const ChatItem* find(qint64 seq) const;
+    ChatItem_S* find(qint64 seq);
+    const ChatItem_S* find(qint64 seq) const;
 
-    /// @brief 成员表（id -> 昵称），按 id 有序。
-    const QMap<qint64, QString>& members() const { return members_; }
+    /* 成员表（id -> 昵称），按 id 有序。 */
+    const QMap<qint64, QString>& members() const { return m_uMembers; }
 
     /**
      * @brief 判断某条消息是否由本人发出。
      * @param userId 消息里的 `from` 字段。
      * @retval true 本人（含历次重连前使用的 id）。
      */
-    bool isSelf(qint64 userId) const { return userId != 0 && selfIds_.contains(userId); }
+    bool isSelf(qint64 userId) const { return userId != 0 && m_uSelfIds.contains(userId); }
 
-    /// @brief 当前成员数。
-    int memberCount() const { return members_.size(); }
+    /* 当前成员数。 */
+    int memberCount() const { return m_uMembers.size(); }
 
     /**
      * @brief 取最近若干条非系统消息，用于生成建议回复的上下文。
      * @param limit 最多取几条。
      * @retval 按时间正序的消息列表。
      */
-    QVector<ChatMessage> recentContext(int limit) const;
+    QVector<ChatMessage_S> recentContext(int limit) const;
 
 signals:
-    /// @brief 新增一条消息，视图应追加渲染。
-    void itemAppended(const business::ChatItem& item);
+    /* 新增一条消息，视图应追加渲染。 */
+    void itemAppended(const business::ChatItem_S& item);
 
-    /// @brief 模型被整体重排或清空，视图应全量重建。
+    /* 模型被整体重排或清空，视图应全量重建。 */
     void modelReset();
 
-    /// @brief 某条消息的译文或转写状态变化，视图应局部刷新。
+    /* 某条消息的译文或转写状态变化，视图应局部刷新。 */
     void itemUpdated(qint64 seq);
 
-    /// @brief 成员表变化。
+    /* 成员表变化。 */
     void membersChanged();
 
 private:
@@ -236,18 +247,26 @@ private:
      */
     void adoptLegacySelfId(qint64 from, const QString& name);
 
-    /// @brief 按时间戳排序，时间相同按 seq。
+    /* 按时间戳排序，时间相同按 seq。 */
     void sortItems();
 
     void ensureMember(qint64 userId, const QString& name);
 
-    QString             room_;      ///< 当前房间号
-    qint64              selfId_ = 0;///< 当前会话 id
-    QString             selfName_;  ///< 本人昵称
-    QSet<qint64>        selfIds_;   ///< 本人历次 id
-    QMap<qint64, QString> members_; ///< 成员表
-    QVector<ChatItem>   items_;     ///< 消息列表
-    QSet<qint64>        seqs_;      ///< 已收录的序号，用于去重
+    /* < 当前房间号 */
+    QString             m_strRoom;
+    /* < 当前会话 id */
+    qint64              m_uSelfId = 0;
+    /* < 本人昵称 */
+    QString             m_strSelfName;
+    /* < 本人历次 id */
+    QSet<qint64>        m_uSelfIds;
+    /* < 成员表 */
+    QMap<qint64, QString> m_uMembers;
+    /* < 消息列表 */
+    QVector<ChatItem_S>   m_aItems;
+    /* < 已收录的序号，用于去重 */
+    QSet<qint64>        m_uSeqs;
 };
 
-}  // namespace business
+/* namespace business */
+}

@@ -1,7 +1,15 @@
-// Theme.h
-//
-// Telegram 风格的浅色主题：调色板 + 全局样式表。
-// 所有颜色集中在此处，避免样式散落在各个页面里。
+/*
+ * 文件名:    Theme.h
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  Theme 头文件，声明相关类型与接口。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+ */
+
+/* Theme.h */
+
+/* Telegram 风格的浅色主题：调色板 + 全局样式表。 */
+/* 所有颜色集中在此处，避免样式散落在各个页面里。 */
 #pragma once
 
 #include <QColor>
@@ -9,7 +17,7 @@
 
 namespace theme {
 
-// ---- 调色板 ----
+/* ---- 调色板 ---- */
 inline const QColor accent        ("#3390EC");
 inline const QColor accentHover   ("#2A7FD6");
 inline const QColor accentPressed ("#246FC0");
@@ -24,7 +32,7 @@ inline const QColor bubbleIn      ("#FFFFFF");
 inline const QColor danger        ("#E5484D");
 inline const QColor success       ("#22C55E");
 
-/// Telegram 头像配色（按 userId 取模，保证同一用户颜色稳定）。
+/* Telegram 头像配色（按 userId 取模，保证同一用户颜色稳定）。 */
 inline QColor avatarColorFor(qint64 id) {
     static const char* palette[] = {
         "#E17076", "#FAA774", "#A695E7", "#7BC862",
@@ -124,10 +132,10 @@ QLineEdit#Field:focus, QSpinBox#Field:focus, QPlainTextEdit#Field:focus {
 #BubbleDivider { background: #E4EAF1; border: none; max-height: 1px; min-height: 1px; margin-top: 4px; }
 #BubbleTranslation { color: #4A5568; font-size: 9pt; background: transparent; }
 #BubbleTranscript { color: #2D3A4A; font-size: 9.5pt; background: transparent; }
-#TranslationCard { background: #F7FAFD; border: 1px solid #DCE6F2; border-radius: 10px; }
-#SuggestionBar  { background: #F7FAFD; border: 1px solid #DCE6F2; border-radius: 10px; }
-#SuggestionChip { background: #FFFFFF; border: 1px solid #D8E3F0; border-radius: 8px; }
-#SuggestionChip:hover { background: #EAF2FB; border-color: #B9D4F2; }
+#CTranslationCard { background: #F7FAFD; border: 1px solid #DCE6F2; border-radius: 10px; }
+#CSuggestionBar  { background: #F7FAFD; border: 1px solid #DCE6F2; border-radius: 10px; }
+#CSuggestionChip { background: #FFFFFF; border: 1px solid #D8E3F0; border-radius: 8px; }
+#CSuggestionChip:hover { background: #EAF2FB; border-color: #B9D4F2; }
 #SuggestionEn { color: #1F2A37; font-size: 10pt; background: transparent; border: none; }
 #SuggestionZh { color: #7A8797; font-size: 9pt; background: transparent; border: none; }
 #BubbleText { background: transparent; font-size: 10pt; }
@@ -181,4 +189,5 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: trans
 )");
 }
 
-}  // namespace theme
+/* namespace theme */
+}

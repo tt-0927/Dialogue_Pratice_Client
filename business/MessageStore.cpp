@@ -1,4 +1,12 @@
-// MessageStore.cpp
+/*
+ * 文件名:    MessageStore.cpp
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  CMessageStore 实现文件，包含相关接口的具体实现。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+ */
+
+/* CMessageStore.cpp */
 #include "business/MessageStore.h"
 
 #include <QDateTime>
@@ -12,15 +20,27 @@
 
 #include <algorithm>
 
-MessageStore::~MessageStore() {
-    if (opened_) {
-        QSqlDatabase::database(connectionName_).close();
-        QSqlDatabase::removeDatabase(connectionName_);
+/*
+ * 功能描述:  执行 CMessageStore 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * return:    返回值，含义见功能描述。
+ */
+CMessageStore::~CMessageStore() {
+    if (m_nOpened) {
+        QSqlDatabase::database(m_strConnectionName).close();
+        QSqlDatabase::removeDatabase(m_strConnectionName);
     }
 }
 
-bool MessageStore::open(const QString& path, QString* error) {
-    path_ = path;
+/*
+ * 功能描述:  执行 open 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  path  参数。
+ * param [in]  error  参数。
+ * return:    返回值，含义见功能描述。
+ */
+bool CMessageStore::open(const QString& path, QString* error) {
+    m_strPath = path;
 
     const QFileInfo info(path);
     if (!info.absoluteDir().exists() && !QDir().mkpath(info.absolutePath())) {
@@ -28,8 +48,8 @@ bool MessageStore::open(const QString& path, QString* error) {
         return false;
     }
 
-    connectionName_ = QStringLiteral("dp_history_%1").arg(reinterpret_cast<quintptr>(this));
-    QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName_);
+    m_strConnectionName = QStringLiteral("dp_history_%1").arg(reinterpret_cast<quintptr>(this));
+    QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), m_strConnectionName);
     db.setDatabaseName(path);
 
     if (!db.open()) {
@@ -38,8 +58,8 @@ bool MessageStore::open(const QString& path, QString* error) {
     }
 
     QSqlQuery query(db);
-    // 同一台机器可能同时开多个客户端（测试双人对话），共用同一个 db 文件。
-    // WAL + busy_timeout 让并发写入排队而不是立刻报 database is locked。
+    /* 同一台机器可能同时开多个客户端（测试双人对话），共用同一个 db 文件。 */
+    /* WAL + busy_timeout 让并发写入排队而不是立刻报 database is locked。 */
     query.exec(QStringLiteral("PRAGMA journal_mode=WAL"));
     query.exec(QStringLiteral("PRAGMA busy_timeout=3000"));
 
@@ -61,14 +81,22 @@ bool MessageStore::open(const QString& path, QString* error) {
     query.exec(QStringLiteral(
         "CREATE INDEX IF NOT EXISTS idx_room_ts ON messages(source, room, ts)"));
 
-    opened_ = true;
+    m_nOpened = true;
     return true;
 }
 
-void MessageStore::save(const QString& source, const QString& room, const ChatMessage& message) {
-    if (!opened_) return;
+/*
+ * 功能描述:  执行 save 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  source  参数。
+ * param [in]  room  参数。
+ * param [in]  message  参数。
+ * return:    void
+ */
+void CMessageStore::save(const QString& source, const QString& room, const ChatMessage_S& message) {
+    if (!m_nOpened) return;
 
-    QSqlDatabase db = QSqlDatabase::database(connectionName_);
+    QSqlDatabase db = QSqlDatabase::database(m_strConnectionName);
     QSqlQuery query(db);
     query.prepare(QStringLiteral(
         "INSERT OR REPLACE INTO messages(source, room, seq, from_id, name, text, ts)"
@@ -83,11 +111,19 @@ void MessageStore::save(const QString& source, const QString& room, const ChatMe
     query.exec();
 }
 
-QVector<ChatMessage> MessageStore::loadRecent(const QString& source, const QString& room, int limit) {
-    QVector<ChatMessage> result;
-    if (!opened_) return result;
+/*
+ * 功能描述:  执行 loadRecent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  source  参数。
+ * param [in]  room  参数。
+ * param [in]  limit  参数。
+ * return:    返回值，含义见功能描述。
+ */
+QVector<ChatMessage_S> CMessageStore::loadRecent(const QString& source, const QString& room, int limit) {
+    QVector<ChatMessage_S> result;
+    if (!m_nOpened) return result;
 
-    QSqlDatabase db = QSqlDatabase::database(connectionName_);
+    QSqlDatabase db = QSqlDatabase::database(m_strConnectionName);
     QSqlQuery query(db);
     query.prepare(QStringLiteral(
         "SELECT seq, from_id, name, text, ts FROM messages"
@@ -102,7 +138,7 @@ QVector<ChatMessage> MessageStore::loadRecent(const QString& source, const QStri
     }
 
     while (query.next()) {
-        ChatMessage message;
+        ChatMessage_S message;
         message.seq = query.value(0).toLongLong();
         message.from = query.value(1).toLongLong();
         message.name = query.value(2).toString();
@@ -111,14 +147,21 @@ QVector<ChatMessage> MessageStore::loadRecent(const QString& source, const QStri
         result.append(message);
     }
 
-    // 查询是倒序，翻回正序给界面
+    /* 查询是倒序，翻回正序给界面 */
     std::reverse(result.begin(), result.end());
     return result;
 }
 
-void MessageStore::clearRoom(const QString& source, const QString& room) {
-    if (!opened_) return;
-    QSqlDatabase db = QSqlDatabase::database(connectionName_);
+/*
+ * 功能描述:  执行 clearRoom 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  source  参数。
+ * param [in]  room  参数。
+ * return:    void
+ */
+void CMessageStore::clearRoom(const QString& source, const QString& room) {
+    if (!m_nOpened) return;
+    QSqlDatabase db = QSqlDatabase::database(m_strConnectionName);
     QSqlQuery query(db);
     query.prepare(QStringLiteral("DELETE FROM messages WHERE source = ? AND room = ?"));
     query.addBindValue(source);
@@ -126,9 +169,17 @@ void MessageStore::clearRoom(const QString& source, const QString& room) {
     query.exec();
 }
 
-void MessageStore::prune(const QString& source, const QString& room, int keep) {
-    if (!opened_) return;
-    QSqlDatabase db = QSqlDatabase::database(connectionName_);
+/*
+ * 功能描述:  执行 prune 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  source  参数。
+ * param [in]  room  参数。
+ * param [in]  keep  参数。
+ * return:    void
+ */
+void CMessageStore::prune(const QString& source, const QString& room, int keep) {
+    if (!m_nOpened) return;
+    QSqlDatabase db = QSqlDatabase::database(m_strConnectionName);
     QSqlQuery query(db);
     query.prepare(QStringLiteral(
         "DELETE FROM messages WHERE source = ? AND room = ? AND seq NOT IN ("

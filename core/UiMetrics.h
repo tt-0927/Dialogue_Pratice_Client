@@ -1,12 +1,9 @@
-/**
- * @file  UiMetrics.h
- * @brief 界面尺寸策略：桌面与移动端共用一套代码，按可用宽度切换。
- * @details 桌面版是 1080×720 的三栏布局，手机竖屏只有 360–420 dp 宽。
- *          与其维护两套界面，不如把「尺寸」集中到这里，由各页面在
- *          `resizeEvent` 里按当前宽度取值。
- *
- * @note 判断依据是**运行时宽度**而不是编译期平台宏。这样在桌面把窗口
- *       拖窄也能验证移动端布局，不必等 Android 工具链就绪。
+/*
+ * 文件名:    UiMetrics.h
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  界面尺寸策略：桌面与移动端共用一套代码，按可用宽度切换。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
  */
 
 #pragma once
@@ -16,16 +13,16 @@
 namespace core {
 namespace ui {
 
-/// @brief 低于该宽度进入紧凑模式（手机竖屏通常 360–420）。
+/* 低于该宽度进入紧凑模式（手机竖屏通常 360–420）。 */
 inline constexpr int kCompactBreakpoint = 600;
 
-/// @brief 触摸目标的最小边长（Material / HIG 的常见建议值是 44–48）。
+/* 触摸目标的最小边长（Material / HIG 的常见建议值是 44–48）。 */
 inline constexpr int kTouchTarget = 44;
 
-/// @brief 卡片类容器的最大宽度（桌面观感上限，窄屏会被压到可用宽度）。
+/* 卡片类容器的最大宽度（桌面观感上限，窄屏会被压到可用宽度）。 */
 inline constexpr int kCardMaxWidth = 420;
 
-/// @brief 页面四周的呼吸边距。
+/* 页面四周的呼吸边距。 */
 inline constexpr int kPageMargin = 24;
 
 /**
@@ -59,5 +56,7 @@ inline int bubbleMaxWidth(int availableWidth) {
     return qBound(180, qMin(520, static_cast<int>(availableWidth * 0.78)), 520);
 }
 
-}  // namespace ui
-}  // namespace core
+/* namespace ui */
+}
+/* namespace core */
+}

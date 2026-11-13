@@ -1,4 +1,12 @@
-// VoiceCodec 自检：读 16k 单声道 WAV -> Opus 编码 -> 解码 -> 报告压缩比与信号完整性
+/*
+ * 文件名:    voice_codec_test.cpp
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  voice_codec_test 实现文件，包含相关接口的具体实现。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+ */
+
+/* CVoiceCodec 自检：读 16k 单声道 WAV -> Opus 编码 -> 解码 -> 报告压缩比与信号完整性 */
 #include "media/VoiceCodec.h"
 
 #include <QCoreApplication>
@@ -9,7 +17,15 @@
 
 namespace {
 
-/// 极简 WAV 读取：只支持 16bit PCM、单声道、16kHz（piper / whisper 的输出就是这种）
+/* 极简 WAV 读取：只支持 16bit PCM、单声道、16kHz（piper / whisper 的输出就是这种） */
+/*
+ * 功能描述:  执行 readWav 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  path  参数。
+ * param [out]  pcm  参数。
+ * param [out]  error  参数。
+ * return:    返回值，含义见功能描述。
+ */
 bool readWav(const QString& path, QByteArray& pcm, QString& error) {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -43,7 +59,7 @@ bool readWav(const QString& path, QByteArray& pcm, QString& error) {
         pos += static_cast<int>(size) + (size % 2);
     }
 
-    if (channels != 1 || sampleRate != VoiceCodec::kSampleRate || bits != 16) {
+    if (channels != 1 || sampleRate != CVoiceCodec::kSampleRate || bits != 16) {
         error = QStringLiteral("需要 16kHz / 单声道 / 16bit，实际 %1Hz %2ch %3bit")
                     .arg(sampleRate).arg(channels).arg(bits);
         return false;
@@ -63,8 +79,16 @@ double rms(const QByteArray& pcm) {
     return std::sqrt(sum / n);
 }
 
-}  // namespace
+/* namespace */
+}
 
+/*
+ * 功能描述:  执行 main 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  argc  参数。
+ * param [in]  argv  参数。
+ * return:    返回值，含义见功能描述。
+ */
 int main(int argc, char** argv) {
     QCoreApplication app(argc, argv);
     if (argc < 2) {
@@ -79,28 +103,28 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    const int durationMs = static_cast<int>(pcm.size() / 2) * 1000 / VoiceCodec::kSampleRate;
+    const int durationMs = static_cast<int>(pcm.size() / 2) * 1000 / CVoiceCodec::kSampleRate;
     std::printf("原始 PCM: %d 字节, %d ms, RMS=%.0f\n", static_cast<int>(pcm.size()), durationMs,
                 rms(pcm));
 
-    const QByteArray container = VoiceCodec::encode(pcm);
+    const QByteArray container = CVoiceCodec::encode(pcm);
     if (container.isEmpty()) {
-        std::fprintf(stderr, "编码失败: %s\n", VoiceCodec::lastError().toUtf8().constData());
+        std::fprintf(stderr, "编码失败: %s\n", CVoiceCodec::lastError().toUtf8().constData());
         return 3;
     }
     std::printf("Opus 容器: %d 字节 (压缩到 %.1f%%), 头部时长=%d ms\n",
                 static_cast<int>(container.size()),
-                100.0 * container.size() / pcm.size(), VoiceCodec::durationMs(container));
+                100.0 * container.size() / pcm.size(), CVoiceCodec::durationMs(container));
 
-    const QByteArray decoded = VoiceCodec::decode(container);
+    const QByteArray decoded = CVoiceCodec::decode(container);
     if (decoded.isEmpty()) {
-        std::fprintf(stderr, "解码失败: %s\n", VoiceCodec::lastError().toUtf8().constData());
+        std::fprintf(stderr, "解码失败: %s\n", CVoiceCodec::lastError().toUtf8().constData());
         return 4;
     }
     std::printf("解码 PCM: %d 字节, RMS=%.0f\n", static_cast<int>(decoded.size()), rms(decoded));
 
-    // 简单完整性判断：时长接近、能量不塌陷
-    const int decodedMs = static_cast<int>(decoded.size() / 2) * 1000 / VoiceCodec::kSampleRate;
+    /* 简单完整性判断：时长接近、能量不塌陷 */
+    const int decodedMs = static_cast<int>(decoded.size() / 2) * 1000 / CVoiceCodec::kSampleRate;
     const double ratio = rms(decoded) / (rms(pcm) + 1e-9);
     const bool ok = std::abs(decodedMs - durationMs) <= 40 && ratio > 0.3 && ratio < 3.0;
     std::printf("时长差 %d ms，能量比 %.2f -> %s\n", decodedMs - durationMs, ratio,

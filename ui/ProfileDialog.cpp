@@ -1,4 +1,12 @@
-// ProfileDialog.cpp
+/*
+ * 文件名:    ProfileDialog.cpp
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  CProfileDialog 实现文件，包含相关接口的具体实现。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+ */
+
+/* CProfileDialog.cpp */
 #include "ui/ProfileDialog.h"
 
 #include <QHBoxLayout>
@@ -9,7 +17,7 @@
 #include <QIntValidator>
 #include <QVBoxLayout>
 
-ProfileDialog::ProfileDialog(const QString& name, int age, const QString& desc, QWidget* parent)
+CProfileDialog::CProfileDialog(const QString& name, int age, const QString& desc, QWidget* parent)
     : QDialog(parent) {
     setWindowTitle(QStringLiteral("编辑个人信息"));
     setModal(true);
@@ -17,64 +25,77 @@ ProfileDialog::ProfileDialog(const QString& name, int age, const QString& desc, 
     setMaximumWidth(440);
     setStyleSheet(QStringLiteral("QDialog { background: #FFFFFF; }"));
 
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     auto* root = new QVBoxLayout(this);
     root->setContentsMargins(28, 24, 28, 22);
     root->setSpacing(8);
 
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     auto* title = new QLabel(QStringLiteral("编辑个人信息"), this);
     title->setStyleSheet(QStringLiteral("font-size: 14pt; font-weight: 700;"));
     root->addWidget(title);
     root->addSpacing(6);
 
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     auto* nameLabel = new QLabel(QStringLiteral("姓名"), this);
     nameLabel->setObjectName("KeyLabel");
     root->addWidget(nameLabel);
 
-    nameEdit_ = new QLineEdit(name, this);
-    nameEdit_->setObjectName("Field");
-    nameEdit_->setMaxLength(24);
-    root->addWidget(nameEdit_);
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pNameEdit = new QLineEdit(name, this);
+    m_pNameEdit->setObjectName("Field");
+    m_pNameEdit->setMaxLength(24);
+    root->addWidget(m_pNameEdit);
 
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     auto* ageLabel = new QLabel(QStringLiteral("年龄"), this);
     ageLabel->setObjectName("KeyLabel");
     root->addWidget(ageLabel);
 
-    // QLineEdit + 校验器替代 QSpinBox：后者在 QSS padding 下文本会被裁切
-    ageEdit_ = new QLineEdit(this);
-    ageEdit_->setObjectName("Field");
-    ageEdit_->setValidator(new QIntValidator(0, 150, ageEdit_));
-    ageEdit_->setPlaceholderText(QStringLiteral("未填写"));
-    if (age > 0) ageEdit_->setText(QString::number(age));
-    root->addWidget(ageEdit_);
+    /* QLineEdit + 校验器替代 QSpinBox：后者在 QSS padding 下文本会被裁切 */
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pAgeEdit = new QLineEdit(this);
+    m_pAgeEdit->setObjectName("Field");
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pAgeEdit->setValidator(new QIntValidator(0, 150, m_pAgeEdit));
+    m_pAgeEdit->setPlaceholderText(QStringLiteral("未填写"));
+    if (age > 0) m_pAgeEdit->setText(QString::number(age));
+    root->addWidget(m_pAgeEdit);
 
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     auto* descLabel = new QLabel(QStringLiteral("个人描述"), this);
     descLabel->setObjectName("KeyLabel");
     root->addWidget(descLabel);
 
-    descEdit_ = new QPlainTextEdit(desc, this);
-    descEdit_->setObjectName("Field");
-    descEdit_->setPlaceholderText(QStringLiteral("一句话介绍自己，最多 200 字节"));
-    descEdit_->setFixedHeight(96);
-    descEdit_->setTabChangesFocus(true);   // Tab 切换控件而不是插入制表符
-    root->addWidget(descEdit_);
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pDescEdit = new QPlainTextEdit(desc, this);
+    m_pDescEdit->setObjectName("Field");
+    m_pDescEdit->setPlaceholderText(QStringLiteral("一句话介绍自己，最多 200 字节"));
+    m_pDescEdit->setFixedHeight(96);
+    /* Tab 切换控件而不是插入制表符 */
+    m_pDescEdit->setTabChangesFocus(true);
+    root->addWidget(m_pDescEdit);
 
-    errorLabel_ = new QLabel(this);
-    errorLabel_->setObjectName("ErrorText");
-    errorLabel_->setWordWrap(true);
-    errorLabel_->setVisible(false);
-    root->addWidget(errorLabel_);
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pErrorLabel = new QLabel(this);
+    m_pErrorLabel->setObjectName("ErrorText");
+    m_pErrorLabel->setWordWrap(true);
+    m_pErrorLabel->setVisible(false);
+    root->addWidget(m_pErrorLabel);
 
     root->addSpacing(8);
 
     auto* buttonRow = new QHBoxLayout();
     buttonRow->addStretch(1);
 
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     auto* cancelBtn = new QPushButton(QStringLiteral("取消"), this);
     cancelBtn->setObjectName("GhostButton");
     cancelBtn->setCursor(Qt::PointingHandCursor);
     cancelBtn->setMinimumWidth(88);
     buttonRow->addWidget(cancelBtn);
 
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     auto* saveBtn = new QPushButton(QStringLiteral("保存"), this);
     saveBtn->setObjectName("PrimaryButton");
     saveBtn->setCursor(Qt::PointingHandCursor);
@@ -85,37 +106,48 @@ ProfileDialog::ProfileDialog(const QString& name, int age, const QString& desc, 
     root->addLayout(buttonRow);
 
     connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
-    connect(saveBtn, &QPushButton::clicked, this, &ProfileDialog::submit);
+    connect(saveBtn, &QPushButton::clicked, this, &CProfileDialog::submit);
 }
 
-void ProfileDialog::showEvent(QShowEvent* event) {
+/*
+ * 功能描述:  执行 showEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  event  参数。
+ * return:    void
+ */
+void CProfileDialog::showEvent(QShowEvent* event) {
     QDialog::showEvent(event);
 
-    // 手机竖屏放不下 440，按父窗口宽度收敛
+    /* 手机竖屏放不下 440，按父窗口宽度收敛 */
     const int parentWidth = parentWidget() != nullptr ? parentWidget()->width() : 440;
     const int target = qBound(280, qMin(440, parentWidth - 48), 440);
     if (width() != target) resize(target, height());
 }
 
-void ProfileDialog::submit() {
-    const QString name = nameEdit_->text().trimmed();
+/*
+ * 功能描述:  执行 submit 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * return:    void
+ */
+void CProfileDialog::submit() {
+    const QString name = m_pNameEdit->text().trimmed();
     if (name.isEmpty()) {
-        errorLabel_->setText(QStringLiteral("姓名不能为空"));
-        errorLabel_->setVisible(true);
+        m_pErrorLabel->setText(QStringLiteral("姓名不能为空"));
+        m_pErrorLabel->setVisible(true);
         return;
     }
     if (name.toUtf8().size() > 24) {
-        errorLabel_->setText(QStringLiteral("姓名最多 24 字节（一个汉字约 3 字节）"));
-        errorLabel_->setVisible(true);
+        m_pErrorLabel->setText(QStringLiteral("姓名最多 24 字节（一个汉字约 3 字节）"));
+        m_pErrorLabel->setVisible(true);
         return;
     }
-    const QString desc = descEdit_->toPlainText().trimmed();
+    const QString desc = m_pDescEdit->toPlainText().trimmed();
     if (desc.toUtf8().size() > 200) {
-        errorLabel_->setText(QStringLiteral("个人描述最多 200 字节"));
-        errorLabel_->setVisible(true);
+        m_pErrorLabel->setText(QStringLiteral("个人描述最多 200 字节"));
+        m_pErrorLabel->setVisible(true);
         return;
     }
 
-    emit saved(name, ageEdit_->text().toInt(), desc);
+    emit saved(name, m_pAgeEdit->text().toInt(), desc);
     accept();
 }

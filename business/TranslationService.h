@@ -1,8 +1,9 @@
-/**
- * @file  TranslationService.h
- * @brief 翻译调度：串行队列 + 内存缓存 + 相同文本合并。
- * @details 一次只发一个请求——本地小模型并发跑反而更慢，串行还能保证译文顺序。
- *          失败不阻塞后续任务，失败的那条会收到 `failed` 信号。
+/*
+ * 文件名:    TranslationService.h
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  翻译调度：串行队列 + 内存缓存 + 相同文本合并。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
  */
 
 #pragma once
@@ -13,7 +14,7 @@
 #include <QString>
 #include <QVector>
 
-class LlmClient;
+class CLlmClient;
 
 /**
  * @brief 中英双向翻译服务。
@@ -26,19 +27,19 @@ class LlmClient;
  *          等首个请求返回后一起回调——这样重复句子不会各自发一次请求，
  *          也不会出现「第 2 条永远停在翻译中」的悬挂状态。
  */
-class TranslationService : public QObject {
+class CTranslationService : public QObject {
     Q_OBJECT
 
 public:
-    explicit TranslationService(QObject* parent = nullptr);
+    explicit CTranslationService(QObject* parent = nullptr);
 
     /**
      * @brief 绑定 LLM 客户端。
      * @param client 客户端实例，不取得所有权；可为空表示禁用。
      */
-    void setClient(LlmClient* client);
+    void setClient(CLlmClient* client);
 
-    /// @brief 翻译服务是否可用（已绑定客户端且客户端已启用）。
+    /* 翻译服务是否可用（已绑定客户端且客户端已启用）。 */
     bool isEnabled() const;
 
     /**
@@ -72,10 +73,10 @@ public:
     static bool looksChinese(const QString& text);
 
 signals:
-    /// @brief 消息翻译完成。
+    /* 消息翻译完成。 */
     void messageTranslated(qint64 seq, const QString& chinese);
 
-    /// @brief 输入翻译完成。
+    /* 输入翻译完成。 */
     void inputTranslated(const QString& sourceChinese, const QString& english);
 
     /**
@@ -86,23 +87,26 @@ signals:
     void failed(qint64 seq, const QString& reason);
 
 private:
-    /// @brief 任务类型。
-    enum class Kind { Message, Input };
+    /* 任务类型。 */
+    enum class Kind_EN { Message, Input };
 
-    /// @brief 一次翻译任务。
-    struct Job {
-        Kind    kind = Kind::Message;  ///< 任务类型
-        qint64  seq = 0;               ///< 消息序号（Input 任务为 0）
-        QString text;                  ///< 原文
+    /* 一次翻译任务。 */
+    struct Job_S {
+        /* < 任务类型 */
+        Kind_EN    kind = Kind_EN::Message;
+        /* < 消息序号（Input 任务为 0） */
+        qint64  seq = 0;
+        /* < 原文 */
+        QString text;
     };
 
     /**
      * @brief 把任务放入队列或登记为等待者。
      * @param job 任务。
      */
-    void enqueue(const Job& job);
+    void enqueue(const Job_S& job);
 
-    /// @brief 队列空闲时取下一个任务发出。
+    /* 队列空闲时取下一个任务发出。 */
     void pump();
 
     /**
@@ -110,7 +114,7 @@ private:
      * @param job    任务。
      * @param result 译文。
      */
-    void deliver(const Job& job, const QString& result);
+    void deliver(const Job_S& job, const QString& result);
 
     /**
      * @brief 处理 LLM 成功响应。
@@ -133,8 +137,8 @@ private:
      */
     void cachePut(const QString& key, const QString& value);
 
-    /// @brief 构造缓存键（区分两个方向）。
-    static QString cacheKey(Kind kind, const QString& text);
+    /* 构造缓存键（区分两个方向）。 */
+    static QString cacheKey(Kind_EN kind, const QString& text);
 
     /**
      * @brief 清洗模型输出。
@@ -143,15 +147,22 @@ private:
      */
     static QString cleanOutput(const QString& raw);
 
-    LlmClient*              client_ = nullptr;  ///< LLM 客户端（不持有）
-    QVector<Job>            queue_;             ///< 待执行任务
-    QHash<QString, QString> cache_;             ///< 译文缓存
-    QList<QString>          cacheOrder_;        ///< 缓存插入顺序，用于淘汰
+    /* < LLM 客户端（不持有） */
+    CLlmClient*              m_pClient = nullptr;
+    /* < 待执行任务 */
+    QVector<Job_S>            queue_;
+    /* < 译文缓存 */
+    QHash<QString, QString> m_strCache;
+    /* < 缓存插入顺序，用于淘汰 */
+    QList<QString>          m_strCacheOrder;
 
-    /// @brief 正在请求中的文本 -> 等待同一译文的全部任务。
-    QHash<QString, QVector<Job>> inFlight_;
+    /* 正在请求中的文本 -> 等待同一译文的全部任务。 */
+    QHash<QString, QVector<Job_S>> m_strInFlight;
 
-    Job   current_;              ///< 正在执行的任务
-    int   currentId_ = 0;        ///< 当前请求 id
-    bool  busy_ = false;         ///< 是否已有请求在途
+    /* < 正在执行的任务 */
+    Job_S   current_;
+    /* < 当前请求 id */
+    int   m_nCurrentId = 0;
+    /* < 是否已有请求在途 */
+    bool  m_nBusy = false;
 };

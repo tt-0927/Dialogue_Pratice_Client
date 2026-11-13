@@ -1,4 +1,12 @@
-// TranslationService.cpp
+/*
+ * 文件名:    TranslationService.cpp
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  CTranslationService 实现文件，包含相关接口的具体实现。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+ */
+
+/* CTranslationService.cpp */
 #include "business/TranslationService.h"
 
 #include "business/LlmClient.h"
@@ -17,30 +25,49 @@ const char* kInputSystem =
     "你是汉英翻译引擎。把用户给出的中文翻译成自然、口语化的英文（日常对话语气，不要书面语）。"
     "只输出英文译文：不要解释，不要加引号，不要重复原文。";
 
-}  // namespace
+/* namespace */
+}
 
-TranslationService::TranslationService(QObject* parent) : QObject(parent) {}
+CTranslationService::CTranslationService(QObject* parent) : QObject(parent) {}
 
-void TranslationService::setClient(LlmClient* client) {
-    if (client_ != nullptr) {
-        disconnect(client_, nullptr, this, nullptr);
+/*
+ * 功能描述:  执行 setClient 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  client  参数。
+ * return:    void
+ */
+void CTranslationService::setClient(CLlmClient* client) {
+    if (m_pClient != nullptr) {
+        disconnect(m_pClient, nullptr, this, nullptr);
     }
-    client_ = client;
-    if (client_ != nullptr) {
-        connect(client_, &LlmClient::finished, this, &TranslationService::onFinished);
-        connect(client_, &LlmClient::failed, this, &TranslationService::onFailed);
+    m_pClient = client;
+    if (m_pClient != nullptr) {
+        connect(m_pClient, &CLlmClient::finished, this, &CTranslationService::onFinished);
+        connect(m_pClient, &CLlmClient::failed, this, &CTranslationService::onFailed);
     }
 }
 
-bool TranslationService::isEnabled() const {
-    return client_ != nullptr && client_->isEnabled();
+/*
+ * 功能描述:  执行 isEnabled 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * return:    返回值，含义见功能描述。
+ */
+bool CTranslationService::isEnabled() const {
+    return m_pClient != nullptr && m_pClient->isEnabled();
 }
 
-bool TranslationService::looksEnglish(const QString& text) {
+/*
+ * 功能描述:  执行 looksEnglish 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  text  参数。
+ * return:    返回值，含义见功能描述。
+ */
+bool CTranslationService::looksEnglish(const QString& text) {
     int latinRun = 0;
     bool hasLatinWord = false;
     for (const QChar c : text) {
-        if (c.unicode() >= 0x4E00 && c.unicode() <= 0x9FFF) return false;   // 含汉字，不是纯英文
+        /* 含汉字，不是纯英文 */
+        if (c.unicode() >= 0x4E00 && c.unicode() <= 0x9FFF) return false;
         if (c.isLetter() && c.unicode() < 128) {
             if (++latinRun >= 2) hasLatinWord = true;
         } else {
@@ -50,122 +77,174 @@ bool TranslationService::looksEnglish(const QString& text) {
     return hasLatinWord;
 }
 
-bool TranslationService::looksChinese(const QString& text) {
+/*
+ * 功能描述:  执行 looksChinese 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  text  参数。
+ * return:    返回值，含义见功能描述。
+ */
+bool CTranslationService::looksChinese(const QString& text) {
     for (const QChar c : text) {
         if (c.unicode() >= 0x4E00 && c.unicode() <= 0x9FFF) return true;
     }
     return false;
 }
 
-void TranslationService::requestMessage(qint64 seq, const QString& english) {
+/*
+ * 功能描述:  执行 requestMessage 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  seq  参数。
+ * param [in]  english  参数。
+ * return:    void
+ */
+void CTranslationService::requestMessage(qint64 seq, const QString& english) {
     if (!isEnabled() || english.trimmed().isEmpty()) return;
     if (!looksEnglish(english)) return;
 
-    Job job;
-    job.kind = Kind::Message;
+    Job_S job;
+    job.kind = Kind_EN::Message;
     job.seq = seq;
     job.text = english.trimmed();
     enqueue(job);
 }
 
-void TranslationService::requestInput(const QString& chinese) {
+/*
+ * 功能描述:  执行 requestInput 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  chinese  参数。
+ * return:    void
+ */
+void CTranslationService::requestInput(const QString& chinese) {
     if (!isEnabled()) return;
     const QString text = chinese.trimmed();
     if (text.isEmpty() || !looksChinese(text)) return;
 
-    // 用户连续打字时只保留最新一条，避免排一堆过期的输入翻译
+    /* 用户连续打字时只保留最新一条，避免排一堆过期的输入翻译 */
     for (int i = queue_.size() - 1; i >= 0; --i) {
-        if (queue_.at(i).kind == Kind::Input) queue_.removeAt(i);
+        if (queue_.at(i).kind == Kind_EN::Input) queue_.removeAt(i);
     }
 
-    Job job;
-    job.kind = Kind::Input;
+    Job_S job;
+    job.kind = Kind_EN::Input;
     job.seq = 0;
     job.text = text;
     enqueue(job);
 }
 
-QString TranslationService::cacheKey(Kind kind, const QString& text) {
-    return (kind == Kind::Message ? QStringLiteral("M:") : QStringLiteral("I:")) + text;
+/*
+ * 功能描述:  执行 cacheKey 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  kind  参数。
+ * param [in]  text  参数。
+ * return:    返回值，含义见功能描述。
+ */
+QString CTranslationService::cacheKey(Kind_EN kind, const QString& text) {
+    return (kind == Kind_EN::Message ? QStringLiteral("M:") : QStringLiteral("I:")) + text;
 }
 
-void TranslationService::cachePut(const QString& key, const QString& value) {
-    if (cache_.contains(key)) return;
-    cache_.insert(key, value);
-    cacheOrder_.append(key);
-    while (cacheOrder_.size() > kMaxCacheEntries) {
-        cache_.remove(cacheOrder_.takeFirst());
+/*
+ * 功能描述:  执行 cachePut 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  key  参数。
+ * param [in]  value  参数。
+ * return:    void
+ */
+void CTranslationService::cachePut(const QString& key, const QString& value) {
+    if (m_strCache.contains(key)) return;
+    m_strCache.insert(key, value);
+    m_strCacheOrder.append(key);
+    while (m_strCacheOrder.size() > kMaxCacheEntries) {
+        m_strCache.remove(m_strCacheOrder.takeFirst());
     }
 }
 
-void TranslationService::enqueue(const Job& job) {
+/*
+ * 功能描述:  执行 enqueue 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  job  参数。
+ * return:    void
+ */
+void CTranslationService::enqueue(const Job_S& job) {
     const QString key = cacheKey(job.kind, job.text);
 
-    // 命中缓存：立刻回调，不进队列
-    const auto hit = cache_.constFind(key);
-    if (hit != cache_.constEnd()) {
+    /* 命中缓存：立刻回调，不进队列 */
+    const auto hit = m_strCache.constFind(key);
+    if (hit != m_strCache.constEnd()) {
         deliver(job, hit.value());
         return;
     }
 
-    // 同一句已在请求中：登记为等待者，等首个请求返回后一起回调。
-    // 这里若直接 return，后来者会永远停在「翻译中」——重复句子很常见。
-    const auto pending = inFlight_.find(key);
-    if (pending != inFlight_.end()) {
+    /* 同一句已在请求中：登记为等待者，等首个请求返回后一起回调。 */
+    /* 这里若直接 return，后来者会永远停在「翻译中」——重复句子很常见。 */
+    const auto pending = m_strInFlight.find(key);
+    if (pending != m_strInFlight.end()) {
         pending->append(job);
         return;
     }
 
-    inFlight_.insert(key, QVector<Job>{job});
+    m_strInFlight.insert(key, QVector<Job_S>{job});
     queue_.append(job);
     pump();
 }
 
-void TranslationService::pump() {
-    if (busy_ || queue_.isEmpty() || !isEnabled()) return;
+/*
+ * 功能描述:  执行 pump 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * return:    void
+ */
+void CTranslationService::pump() {
+    if (m_nBusy || queue_.isEmpty() || !isEnabled()) return;
 
     current_ = queue_.takeFirst();
-    busy_ = true;
+    m_nBusy = true;
 
-    const bool toChinese = (current_.kind == Kind::Message);
-    currentId_ = client_->chat(QString::fromUtf8(toChinese ? kMessageSystem : kInputSystem),
+    const bool toChinese = (current_.kind == Kind_EN::Message);
+    m_nCurrentId = m_pClient->chat(QString::fromUtf8(toChinese ? kMessageSystem : kInputSystem),
                                current_.text,
                                toChinese ? 256 : 200);
 
-    if (currentId_ <= 0) {
-        busy_ = false;
-        const QVector<Job> waiters = inFlight_.take(cacheKey(current_.kind, current_.text));
-        for (const Job& job : waiters) {
+    if (m_nCurrentId <= 0) {
+        m_nBusy = false;
+        const QVector<Job_S> waiters = m_strInFlight.take(cacheKey(current_.kind, current_.text));
+        for (const Job_S& job : waiters) {
             emit failed(job.seq, QStringLiteral("翻译服务未启用"));
         }
     }
 }
 
-void TranslationService::onFinished(int requestId, const QString& text) {
-    if (requestId != currentId_) return;   // 过期响应（理论上不会发生，串行队列）
+/*
+ * 功能描述:  执行 onFinished 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  requestId  参数。
+ * param [in]  text  参数。
+ * return:    void
+ */
+void CTranslationService::onFinished(int requestId, const QString& text) {
+    /* 过期响应（理论上不会发生，串行队列） */
+    if (requestId != m_nCurrentId) return;
 
-    busy_ = false;
+    m_nBusy = false;
     const QString key = cacheKey(current_.kind, current_.text);
 
-    // 取出所有等待同一译文的任务（含首个请求者本身）
-    QVector<Job> waiters = inFlight_.take(key);
+    /* 取出所有等待同一译文的任务（含首个请求者本身） */
+    QVector<Job_S> waiters = m_strInFlight.take(key);
     if (waiters.isEmpty()) waiters.append(current_);
 
     const QString result = cleanOutput(text);
     if (result.isEmpty()) {
         DP_LOG_WARN(kTag, QStringLiteral("empty translation for: %1").arg(current_.text));
-        for (const Job& job : waiters) {
+        for (const Job_S& job : waiters) {
             emit failed(job.seq, QStringLiteral("模型返回空译文"));
         }
         pump();
         return;
     }
 
-    // 小模型偶尔会把原文原样吐回来（尤其含下划线标识符的短句），
-    // 这种"译文"没有意义，按失败处理更诚实。
+    /* 小模型偶尔会把原文原样吐回来（尤其含下划线标识符的短句）， */
+    /* 这种"译文"没有意义，按失败处理更诚实。 */
     if (result.compare(current_.text, Qt::CaseInsensitive) == 0) {
         DP_LOG_WARN(kTag, QStringLiteral("model echoed source text: %1").arg(current_.text));
-        for (const Job& job : waiters) {
+        for (const Job_S& job : waiters) {
             emit failed(job.seq, QStringLiteral("模型没有翻译，返回了原文"));
         }
         pump();
@@ -173,34 +252,55 @@ void TranslationService::onFinished(int requestId, const QString& text) {
     }
 
     cachePut(key, result);
-    for (const Job& job : waiters) {
+    for (const Job_S& job : waiters) {
         deliver(job, result);
     }
     pump();
 }
 
-void TranslationService::onFailed(int requestId, const QString& reason) {
-    if (requestId != currentId_) return;
+/*
+ * 功能描述:  执行 onFailed 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  requestId  参数。
+ * param [in]  reason  参数。
+ * return:    void
+ */
+void CTranslationService::onFailed(int requestId, const QString& reason) {
+    if (requestId != m_nCurrentId) return;
 
-    busy_ = false;
-    const QVector<Job> waiters = inFlight_.take(cacheKey(current_.kind, current_.text));
+    m_nBusy = false;
+    const QVector<Job_S> waiters = m_strInFlight.take(cacheKey(current_.kind, current_.text));
 
     DP_LOG_WARN(kTag, QStringLiteral("LLM request failed: %1").arg(reason));
-    for (const Job& job : waiters) {
+    for (const Job_S& job : waiters) {
         emit failed(job.seq, reason);
     }
-    pump();   // 一条失败不影响后面的
+    /* 一条失败不影响后面的 */
+    pump();
 }
 
-void TranslationService::deliver(const Job& job, const QString& result) {
-    if (job.kind == Kind::Message) {
+/*
+ * 功能描述:  执行 deliver 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  job  参数。
+ * param [in]  result  参数。
+ * return:    void
+ */
+void CTranslationService::deliver(const Job_S& job, const QString& result) {
+    if (job.kind == Kind_EN::Message) {
         emit messageTranslated(job.seq, result);
     } else {
         emit inputTranslated(job.text, result);
     }
 }
 
-QString TranslationService::cleanOutput(const QString& raw) {
+/*
+ * 功能描述:  执行 cleanOutput 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  raw  参数。
+ * return:    返回值，含义见功能描述。
+ */
+QString CTranslationService::cleanOutput(const QString& raw) {
     QString s = raw.trimmed();
 
     static const QStringList prefixes = {
@@ -217,7 +317,7 @@ QString TranslationService::cleanOutput(const QString& raw) {
         }
     }
 
-    // 去掉整体包裹的引号
+    /* 去掉整体包裹的引号 */
     if (s.size() >= 2) {
         const QChar first = s.front();
         const QChar last = s.back();

@@ -1,11 +1,9 @@
-/**
- * @file  ChatController.h
- * @brief 聊天业务编排：翻译、智能建议、语音转写与语音发送。
- * @details 从原 ChatPage 中剥离出来的逻辑层。它持有各业务服务并驱动 ChatModel，
- *          但不持有任何控件——界面反应全部通过信号发出。
- *
- *          这样拆的好处：编排逻辑可以脱离界面单独测试，
- *          界面改动不会碰到翻译/建议的触发条件。
+/*
+ * 文件名:    ChatController.h
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  聊天业务编排：翻译、智能建议、语音转写与语音发送。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
  */
 
 #pragma once
@@ -20,10 +18,10 @@
 #include "business/ChatTypes.h"
 #include "core/AppConfig.h"
 
-class LlmClient;
-class ReplyService;
-class TranslationService;
-class VoiceRecorder;
+class CLlmClient;
+class CReplyService;
+class CTranslationService;
+class CVoiceRecorder;
 class QFileSystemWatcher;
 class QTimer;
 
@@ -33,8 +31,8 @@ namespace business {
  * @brief 聊天页的业务编排器。
  *
  * @details 职责边界：
- *          - 决定「哪些消息要翻译」并驱动 TranslationService
- *          - 决定「何时请求建议回复」并驱动 ReplyService
+ *          - 决定「哪些消息要翻译」并驱动 CTranslationService
+ *          - 决定「何时请求建议回复」并驱动 CReplyService
  *          - 维护语音转写队列（一次只跑一条，避免 whisper 抢占 CPU）
  *          - 把录音 PCM 编码成协议容器并请求发送
  *
@@ -57,14 +55,14 @@ public:
      * @brief 注入录音器（语音转写需要它）。
      * @param recorder 录音器实例，不取得所有权；可为空表示禁用转写。
      */
-    void setRecorder(VoiceRecorder* recorder);
+    void setRecorder(CVoiceRecorder* recorder);
 
     /**
      * @brief 告知当前输入框是否为空。
      * @param empty true 表示无内容。
      * @details 建议回复只在输入框为空时请求，避免打断用户输入。
      */
-    void setComposerEmpty(bool empty) { composerEmpty_ = empty; }
+    void setComposerEmpty(bool empty) { m_nComposerEmpty = empty; }
 
     /**
      * @brief 请求生成智能建议回复。
@@ -99,13 +97,13 @@ public:
      */
     void retryFailedTranslations();
 
-    /// @brief 翻译服务当前是否可用。
+    /* 翻译服务当前是否可用。 */
     bool translationEnabled() const;
 
-    /// @brief 建议服务当前是否可用。
+    /* 建议服务当前是否可用。 */
     bool replyEnabled() const;
 
-    /// @brief 语音识别模型是否已就绪。
+    /* 语音识别模型是否已就绪。 */
     bool transcriptReady() const;
 
 signals:
@@ -124,16 +122,16 @@ signals:
      */
     void voiceStatus(const QString& text, bool error, int autoHideMs);
 
-    /// @brief 建议回复已生成。
-    void suggestionsReady(const QVector<Suggestion>& items);
+    /* 建议回复已生成。 */
+    void suggestionsReady(const QVector<Suggestion_S>& items);
 
-    /// @brief 建议回复请求失败或取消，界面应收起建议条。
+    /* 建议回复请求失败或取消，界面应收起建议条。 */
     void suggestionsCleared();
 
-    /// @brief 输入翻译完成，界面应显示译文卡。
+    /* 输入翻译完成，界面应显示译文卡。 */
     void inputTranslationReady(const QString& source, const QString& english);
 
-    /// @brief 输入翻译失败，界面应收起译文卡。
+    /* 输入翻译失败，界面应收起译文卡。 */
     void inputTranslationFailed(const QString& reason);
 
     /**
@@ -148,7 +146,7 @@ private:
      * @brief 模型新增消息后的编排：决定是否翻译、是否转写、是否请求建议。
      * @param item 新增的消息。
      */
-    void onItemAppended(const ChatItem& item);
+    void onItemAppended(const ChatItem_S& item);
 
     /**
      * @brief 模型整体重建后的编排（历史批量合并、切房间）。
@@ -157,7 +155,7 @@ private:
      */
     void onModelReset();
 
-    /// @brief 从队列取下一条待转写语音。
+    /* 从队列取下一条待转写语音。 */
     void pumpTranscript();
 
     /**
@@ -177,32 +175,50 @@ private:
      * @param initial  是否首次加载（首次的错误提示要延后到事件循环）。
      * @param silent   true 时不发「配置已重新加载」的成功提示（登录下发时用）。
      */
-    void applyConfig(const AppConfig::Settings& settings, bool initial, bool silent = false);
+    void applyConfig(const AppConfig::Settings_S& settings, bool initial, bool silent = false);
 
-    /// @brief 监听配置文件变化并热重载。
+    /* 监听配置文件变化并热重载。 */
     void watchConfig();
 
-    ChatModel*           model_ = nullptr;        ///< 消息模型（不持有）
-    VoiceRecorder*       recorder_ = nullptr;     ///< 录音器（不持有）
-    LlmClient*           llm_ = nullptr;          ///< 对话/建议模型
-    LlmClient*           translateLlm_ = nullptr; ///< 翻译模型（可与上面不同）
-    TranslationService*  translation_ = nullptr;  ///< 翻译服务
-    ReplyService*        reply_ = nullptr;        ///< 建议回复服务
+    /* < 消息模型（不持有） */
+    ChatModel*           model_ = nullptr;
+    /* < 录音器（不持有） */
+    CVoiceRecorder*       m_pRecorder = nullptr;
+    /* < 对话/建议模型 */
+    CLlmClient*           m_pLlm = nullptr;
+    /* < 翻译模型（可与上面不同） */
+    CLlmClient*           m_pTranslateLlm = nullptr;
+    /* < 翻译服务 */
+    CTranslationService*  m_pTranslation = nullptr;
+    /* < 建议回复服务 */
+    CReplyService*        m_pReply = nullptr;
 
-    QFileSystemWatcher* configWatcher_ = nullptr;      ///< 配置热重载
-    QTimer*             configReloadTimer_ = nullptr;  ///< 配置重载防抖
-    QTimer*             replyDebounce_ = nullptr;      ///< 建议请求防抖
-    QTimer*             inputDebounce_ = nullptr;      ///< 输入翻译防抖
+    /* < 配置热重载 */
+    QFileSystemWatcher* m_pConfigWatcher = nullptr;
+    /* < 配置重载防抖 */
+    QTimer*             m_pConfigReloadTimer = nullptr;
+    /* < 建议请求防抖 */
+    QTimer*             m_pReplyDebounce = nullptr;
+    /* < 输入翻译防抖 */
+    QTimer*             m_pInputDebounce = nullptr;
 
-    QString configError_;                ///< 配置错误，进房后再提醒一次
-    int     historyTranslationBudget_ = 12; ///< 历史消息最多翻多少条
+    /* < 配置错误，进房后再提醒一次 */
+    QString m_strConfigError;
+    /* < 历史消息最多翻多少条 */
+    int     m_nHistoryTranslationBudget = 12;
 
-    QQueue<qint64> transcriptQueue_;     ///< 待转写队列
-    qint64         transcribingSeq_ = 0; ///< 正在转写的那条（0 = 空闲）
+    /* < 待转写队列 */
+    QQueue<qint64> m_uTranscriptQueue;
+    /* < 正在转写的那条（0 = 空闲） */
+    qint64         m_uTranscribingSeq = 0;
 
-    bool    composerEmpty_ = true;       ///< 输入框是否为空
-    bool    usingRemoteConfig_ = false;  ///< 已采用服务端下发的配置（忽略本地文件变化）
-    QString pendingInput_;               ///< 最近一次请求翻译的输入内容
+    /* < 输入框是否为空 */
+    bool    m_nComposerEmpty = true;
+    /* < 已采用服务端下发的配置（忽略本地文件变化） */
+    bool    m_nUsingRemoteConfig = false;
+    /* < 最近一次请求翻译的输入内容 */
+    QString m_strPendingInput;
 };
 
-}  // namespace business
+/* namespace business */
+}

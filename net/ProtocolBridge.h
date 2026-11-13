@@ -1,7 +1,15 @@
-// ProtocolBridge.h
-//
-// 自研 TCP 服务端实现（局域网模式）：负责组帧/解帧、JSON 解析，转成 ChatTransport 的信号。
-// 界面层只依赖 ChatTransport，不接触 socket 与字节流。
+/*
+ * 文件名:    ProtocolBridge.h
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  CProtocolBridge 头文件，声明相关类型与接口。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+ */
+
+/* CProtocolBridge.h */
+
+/* 自研 TCP 服务端实现（局域网模式）：负责组帧/解帧、JSON 解析，转成 ChatTransport 的信号。 */
+/* 界面层只依赖 ChatTransport，不接触 socket 与字节流。 */
 #pragma once
 
 #include <QObject>
@@ -13,11 +21,11 @@
 #include "net/ChatTransport.h"
 #include "common/Protocol.h"
 
-class ProtocolBridge : public ChatTransport {
+class CProtocolBridge : public ChatTransport {
     Q_OBJECT
 
 public:
-    explicit ProtocolBridge(QObject* parent = nullptr);
+    explicit CProtocolBridge(QObject* parent = nullptr);
 
     void connectToServer(const QString& host, quint16 port) override;
     void disconnectFromServer() override;
@@ -40,12 +48,12 @@ private slots:
     void onSocketError(QAbstractSocket::SocketError error);
 
 private:
-    void handleFrame(const dp::Frame& frame);
-    void sendJson(dp::OpCode op, const dp::Json& payload);
+    void handleFrame(const dp::Frame_S& frame);
+    void sendJson(dp::OpCode_EN op, const dp::Json& payload);
 
-    QTcpSocket*     socket_ = nullptr;
-    QTimer*         pingTimer_ = nullptr;
-    QTimer*         connectTimer_ = nullptr;
-    dp::FrameDecoder decoder_;
-    bool            connecting_ = false;
+    QTcpSocket*     m_pSocket = nullptr;
+    QTimer*         m_pPingTimer = nullptr;
+    QTimer*         m_pConnectTimer = nullptr;
+    dp::CFrameDecoder m_stDecoder;
+    bool            m_nConnecting = false;
 };

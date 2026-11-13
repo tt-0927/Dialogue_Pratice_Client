@@ -1,12 +1,9 @@
-/**
- * @file  Logger.h
- * @brief 客户端统一日志入口。
- * @details 对 Qt 日志系统做一层薄封装，解决两个问题：
- *          1. 统一格式（时间 + 级别 + 模块标签），便于从终端输出里定位问题；
- *          2. 支持可选的落盘输出，方便让用户回传「出问题时那一段」。
- *
- *          不替代 `qDebug()`——底层仍然走 Qt 的消息处理器，
- *          所以 `QT_LOGGING_RULES` 之类的既有手段依然有效。
+/*
+ * 文件名:    Logger.h
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  客户端统一日志入口。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
  */
 
 #pragma once
@@ -18,11 +15,15 @@ namespace core {
 /**
  * @brief 日志级别，数值越大越严重。
  */
-enum class LogLevel : int {
-    Debug = 0,   ///< 细节（逐条消息、重连尝试）
-    Info  = 1,   ///< 正常流程（连接、登录、进房）
-    Warn  = 2,   ///< 可恢复异常（配置缺失、缓存不可用）
-    Error = 3,   ///< 需要用户关注的失败
+enum class LogLevel_EN : int {
+    /* < 细节（逐条消息、重连尝试） */
+    Debug = 0,
+    /* < 正常流程（连接、登录、进房） */
+    Info  = 1,
+    /* < 可恢复异常（配置缺失、缓存不可用） */
+    Warn  = 2,
+    /* < 需要用户关注的失败 */
+    Error = 3,
 };
 
 /**
@@ -31,25 +32,25 @@ enum class LogLevel : int {
  * @details 用函数内静态对象实现，C++11 起保证线程安全的一次性初始化。
  *          默认只输出到 stderr；调用 setFile() 后同时追加到文件。
  */
-class Logger {
+class CLogger {
 public:
     /**
      * @brief 获取全局唯一实例。
      * @retval 单例引用。
      */
-    static Logger& instance();
+    static CLogger& instance();
 
-    Logger(const Logger&) = delete;
-    Logger& operator=(const Logger&) = delete;
+    CLogger(const CLogger&) = delete;
+    CLogger& operator=(const CLogger&) = delete;
 
     /**
      * @brief 设置最低输出级别。
      * @param level 低于该级别的日志会被丢弃。
      */
-    void setLevel(LogLevel level) { level_ = level; }
+    void setLevel(LogLevel_EN level) { m_stLevel = level; }
 
-    /// @brief 当前最低输出级别。
-    LogLevel level() const { return level_; }
+    /* 当前最低输出级别。 */
+    LogLevel_EN level() const { return m_stLevel; }
 
     /**
      * @brief 把日志同时写入文件。
@@ -65,26 +66,29 @@ public:
      * @param tag     模块标签，例如 `net` / `media` / `ui`。
      * @param message 正文。
      */
-    void write(LogLevel level, const QString& tag, const QString& message);
+    void write(LogLevel_EN level, const QString& tag, const QString& message);
 
 private:
-    Logger() = default;
+    CLogger() = default;
 
-    LogLevel level_ = LogLevel::Info;   ///< 最低输出级别
-    QString  filePath_;                 ///< 落盘路径，空表示不落盘
+    /* < 最低输出级别 */
+    LogLevel_EN m_stLevel = LogLevel_EN::Info;
+    /* < 落盘路径，空表示不落盘 */
+    QString  m_strFilePath;
 };
 
-}  // namespace core
+/* namespace core */
+}
 
-/// @brief 写 Debug 级别日志。
+/* 写 Debug 级别日志。 */
 #define DP_LOG_DEBUG(tag, msg) \
-    ::core::Logger::instance().write(::core::LogLevel::Debug, tag, msg)
-/// @brief 写 Info 级别日志。
+    ::core::CLogger::instance().write(::core::LogLevel_EN::Debug, tag, msg)
+/* 写 Info 级别日志。 */
 #define DP_LOG_INFO(tag, msg) \
-    ::core::Logger::instance().write(::core::LogLevel::Info, tag, msg)
-/// @brief 写 Warn 级别日志。
+    ::core::CLogger::instance().write(::core::LogLevel_EN::Info, tag, msg)
+/* 写 Warn 级别日志。 */
 #define DP_LOG_WARN(tag, msg) \
-    ::core::Logger::instance().write(::core::LogLevel::Warn, tag, msg)
-/// @brief 写 Error 级别日志。
+    ::core::CLogger::instance().write(::core::LogLevel_EN::Warn, tag, msg)
+/* 写 Error 级别日志。 */
 #define DP_LOG_ERROR(tag, msg) \
-    ::core::Logger::instance().write(::core::LogLevel::Error, tag, msg)
+    ::core::CLogger::instance().write(::core::LogLevel_EN::Error, tag, msg)

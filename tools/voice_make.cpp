@@ -1,5 +1,13 @@
-// 把 16k 单声道 WAV 编码成 DPV1 容器并输出 Base64，
-// 供 peer_bot.py 之类的测试工具直接当作 Voice 帧的 opus 字段发出去。
+/*
+ * 文件名:    voice_make.cpp
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  voice_make 实现文件，包含相关接口的具体实现。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+ */
+
+/* 把 16k 单声道 WAV 编码成 DPV1 容器并输出 Base64， */
+/* 供 peer_bot.py 之类的测试工具直接当作 Voice 帧的 opus 字段发出去。 */
 #include "media/VoiceCodec.h"
 
 #include <QCoreApplication>
@@ -9,6 +17,14 @@
 
 namespace {
 
+/*
+ * 功能描述:  执行 readWavPcm 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  path  参数。
+ * param [out]  pcm  参数。
+ * param [out]  error  参数。
+ * return:    返回值，含义见功能描述。
+ */
 bool readWavPcm(const QString& path, QByteArray& pcm, QString& error) {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -42,7 +58,7 @@ bool readWavPcm(const QString& path, QByteArray& pcm, QString& error) {
         pos += static_cast<int>(size) + (size % 2);
     }
 
-    if (channels != 1 || sampleRate != VoiceCodec::kSampleRate || bits != 16) {
+    if (channels != 1 || sampleRate != CVoiceCodec::kSampleRate || bits != 16) {
         error = QStringLiteral("需要 16kHz/单声道/16bit，实际 %1Hz %2ch %3bit")
                     .arg(sampleRate).arg(channels).arg(bits);
         return false;
@@ -50,8 +66,16 @@ bool readWavPcm(const QString& path, QByteArray& pcm, QString& error) {
     return true;
 }
 
-}  // namespace
+/* namespace */
+}
 
+/*
+ * 功能描述:  执行 main 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  argc  参数。
+ * param [in]  argv  参数。
+ * return:    返回值，含义见功能描述。
+ */
 int main(int argc, char** argv) {
     QCoreApplication app(argc, argv);
     if (argc < 2) {
@@ -66,14 +90,14 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    const QByteArray container = VoiceCodec::encode(pcm);
+    const QByteArray container = CVoiceCodec::encode(pcm);
     if (container.isEmpty()) {
-        std::fprintf(stderr, "编码失败: %s\n", VoiceCodec::lastError().toUtf8().constData());
+        std::fprintf(stderr, "编码失败: %s\n", CVoiceCodec::lastError().toUtf8().constData());
         return 3;
     }
 
-    // stdout 只输出一行：<durationMs> <base64>
-    std::printf("%d %s\n", VoiceCodec::durationMs(container),
+    /* stdout 只输出一行：<durationMs> <base64> */
+    std::printf("%d %s\n", CVoiceCodec::durationMs(container),
                 container.toBase64().constData());
     return 0;
 }

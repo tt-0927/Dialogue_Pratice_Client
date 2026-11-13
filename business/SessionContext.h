@@ -1,12 +1,9 @@
-/**
- * @file  SessionContext.h
- * @brief 当前会话的全局状态：本人身份、所在房间、在线状态。
- * @details 这些状态原本散落在 MainWindow 与 ChatPage 的成员变量里，
- *          两边各存一份，靠调用方保证同步。收敛到单例后只有一个真相源，
- *          UI 层通过信号被动刷新，不再需要层层传参。
- *
- * @note 只保存「会话级」状态。消息列表属于 ChatModel，
- *       配置属于 AppConfig，不要往这里堆。
+/*
+ * 文件名:    SessionContext.h
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  当前会话的全局状态：本人身份、所在房间、在线状态。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
  */
 
 #pragma once
@@ -23,7 +20,7 @@ namespace business {
  * @details 生命周期与进程相同，构造后由 `instance()` 唯一持有。
  *          所有改动都会发出对应信号，界面据此刷新。
  */
-class SessionContext : public QObject {
+class CSessionContext : public QObject {
     Q_OBJECT
 
 public:
@@ -31,24 +28,24 @@ public:
      * @brief 获取全局唯一实例。
      * @retval 单例引用。
      */
-    static SessionContext& instance();
+    static CSessionContext& instance();
 
-    SessionContext(const SessionContext&) = delete;
-    SessionContext& operator=(const SessionContext&) = delete;
+    CSessionContext(const CSessionContext&) = delete;
+    CSessionContext& operator=(const CSessionContext&) = delete;
 
-    // ---- 本人身份 ----
+    /* ---- 本人身份 ---- */
 
-    /// @brief 服务端分配的会话 id，0 表示未登录。
-    qint64 userId() const { return userId_; }
+    /* 服务端分配的会话 id，0 表示未登录。 */
+    qint64 userId() const { return m_uUserId; }
 
-    /// @brief 昵称。
-    QString name() const { return name_; }
+    /* 昵称。 */
+    QString name() const { return m_strName; }
 
-    /// @brief 年龄，0 表示未填写。
-    int age() const { return age_; }
+    /* 年龄，0 表示未填写。 */
+    int age() const { return m_nAge; }
 
-    /// @brief 个人简介。
-    QString desc() const { return desc_; }
+    /* 个人简介。 */
+    QString desc() const { return m_strDesc; }
 
     /**
      * @brief 更新本人资料。
@@ -61,7 +58,7 @@ public:
      */
     void setProfile(qint64 userId, const QString& name, int age, const QString& desc);
 
-    /// @brief 清空本人身份（退出登录时调用）。
+    /* 清空本人身份（退出登录时调用）。 */
     void clearProfile();
 
     /**
@@ -70,12 +67,12 @@ public:
      * @retval true  本人（含历次重连前使用的 id）。
      * @retval false 他人，或 userId 为 0。
      */
-    bool isSelf(qint64 userId) const { return userId != 0 && selfIds_.contains(userId); }
+    bool isSelf(qint64 userId) const { return userId != 0 && m_uSelfIds.contains(userId); }
 
-    // ---- 房间 ----
+    /* ---- 房间 ---- */
 
-    /// @brief 当前房间号，空串表示不在任何房间。
-    QString room() const { return room_; }
+    /* 当前房间号，空串表示不在任何房间。 */
+    QString room() const { return m_strRoom; }
 
     /**
      * @brief 进入房间。
@@ -83,13 +80,13 @@ public:
      */
     void setRoom(const QString& room);
 
-    /// @brief 离开房间。
+    /* 离开房间。 */
     void clearRoom();
 
-    // ---- 连接 ----
+    /* ---- 连接 ---- */
 
-    /// @brief 是否处于「已连接且已登录」状态。
-    bool online() const { return online_; }
+    /* 是否处于「已连接且已登录」状态。 */
+    bool online() const { return m_nOnline; }
 
     /**
      * @brief 设置在线状态。
@@ -98,23 +95,31 @@ public:
     void setOnline(bool online);
 
 signals:
-    /// @brief 本人资料发生变化。
+    /* 本人资料发生变化。 */
     void profileChanged();
-    /// @brief 所在房间发生变化（空串表示已离开）。
+    /* 所在房间发生变化（空串表示已离开）。 */
     void roomChanged(const QString& room);
-    /// @brief 在线状态发生变化。
+    /* 在线状态发生变化。 */
     void onlineChanged(bool online);
 
 private:
-    explicit SessionContext(QObject* parent = nullptr);
+    explicit CSessionContext(QObject* parent = nullptr);
 
-    qint64        userId_ = 0;      ///< 当前会话 id
-    QString       name_;            ///< 昵称
-    int           age_ = 0;         ///< 年龄
-    QString       desc_;            ///< 个人简介
-    QSet<qint64>  selfIds_;         ///< 本人历次使用的 id（重连后 id 会变）
-    QString       room_;            ///< 当前房间号
-    bool          online_ = false;  ///< 在线状态
+    /* < 当前会话 id */
+    qint64        m_uUserId = 0;
+    /* < 昵称 */
+    QString       m_strName;
+    /* < 年龄 */
+    int           m_nAge = 0;
+    /* < 个人简介 */
+    QString       m_strDesc;
+    /* < 本人历次使用的 id（重连后 id 会变） */
+    QSet<qint64>  m_uSelfIds;
+    /* < 当前房间号 */
+    QString       m_strRoom;
+    /* < 在线状态 */
+    bool          m_nOnline = false;
 };
 
-}  // namespace business
+/* namespace business */
+}

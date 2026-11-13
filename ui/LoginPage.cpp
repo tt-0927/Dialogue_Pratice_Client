@@ -1,4 +1,12 @@
-// LoginPage.cpp
+/*
+ * 文件名:    LoginPage.cpp
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  CLoginPage 实现文件，包含相关接口的具体实现。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+ */
+
+/* CLoginPage.cpp */
 #include "ui/LoginPage.h"
 
 #include "core/UiMetrics.h"
@@ -17,17 +25,26 @@
 #include <QSettings>
 #include <QVBoxLayout>
 
-LoginPage::LoginPage(QWidget* parent) : QWidget(parent) {
+/*
+ * 功能描述:  执行 CLoginPage 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  parent  参数。
+ * return:    返回值，含义见功能描述。
+ */
+CLoginPage::CLoginPage(QWidget* parent) : QWidget(parent) {
     setObjectName("AppRoot");
 
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     auto* root = new QVBoxLayout(this);
     root->setContentsMargins(24, 24, 24, 24);
     root->addStretch(1);
 
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     auto* card = new QFrame(this);
-    card_ = card;
+    m_pCard = card;
     card->setObjectName("Card");
-    card->setFixedWidth(core::ui::cardWidth(width()));   // 初始值，resizeEvent 会再校准
+    /* 初始值，resizeEvent 会再校准 */
+    card->setFixedWidth(core::ui::cardWidth(width()));
 
     auto* shadow = new QGraphicsDropShadowEffect(card);
     shadow->setBlurRadius(36);
@@ -39,7 +56,7 @@ LoginPage::LoginPage(QWidget* parent) : QWidget(parent) {
     cardLayout->setContentsMargins(32, 32, 32, 28);
     cardLayout->setSpacing(10);
 
-    auto* logo = new Avatar(card);
+    auto* logo = new CAvatar(card);
     logo->setFixedSize(64, 64);
     logo->setFontPx(28);
     logo->setText(QStringLiteral("D"));
@@ -70,113 +87,132 @@ LoginPage::LoginPage(QWidget* parent) : QWidget(parent) {
     auto* serverRow = new QHBoxLayout();
     serverRow->setSpacing(8);
 
-    hostEdit_ = new QLineEdit(card);
-    hostEdit_->setObjectName("Field");
-    hostEdit_->setPlaceholderText(QStringLiteral("192.168.80.128"));
-    serverRow->addWidget(hostEdit_, 1);
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pHostEdit = new QLineEdit(card);
+    m_pHostEdit->setObjectName("Field");
+    m_pHostEdit->setPlaceholderText(QStringLiteral("192.168.80.128"));
+    serverRow->addWidget(m_pHostEdit, 1);
 
-    portEdit_ = new QLineEdit(card);
-    portEdit_->setObjectName("Field");
-    portEdit_->setPlaceholderText(QStringLiteral("9000"));
-    portEdit_->setValidator(new QIntValidator(1, 65535, portEdit_));
-    portEdit_->setAlignment(Qt::AlignCenter);
-    portEdit_->setFixedWidth(88);
-    portEdit_->setToolTip(QStringLiteral("服务器端口，默认 9000"));
-    serverRow->addWidget(portEdit_, 0);
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pPortEdit = new QLineEdit(card);
+    m_pPortEdit->setObjectName("Field");
+    m_pPortEdit->setPlaceholderText(QStringLiteral("9000"));
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pPortEdit->setValidator(new QIntValidator(1, 65535, m_pPortEdit));
+    m_pPortEdit->setAlignment(Qt::AlignCenter);
+    m_pPortEdit->setFixedWidth(88);
+    m_pPortEdit->setToolTip(QStringLiteral("服务器端口，默认 9000"));
+    serverRow->addWidget(m_pPortEdit, 0);
     cardLayout->addLayout(serverRow);
 
     auto* nameLabel = new QLabel(QStringLiteral("昵称"), card);
     nameLabel->setObjectName("KeyLabel");
     cardLayout->addWidget(nameLabel);
 
-    nameEdit_ = new QLineEdit(card);
-    nameEdit_->setObjectName("Field");
-    nameEdit_->setPlaceholderText(QStringLiteral("例如 alice，最多 24 字节"));
-    nameEdit_->setMaxLength(24);
-    cardLayout->addWidget(nameEdit_);
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pNameEdit = new QLineEdit(card);
+    m_pNameEdit->setObjectName("Field");
+    m_pNameEdit->setPlaceholderText(QStringLiteral("例如 alice，最多 24 字节"));
+    m_pNameEdit->setMaxLength(24);
+    cardLayout->addWidget(m_pNameEdit);
 
-    passwordEdit_ = new QLineEdit(card);
-    passwordEdit_->setObjectName("Field");
-    passwordEdit_->setEchoMode(QLineEdit::Password);
-    passwordEdit_->setPlaceholderText(
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pPasswordEdit = new QLineEdit(card);
+    m_pPasswordEdit->setObjectName("Field");
+    m_pPasswordEdit->setEchoMode(QLineEdit::Password);
+    m_pPasswordEdit->setPlaceholderText(
         QStringLiteral("密码（留空则按昵称匿名登录）"));
-    cardLayout->addWidget(passwordEdit_);
+    cardLayout->addWidget(m_pPasswordEdit);
 
-    errorLabel_ = new QLabel(card);
-    errorLabel_->setObjectName("ErrorText");
-    errorLabel_->setWordWrap(true);
-    errorLabel_->setVisible(false);
-    cardLayout->addWidget(errorLabel_);
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pErrorLabel = new QLabel(card);
+    m_pErrorLabel->setObjectName("ErrorText");
+    m_pErrorLabel->setWordWrap(true);
+    m_pErrorLabel->setVisible(false);
+    cardLayout->addWidget(m_pErrorLabel);
 
     cardLayout->addSpacing(4);
 
-    loginBtn_ = new QPushButton(QStringLiteral("登  录"), card);
-    loginBtn_->setObjectName("PrimaryButton");
-    loginBtn_->setCursor(Qt::PointingHandCursor);
-    loginBtn_->setDefault(true);
-    loginBtn_->setMinimumHeight(44);
-    cardLayout->addWidget(loginBtn_);
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pLoginBtn = new QPushButton(QStringLiteral("登  录"), card);
+    m_pLoginBtn->setObjectName("PrimaryButton");
+    m_pLoginBtn->setCursor(Qt::PointingHandCursor);
+    m_pLoginBtn->setDefault(true);
+    m_pLoginBtn->setMinimumHeight(44);
+    cardLayout->addWidget(m_pLoginBtn);
 
-    registerBtn_ = new QPushButton(QStringLiteral("还没有账号？注册新账号"), card);
-    registerBtn_->setObjectName("LinkButton");
-    registerBtn_->setCursor(Qt::PointingHandCursor);
-    registerBtn_->setFlat(true);
-    cardLayout->addWidget(registerBtn_, 0, Qt::AlignHCenter);
+    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    m_pRegisterBtn = new QPushButton(QStringLiteral("还没有账号？注册新账号"), card);
+    m_pRegisterBtn->setObjectName("LinkButton");
+    m_pRegisterBtn->setCursor(Qt::PointingHandCursor);
+    m_pRegisterBtn->setFlat(true);
+    cardLayout->addWidget(m_pRegisterBtn, 0, Qt::AlignHCenter);
 
     root->addWidget(card, 0, Qt::AlignHCenter);
     root->addStretch(1);
 
-    // 恢复上次填写的服务器与昵称
+    /* 恢复上次填写的服务器与昵称 */
     QSettings settings;
-    hostEdit_->setText(settings.value("server/host", QStringLiteral("192.168.80.128")).toString());
-    portEdit_->setText(settings.value("server/port", 9000).toString());
-    nameEdit_->setText(settings.value("login/name").toString());
+    m_pHostEdit->setText(settings.value("server/host", QStringLiteral("192.168.80.128")).toString());
+    m_pPortEdit->setText(settings.value("server/port", 9000).toString());
+    m_pNameEdit->setText(settings.value("login/name").toString());
 
-    connect(loginBtn_, &QPushButton::clicked, this, &LoginPage::submit);
-    connect(nameEdit_, &QLineEdit::returnPressed, this, &LoginPage::submit);
-    connect(passwordEdit_, &QLineEdit::returnPressed, this, &LoginPage::submit);
-    connect(hostEdit_, &QLineEdit::returnPressed, this, &LoginPage::submit);
-    connect(portEdit_, &QLineEdit::returnPressed, this, &LoginPage::submit);
-    connect(registerBtn_, &QPushButton::clicked, this, &LoginPage::registerRequested);
+    connect(m_pLoginBtn, &QPushButton::clicked, this, &CLoginPage::submit);
+    connect(m_pNameEdit, &QLineEdit::returnPressed, this, &CLoginPage::submit);
+    connect(m_pPasswordEdit, &QLineEdit::returnPressed, this, &CLoginPage::submit);
+    connect(m_pHostEdit, &QLineEdit::returnPressed, this, &CLoginPage::submit);
+    connect(m_pPortEdit, &QLineEdit::returnPressed, this, &CLoginPage::submit);
+    connect(m_pRegisterBtn, &QPushButton::clicked, this, &CLoginPage::registerRequested);
 }
 
-void LoginPage::resizeEvent(QResizeEvent* event) {
+/*
+ * 功能描述:  执行 resizeEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  event  参数。
+ * return:    void
+ */
+void CLoginPage::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
-    if (card_ == nullptr) return;
+    if (m_pCard == nullptr) return;
 
-    // 只在宽度真的变了才动，避免 setFixedWidth 触发的递归布局
+    /* 只在宽度真的变了才动，避免 setFixedWidth 触发的递归布局 */
     const int target = core::ui::cardWidth(width());
-    if (card_->width() != target) card_->setFixedWidth(target);
+    if (m_pCard->width() != target) m_pCard->setFixedWidth(target);
 }
 
-void LoginPage::submit() {
+/*
+ * 功能描述:  执行 submit 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * return:    void
+ */
+void CLoginPage::submit() {
     clearError();
 
-    const QString host = hostEdit_->text().trimmed();
-    const QString name = nameEdit_->text().trimmed();
+    const QString host = m_pHostEdit->text().trimmed();
+    const QString name = m_pNameEdit->text().trimmed();
 
     if (host.isEmpty()) {
         showError(QStringLiteral("请填写服务器地址"));
-        hostEdit_->setFocus();
+        m_pHostEdit->setFocus();
         return;
     }
     if (name.isEmpty()) {
         showError(QStringLiteral("请填写昵称"));
-        nameEdit_->setFocus();
+        m_pNameEdit->setFocus();
         return;
     }
     if (name.toUtf8().size() > 24) {
         showError(QStringLiteral("昵称最多 24 字节（一个汉字约 3 字节）"));
-        nameEdit_->setFocus();
+        m_pNameEdit->setFocus();
         return;
     }
 
     bool portOk = false;
-    const int portValue = portEdit_->text().toInt(&portOk);
+    const int portValue = m_pPortEdit->text().toInt(&portOk);
     if (!portOk || portValue < 1 || portValue > 65535) {
         showError(QStringLiteral("端口必须是 1–65535 之间的数字"));
-        portEdit_->setFocus();
-        portEdit_->selectAll();
+        m_pPortEdit->setFocus();
+        m_pPortEdit->selectAll();
         return;
     }
 
@@ -186,44 +222,78 @@ void LoginPage::submit() {
     settings.setValue("login/name", name);
 
     emit loginRequested(host, static_cast<quint16>(portValue), name,
-                        passwordEdit_->text());
+                        m_pPasswordEdit->text());
 }
 
-void LoginPage::setBusy(bool busy) {
-    loginBtn_->setEnabled(!busy);
-    loginBtn_->setText(busy ? QStringLiteral("连接中…") : QStringLiteral("登  录"));
-    hostEdit_->setEnabled(!busy);
-    portEdit_->setEnabled(!busy);
-    nameEdit_->setEnabled(!busy);
-    passwordEdit_->setEnabled(!busy);
-    registerBtn_->setEnabled(!busy);
+/*
+ * 功能描述:  执行 setBusy 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  busy  参数。
+ * return:    void
+ */
+void CLoginPage::setBusy(bool busy) {
+    m_pLoginBtn->setEnabled(!busy);
+    m_pLoginBtn->setText(busy ? QStringLiteral("连接中…") : QStringLiteral("登  录"));
+    m_pHostEdit->setEnabled(!busy);
+    m_pPortEdit->setEnabled(!busy);
+    m_pNameEdit->setEnabled(!busy);
+    m_pPasswordEdit->setEnabled(!busy);
+    m_pRegisterBtn->setEnabled(!busy);
 }
 
-void LoginPage::showError(const QString& message) {
-    errorLabel_->setText(message);
-    errorLabel_->setVisible(true);
+/*
+ * 功能描述:  执行 showError 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  message  参数。
+ * return:    void
+ */
+void CLoginPage::showError(const QString& message) {
+    m_pErrorLabel->setText(message);
+    m_pErrorLabel->setVisible(true);
 }
 
-void LoginPage::clearError() {
-    errorLabel_->clear();
-    errorLabel_->setVisible(false);
+/*
+ * 功能描述:  执行 clearError 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * return:    void
+ */
+void CLoginPage::clearError() {
+    m_pErrorLabel->clear();
+    m_pErrorLabel->setVisible(false);
 }
 
-QString LoginPage::host() const {
-    return hostEdit_ != nullptr ? hostEdit_->text().trimmed() : QString();
+/*
+ * 功能描述:  执行 host 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * return:    返回值，含义见功能描述。
+ */
+QString CLoginPage::host() const {
+    return m_pHostEdit != nullptr ? m_pHostEdit->text().trimmed() : QString();
 }
 
-quint16 LoginPage::port() const {
-    if (portEdit_ == nullptr) return 0;
+/*
+ * 功能描述:  执行 port 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * return:    返回值，含义见功能描述。
+ */
+quint16 CLoginPage::port() const {
+    if (m_pPortEdit == nullptr) return 0;
     bool ok = false;
-    const uint value = portEdit_->text().toUInt(&ok);
+    const uint value = m_pPortEdit->text().toUInt(&ok);
     if (!ok || value < 1) return 0;
     return static_cast<quint16>(qMin(value, 65535u));
 }
 
-void LoginPage::setCredentials(const QString& name, const QString& password) {
-    if (nameEdit_ != nullptr) nameEdit_->setText(name);
-    if (passwordEdit_ != nullptr) passwordEdit_->setText(password);
-    if (passwordEdit_ != nullptr) passwordEdit_->setFocus();
+/*
+ * 功能描述:  执行 setCredentials 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  name  参数。
+ * param [in]  password  参数。
+ * return:    void
+ */
+void CLoginPage::setCredentials(const QString& name, const QString& password) {
+    if (m_pNameEdit != nullptr) m_pNameEdit->setText(name);
+    if (m_pPasswordEdit != nullptr) m_pPasswordEdit->setText(password);
+    if (m_pPasswordEdit != nullptr) m_pPasswordEdit->setFocus();
     clearError();
 }

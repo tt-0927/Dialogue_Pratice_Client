@@ -1,6 +1,14 @@
-// main.cpp
-//
-// 客户端入口。除组装各层与解析命令行外不做任何业务逻辑。
+/*
+ * 文件名:    main.cpp
+ * 创建日期:  2026-11-13
+ * 作者:      JaTin
+ * 功能描述:  main 实现文件，包含相关接口的具体实现。
+ * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+ */
+
+/* main.cpp */
+
+/* 客户端入口。除组装各层与解析命令行外不做任何业务逻辑。 */
 #include "business/ChatModel.h"
 #include "core/AppConfig.h"
 #include "core/Theme.h"
@@ -19,12 +27,19 @@
 
 namespace {
 
-/// 诊断模式：只做「WAV -> 文本」，用来在没有麦克风的环境验证语音链路。
+/* 诊断模式：只做「WAV -> 文本」，用来在没有麦克风的环境验证语音链路。 */
+/*
+ * 功能描述:  执行 runVoiceDiagnostic 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  wavPath  参数。
+ * param [in]  modelPath  参数。
+ * return:    返回值，含义见功能描述。
+ */
 int runVoiceDiagnostic(const QString& wavPath, const QString& modelPath) {
-    VoiceRecorder voice;
+    CVoiceRecorder voice;
     voice.setModelPath(modelPath);
 
-    QObject::connect(&voice, &VoiceRecorder::modelLoaded, &voice,
+    QObject::connect(&voice, &CVoiceRecorder::modelLoaded, &voice,
                      [&voice, wavPath](bool ok, const QString& message) {
                          if (!ok) {
                              std::fprintf(stderr, "模型加载失败: %s\n", message.toUtf8().constData());
@@ -34,7 +49,7 @@ int runVoiceDiagnostic(const QString& wavPath, const QString& modelPath) {
                          voice.transcribeFile(wavPath);
                      });
 
-    QObject::connect(&voice, &VoiceRecorder::textReady, &voice,
+    QObject::connect(&voice, &CVoiceRecorder::textReady, &voice,
                      [](const QString& text, qint64 elapsedMs) {
                          std::printf("%s\n", text.toUtf8().constData());
                          std::fprintf(stderr, "识别耗时 %lld ms\n",
@@ -42,7 +57,7 @@ int runVoiceDiagnostic(const QString& wavPath, const QString& modelPath) {
                          QCoreApplication::exit(0);
                      });
 
-    QObject::connect(&voice, &VoiceRecorder::failed, &voice, [](const QString& message) {
+    QObject::connect(&voice, &CVoiceRecorder::failed, &voice, [](const QString& message) {
         std::fprintf(stderr, "识别失败: %s\n", message.toUtf8().constData());
         QCoreApplication::exit(3);
     });
@@ -51,8 +66,16 @@ int runVoiceDiagnostic(const QString& wavPath, const QString& modelPath) {
     return QCoreApplication::exec();
 }
 
-}  // namespace
+/* namespace */
+}
 
+/*
+ * 功能描述:  执行 main 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 作者:      JaTin
+ * param [in]  argc  参数。
+ * param [in]  argv  参数。
+ * return:    返回值，含义见功能描述。
+ */
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
 
@@ -100,17 +123,17 @@ int main(int argc, char* argv[]) {
     }
 
     if (parser.isSet(sayOption)) {
-        TtsService tts;
+        CTtsService tts;
         tts.setPaths(QString::fromUtf8(DP_PIPER_BIN), QString::fromUtf8(DP_PIPER_MODEL));
         if (!tts.isAvailable()) {
             std::fprintf(stderr, "未安装 Piper，请运行 scripts/setup_tts.sh\n");
             return 4;
         }
-        QObject::connect(&tts, &TtsService::failed, &tts, [](const QString& message) {
+        QObject::connect(&tts, &CTtsService::failed, &tts, [](const QString& message) {
             std::fprintf(stderr, "TTS 失败: %s\n", message.toUtf8().constData());
             QCoreApplication::exit(5);
         });
-        QObject::connect(&tts, &TtsService::speakingChanged, &tts, [](bool speaking) {
+        QObject::connect(&tts, &CTtsService::speakingChanged, &tts, [](bool speaking) {
             if (speaking) std::fprintf(stderr, "开始播放\n");
         });
         tts.speak(parser.value(sayOption));
@@ -118,20 +141,20 @@ int main(int argc, char* argv[]) {
         return app.exec();
     }
 
-    qRegisterMetaType<MemberInfo>();
-    qRegisterMetaType<QVector<MemberInfo>>("QVector<MemberInfo>");
-    qRegisterMetaType<ChatMessage>();
-    qRegisterMetaType<QVector<ChatMessage>>("QVector<ChatMessage>");
-    qRegisterMetaType<Suggestion>();
-    qRegisterMetaType<QVector<Suggestion>>("QVector<Suggestion>");
-    // ChatModel 的 itemAppended 信号带这条结构；同线程直连虽不强制注册，
-    // 但注册后未来接队列连接或写测试时不会踩「未注册类型」的坑。
-    qRegisterMetaType<business::ChatItem>();
-    qRegisterMetaType<QVector<business::ChatItem>>("QVector<business::ChatItem>");
+    qRegisterMetaType<MemberInfo_S>();
+    qRegisterMetaType<QVector<MemberInfo_S>>("QVector<MemberInfo_S>");
+    qRegisterMetaType<ChatMessage_S>();
+    qRegisterMetaType<QVector<ChatMessage_S>>("QVector<ChatMessage_S>");
+    qRegisterMetaType<Suggestion_S>();
+    qRegisterMetaType<QVector<Suggestion_S>>("QVector<Suggestion_S>");
+    /* ChatModel 的 itemAppended 信号带这条结构；同线程直连虽不强制注册， */
+    /* 但注册后未来接队列连接或写测试时不会踩「未注册类型」的坑。 */
+    qRegisterMetaType<business::ChatItem_S>();
+    qRegisterMetaType<QVector<business::ChatItem_S>>("QVector<business::ChatItem_S>");
 
     app.setStyleSheet(theme::styleSheet());
 
-    MainWindow window;
+    CMainWindow window;
     window.show();
 
     return app.exec();
