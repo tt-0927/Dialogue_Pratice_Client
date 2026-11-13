@@ -1,0 +1,21 @@
+{
+  "_说明": "填写 apiKey 后即可启用翻译；改完保存即生效，客户端会自动重载，无需重启。",
+
+  "llm": {
+    "enabled": true,
+    "baseUrl": "https://api.deepseek.com",
+    "apiKey": "",
+    "model": "deepseek-chat",
+    "temperature": 0.2,
+    "reasoningEffort": "",
+    "timeoutMs": 40000
+  },
+
+  "translation": {
+    "maxHistoryMessages": 12,
+    "cacheSize": 500,
+
+    "_说明_llm": "可选：翻译专用模型。保持 {} 表示翻译也用上面的 llm；填了之后上面的 llm 只负责生成智能建议。baseUrl / apiKey 缺省时自动继承上面的 llm。",
+    "llm": {}
+  }
+}

@@ -1,0 +1,16 @@
+# 构建产物（build / build-612 / build-android）
+build*/
+# 模型文件（whisper/piper，约 200M，另行下载）
+models/
+# 第三方依赖（whisper.cpp 自带 .git，piper 约 100M）
+third_party/
+# 含密钥的实际配置（保留 *.example.json）
+config/llm.json
+config/llm.json.bak
+# 声网时代残留缓存
+agora_rtm_cache.db_valtree/
+agorartm*.dat
+# 数据库与运行时产物
+*.db
+*.db-shm
+*.db-wal

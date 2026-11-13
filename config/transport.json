@@ -1,0 +1,4 @@
+{
+  "_说明": "传输层配置。目前只支持 server（局域网自研 TCP 服务端）。",
+  "transport": "server"
+}
