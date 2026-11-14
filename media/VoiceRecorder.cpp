@@ -28,58 +28,58 @@ namespace {
 
 /* 极简 WAV 解析：只接受 16 kHz / 单声道 / 16-bit，正好是 whisper 的输入要求。 */
 /*
- * 功能描述:  执行 loadWavPcm16 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  加载wavpcm16；失败时返回 false。
  * 作者:      JaTin
- * param [in]  path  参数。
- * param [out]  pcm  参数。
- * param [out]  error  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   strPath          文件路径，类型 const QString&。
+ * param [out]  byPcm            输入数据，类型 QByteArray&。
+ * param [out]  strError         错误信息，类型 QString&。
+ * return:    成功返回 true；参数非法或执行失败时返回 false。
  */
-bool loadWavPcm16(const QString& path, QByteArray& pcm, QString& error) {
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly)) {
-        error = QStringLiteral("无法打开文件：%1").arg(path);
+bool loadWavPcm16(const QString& strPath, QByteArray& byPcm, QString& strError) {
+    QFile stFile(strPath);
+    if (!stFile.open(QIODevice::ReadOnly)) {
+        strError = QStringLiteral("无法打开文件：%1").arg(strPath);
         return false;
     }
-    const QByteArray all = file.readAll();
-    if (all.size() < 44 || !all.startsWith("RIFF")) {
-        error = QStringLiteral("不是合法的 WAV 文件");
+    const QByteArray byAll = stFile.readAll();
+    if (byAll.size() < 44 || !byAll.startsWith("RIFF")) {
+        strError = QStringLiteral("不是合法的 WAV 文件");
         return false;
     }
 
-    int channels = 0;
-    int rate = 0;
-    int bits = 0;
-    int pos = 12;
+    int nChannels = 0;
+    int nRate = 0;
+    int nBits = 0;
+    int nPos = 12;
 
-    while (pos + 8 <= all.size()) {
-        const QByteArray id = all.mid(pos, 4);
-        const quint32 size = qFromLittleEndian<quint32>(
-            reinterpret_cast<const uchar*>(all.constData() + pos + 4));
-        const int dataStart = pos + 8;
+    while (nPos + 8 <= byAll.size()) {
+        const QByteArray byId = byAll.mid(nPos, 4);
+        const quint32 uSize = qFromLittleEndian<quint32>(
+            reinterpret_cast<const uchar*>(byAll.constData() + nPos + 4));
+        const int nDataStart = nPos + 8;
 
-        if (id == "fmt " && dataStart + 16 <= all.size()) {
-            channels = qFromLittleEndian<quint16>(reinterpret_cast<const uchar*>(all.constData() + dataStart + 2));
-            rate     = qFromLittleEndian<quint32>(reinterpret_cast<const uchar*>(all.constData() + dataStart + 4));
-            bits     = qFromLittleEndian<quint16>(reinterpret_cast<const uchar*>(all.constData() + dataStart + 14));
-        } else if (id == "data") {
-            if (dataStart + static_cast<int>(size) > all.size()) {
-                error = QStringLiteral("WAV 数据块不完整");
+        if (byId == "fmt " && nDataStart + 16 <= byAll.size()) {
+            nChannels = qFromLittleEndian<quint16>(reinterpret_cast<const uchar*>(byAll.constData() + nDataStart + 2));
+            nRate     = qFromLittleEndian<quint32>(reinterpret_cast<const uchar*>(byAll.constData() + nDataStart + 4));
+            nBits     = qFromLittleEndian<quint16>(reinterpret_cast<const uchar*>(byAll.constData() + nDataStart + 14));
+        } else if (byId == "data") {
+            if (nDataStart + static_cast<int>(uSize) > byAll.size()) {
+                strError = QStringLiteral("WAV 数据块不完整");
                 return false;
             }
-            pcm = all.mid(dataStart, static_cast<int>(size));
+            byPcm = byAll.mid(nDataStart, static_cast<int>(uSize));
             break;
         }
-        pos = dataStart + static_cast<int>(size) + (static_cast<int>(size) & 1);
+        nPos = nDataStart + static_cast<int>(uSize) + (static_cast<int>(uSize) & 1);
     }
 
-    if (pcm.isEmpty()) {
-        error = QStringLiteral("WAV 里没有音频数据");
+    if (byPcm.isEmpty()) {
+        strError = QStringLiteral("WAV 里没有音频数据");
         return false;
     }
-    if (channels != 1 || rate != 16000 || bits != 16) {
-        error = QStringLiteral("只支持 16 kHz / 单声道 / 16-bit 的 WAV（当前 %1 Hz / %2 声道 / %3 bit）")
-                    .arg(rate).arg(channels).arg(bits);
+    if (nChannels != 1 || nRate != 16000 || nBits != 16) {
+        strError = QStringLiteral("只支持 16 kHz / 单声道 / 16-bit 的 WAV（当前 %1 Hz / %2 声道 / %3 bit）")
+                    .arg(nRate).arg(nChannels).arg(nBits);
         return false;
     }
     return true;
@@ -89,12 +89,12 @@ bool loadWavPcm16(const QString& path, QByteArray& pcm, QString& error) {
 }
 
 /*
- * 功能描述:  执行 CVoiceRecorder 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  构造 CVoiceRecorder 对象，完成成员初始化与依赖注入。
  * 作者:      JaTin
- * param [in]  parent  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject* parent) : QObject(。
+ * return:    无返回值（构造函数或析构函数）。
  */
-CVoiceRecorder::CVoiceRecorder(QObject* parent) : QObject(parent) {
+CVoiceRecorder::CVoiceRecorder(QObject* pParent) : QObject(pParent) {
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     m_pTick = new QTimer(this);
     m_pTick->setInterval(200);
@@ -107,9 +107,9 @@ CVoiceRecorder::CVoiceRecorder(QObject* parent) : QObject(parent) {
 }
 
 /*
- * 功能描述:  执行 CVoiceRecorder 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  析构 CVoiceRecorder 对象，释放运行期持有的全部资源。
  * 作者:      JaTin
- * return:    返回值，含义见功能描述。
+ * return:    无返回值（构造函数或析构函数）。
  */
 CVoiceRecorder::~CVoiceRecorder() {
     if (m_pThread != nullptr) {
@@ -119,9 +119,9 @@ CVoiceRecorder::~CVoiceRecorder() {
 }
 
 /*
- * 功能描述:  执行 start 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  启动start；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CVoiceRecorder::start() {
     if (m_pWorker != nullptr) return;
@@ -153,16 +153,16 @@ void CVoiceRecorder::start() {
 }
 
 /*
- * 功能描述:  执行 startRecording 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  启动recording；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
  * 作者:      JaTin
- * param [in]  purpose  参数。
- * return:    void
+ * param [in]   enPurpose        输入数据，类型 Purpose_EN。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CVoiceRecorder::startRecording(Purpose_EN purpose) {
+void CVoiceRecorder::startRecording(Purpose_EN enPurpose) {
     if (m_nRecording) return;
 
     /* 发送模式不需要 whisper 模型，也不受「上一句还在识别」限制 */
-    if (purpose == Purpose_EN::Transcribe) {
+    if (enPurpose == Purpose_EN::Transcribe) {
         if (!m_nModelReady) {
             emit failed(QStringLiteral("语音模型还在加载，请稍候再试"));
             return;
@@ -172,26 +172,26 @@ void CVoiceRecorder::startRecording(Purpose_EN purpose) {
             return;
         }
     }
-    m_stPurpose = purpose;
+    m_stPurpose = enPurpose;
 
-    const QAudioDevice device = QMediaDevices::defaultAudioInput();
-    if (device.isNull()) {
+    const QAudioDevice stDevice = QMediaDevices::defaultAudioInput();
+    if (stDevice.isNull()) {
         emit failed(QStringLiteral("没有检测到麦克风"));
         return;
     }
 
-    QAudioFormat format;
-    format.setSampleRate(16000);
-    format.setChannelCount(1);
-    format.setSampleFormat(QAudioFormat::Int16);
+    QAudioFormat stFormat;
+    stFormat.setSampleRate(16000);
+    stFormat.setChannelCount(1);
+    stFormat.setSampleFormat(QAudioFormat::Int16);
 
-    if (!device.isFormatSupported(format)) {
+    if (!stDevice.isFormatSupported(stFormat)) {
         emit failed(QStringLiteral("麦克风不支持 16 kHz 单声道采集"));
         return;
     }
 
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
-    m_pSource = new QAudioSource(device, format, this);
+    m_pSource = new QAudioSource(stDevice, stFormat, this);
     /* 约 200 ms */
     m_pSource->setBufferSize(16000 * 2 / 5);
 
@@ -212,35 +212,35 @@ void CVoiceRecorder::startRecording(Purpose_EN purpose) {
 }
 
 /*
- * 功能描述:  执行 onAudioReady 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  执行on 音频数据 ready。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CVoiceRecorder::onAudioReady() {
     if (m_pDevice == nullptr) return;
 
-    const QByteArray chunk = m_pDevice->readAll();
-    if (chunk.isEmpty()) return;
-    m_byPcm.append(chunk);
+    const QByteArray byChunk = m_pDevice->readAll();
+    if (byChunk.isEmpty()) return;
+    m_byPcm.append(byChunk);
 
     /* 供 UI 显示电平：RMS 映射到 0..100 */
-    const auto* samples = reinterpret_cast<const qint16*>(chunk.constData());
-    const int count = chunk.size() / 2;
-    double sum = 0.0;
-    for (int i = 0; i < count; ++i) {
-        const double v = static_cast<double>(samples[i]);
-        sum += v * v;
+    const auto* pSamples = reinterpret_cast<const qint16*>(byChunk.constData());
+    const int nCount = byChunk.size() / 2;
+    double dSum = 0.0;
+    for (int i = 0; i < nCount; ++i) {
+        const double dV = static_cast<double>(pSamples[i]);
+        dSum += dV * dV;
     }
-    const double rms = count > 0 ? std::sqrt(sum / count) : 0.0;
-    const int level = static_cast<int>(std::min(100.0, rms / 32768.0 * 400.0));
+    const double dRms = nCount > 0 ? std::sqrt(dSum / nCount) : 0.0;
+    const int nLevel = static_cast<int>(std::min(100.0, dRms / 32768.0 * 400.0));
 
-    emit recordingTick(static_cast<int>(m_stElapsed.elapsed() / 1000), level);
+    emit recordingTick(static_cast<int>(m_stElapsed.elapsed() / 1000), nLevel);
 }
 
 /*
- * 功能描述:  执行 stopRecording 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  停止recording。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CVoiceRecorder::stopRecording() {
     if (!m_nRecording) return;
@@ -265,10 +265,10 @@ void CVoiceRecorder::stopRecording() {
 
     if (m_stPurpose == Purpose_EN::Send) {
         /* 语音消息：直接把原始 PCM 交出去编码发送，不走识别 */
-        const int durationMs = static_cast<int>(m_byPcm.size() / 2) * 1000 / 16000;
-        const QByteArray captured = m_byPcm;
+        const int nDurationMs = static_cast<int>(m_byPcm.size() / 2) * 1000 / 16000;
+        const QByteArray byCaptured = m_byPcm;
         m_byPcm.clear();
-        emit pcmReady(captured, durationMs);
+        emit pcmReady(byCaptured, nDurationMs);
         return;
     }
 
@@ -277,12 +277,12 @@ void CVoiceRecorder::stopRecording() {
 }
 
 /*
- * 功能描述:  执行 transcribeFile 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  转写文件。
  * 作者:      JaTin
- * param [in]  wavPath  参数。
- * return:    void
+ * param [in]   strWavPath       输入数据，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CVoiceRecorder::transcribeFile(const QString& wavPath) {
+void CVoiceRecorder::transcribeFile(const QString& strWavPath) {
     if (!m_nModelReady) {
         emit failed(QStringLiteral("语音模型还在加载，请稍候再试"));
         return;
@@ -292,29 +292,29 @@ void CVoiceRecorder::transcribeFile(const QString& wavPath) {
         return;
     }
 
-    QByteArray pcm;
-    QString error;
-    if (!loadWavPcm16(wavPath, pcm, error)) {
-        emit failed(error);
+    QByteArray byPcm;
+    QString strError;
+    if (!loadWavPcm16(strWavPath, byPcm, strError)) {
+        emit failed(strError);
         return;
     }
 
     emit recognizing();
-    submit(pcm);
+    submit(byPcm);
 }
 
 /*
- * 功能描述:  执行 submit 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  提交submit。
  * 作者:      JaTin
- * param [in]  pcm  参数。
- * return:    void
+ * param [in]   byPcm            输入数据，类型 const QByteArray&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CVoiceRecorder::submit(const QByteArray& pcm) {
+void CVoiceRecorder::submit(const QByteArray& byPcm) {
     if (m_pWorker == nullptr) {
         emit failed(QStringLiteral("语音识别线程未启动"));
         return;
     }
     m_nBusy = true;
     QMetaObject::invokeMethod(m_pWorker, "transcribe", Qt::QueuedConnection,
-                              Q_ARG(QByteArray, pcm));
+                              Q_ARG(QByteArray, byPcm));
 }

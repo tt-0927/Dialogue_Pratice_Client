@@ -25,9 +25,9 @@ namespace {
 QString g_overridePath;
 
 /*
- * 功能描述:  执行 defaultConfigDir 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  获取default 配置 dir。
  * 作者:      JaTin
- * return:    返回值，含义见功能描述。
+ * return:    返回构造好的字符串；无内容时返回空字符串。
  */
 QString defaultConfigDir() {
 #ifdef DP_CONFIG_DIR
@@ -38,50 +38,50 @@ QString defaultConfigDir() {
 }
 
 /*
- * 功能描述:  执行 userConfigPath 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  获取用户配置文件路径。
  * 作者:      JaTin
- * return:    返回值，含义见功能描述。
+ * return:    返回构造好的字符串；无内容时返回空字符串。
  */
 QString userConfigPath() {
-    const QString base = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
-    return base + QStringLiteral("/DialoguePratice/llm.json");
+    const QString strBase = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
+    return strBase + QStringLiteral("/DialoguePratice/llm.json");
 }
 
 /*
- * 功能描述:  执行 readString 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  读取string；实现上按协议字段组装或解析 JSON。
  * 作者:      JaTin
- * param [in]  obj  参数。
- * param [in]  key  参数。
- * param [in]  fallback  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   stObj            输入数据，类型 const QJsonObject&。
+ * param [in]   strKey           缓存键，类型 const char*。
+ * param [in]   strFallback      输入数据，类型 const QString&。
+ * return:    返回构造好的字符串；无内容时返回空字符串。
  */
-QString readString(const QJsonObject& obj, const char* key, const QString& fallback) {
-    const QJsonValue value = obj.value(QLatin1String(key));
-    return value.isString() ? value.toString() : fallback;
+QString readString(const QJsonObject& stObj, const char* strKey, const QString& strFallback) {
+    const QJsonValue stValue = stObj.value(QLatin1String(strKey));
+    return stValue.isString() ? stValue.toString() : strFallback;
 }
 
 /* 本地或局域网地址不需要 apiKey（自建 llama-server 等）。 */
 /*
- * 功能描述:  执行 isLocalOrLan 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  判断地址是否为本机或局域网地址（此类地址无需 API 密钥）。
  * 作者:      JaTin
- * param [in]  baseUrl  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   strBaseUrl       模型服务地址，类型 const QString&。
+ * return:    成功返回 true；参数非法或执行失败时返回 false。
  */
-bool isLocalOrLan(const QString& baseUrl) {
-    const QString host = QUrl(baseUrl).host();
-    if (host.isEmpty() || host == QLatin1String("localhost") || host == QLatin1String("::1")) {
+bool isLocalOrLan(const QString& strBaseUrl) {
+    const QString strHost = QUrl(strBaseUrl).host();
+    if (strHost.isEmpty() || strHost == QLatin1String("localhost") || strHost == QLatin1String("::1")) {
         return true;
     }
-    if (host.startsWith(QLatin1String("127.")) || host.startsWith(QLatin1String("10."))
-        || host.startsWith(QLatin1String("192.168."))) {
+    if (strHost.startsWith(QLatin1String("127.")) || strHost.startsWith(QLatin1String("10."))
+        || strHost.startsWith(QLatin1String("192.168."))) {
         return true;
     }
     /* 172.16.0.0 – 172.31.255.255 */
-    const QStringList parts = host.split(QLatin1Char('.'));
-    if (parts.size() == 4 && parts.at(0) == QLatin1String("172")) {
-        bool ok = false;
-        const int second = parts.at(1).toInt(&ok);
-        if (ok && second >= 16 && second <= 31) return true;
+    const QStringList strParts = strHost.split(QLatin1Char('.'));
+    if (strParts.size() == 4 && strParts.at(0) == QLatin1String("172")) {
+        bool nOk = false;
+        const int nSecond = strParts.at(1).toInt(&nOk);
+        if (nOk && nSecond >= 16 && nSecond <= 31) return true;
     }
     return false;
 }
@@ -90,54 +90,54 @@ bool isLocalOrLan(const QString& baseUrl) {
 }
 
 /*
- * 功能描述:  执行 setPathOverride 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  设置文件路径 override。
  * 作者:      JaTin
- * param [in]  path  参数。
- * return:    void
+ * param [in]   strPath          文件路径，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void setPathOverride(const QString& path) {
-    g_overridePath = path;
+void setPathOverride(const QString& strPath) {
+    g_overridePath = strPath;
 }
 
 /*
- * 功能描述:  执行 resolvePath 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  获取resolve 文件路径。
  * 作者:      JaTin
- * return:    返回值，含义见功能描述。
+ * return:    返回构造好的字符串；无内容时返回空字符串。
  */
 QString resolvePath() {
     if (!g_overridePath.isEmpty()) return g_overridePath;
 
-    const QString fromEnv = QProcessEnvironment::systemEnvironment()
+    const QString strFromEnv = QProcessEnvironment::systemEnvironment()
                                 .value(QStringLiteral("DP_LLM_CONFIG"));
-    if (!fromEnv.isEmpty()) return fromEnv;
+    if (!strFromEnv.isEmpty()) return strFromEnv;
 
-    const QString projectConfig = defaultConfigDir() + QStringLiteral("/llm.json");
-    if (QFileInfo::exists(projectConfig)) return projectConfig;
+    const QString strProjectConfig = defaultConfigDir() + QStringLiteral("/llm.json");
+    if (QFileInfo::exists(strProjectConfig)) return strProjectConfig;
 
-    const QString userConfig = userConfigPath();
-    if (QFileInfo::exists(userConfig)) return userConfig;
+    const QString strUserConfig = userConfigPath();
+    if (QFileInfo::exists(strUserConfig)) return strUserConfig;
 
     /* 都不存在时返回源码树路径，供 ensureTemplate 落盘 */
-    if (!defaultConfigDir().isEmpty()) return projectConfig;
-    return userConfig;
+    if (!defaultConfigDir().isEmpty()) return strProjectConfig;
+    return strUserConfig;
 }
 
 /*
- * 功能描述:  执行 ensureTemplate 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  确保template；失败时返回 false。
  * 作者:      JaTin
- * param [in]  path  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   strPath          文件路径，类型 const QString&。
+ * return:    成功返回 true；参数非法或执行失败时返回 false。
  */
-bool ensureTemplate(const QString& path) {
-    if (path.isEmpty() || QFileInfo::exists(path)) return false;
+bool ensureTemplate(const QString& strPath) {
+    if (strPath.isEmpty() || QFileInfo::exists(strPath)) return false;
 
-    const QDir dir = QFileInfo(path).absoluteDir();
-    if (!dir.exists() && !QDir().mkpath(dir.absolutePath())) return false;
+    const QDir stDir = QFileInfo(strPath).absoluteDir();
+    if (!stDir.exists() && !QDir().mkpath(stDir.absolutePath())) return false;
 
-    QFile file(path);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) return false;
+    QFile stFile(strPath);
+    if (!stFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) return false;
 
-    const QByteArray tmpl = R"({
+    const QByteArray byTmpl = R"({
   "_说明": "填写 apiKey 后即可启用翻译。改完保存即生效，客户端会自动重载。不要提交到 Git。",
 
   "llm": {
@@ -159,167 +159,167 @@ bool ensureTemplate(const QString& path) {
   }
 }
 )";
-    file.write(tmpl);
-    file.close();
+    stFile.write(byTmpl);
+    stFile.close();
     return true;
 }
 
 /*
- * 功能描述:  执行 parse 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  解析parse；实现上按协议字段组装或解析 JSON。
  * 作者:      JaTin
- * param [in]  data  参数。
- * param [in]  source  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   byData           原始字节数据，类型 const QByteArray&。
+ * param [in]   strSource        配置来源路径，类型 const QString&。
+ * return:    返回 Settings_S 类型的处理结果，具体含义见功能描述。
  */
-Settings_S parse(const QByteArray& data, const QString& source) {
-    Settings_S settings;
-    settings.path = source;
+Settings_S parse(const QByteArray& byData, const QString& strSource) {
+    Settings_S stSettings;
+    stSettings.path = strSource;
 
-    QJsonParseError parseError{};
-    const QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
+    QJsonParseError stParseError{};
+    const QJsonDocument stDoc = QJsonDocument::fromJson(byData, &stParseError);
 
-    if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
-        settings.error = QStringLiteral("配置不是合法 JSON：%1").arg(parseError.errorString());
-        return settings;
+    if (stParseError.error != QJsonParseError::NoError || !stDoc.isObject()) {
+        stSettings.error = QStringLiteral("配置不是合法 JSON：%1").arg(stParseError.errorString());
+        return stSettings;
     }
 
-    const QJsonObject root = doc.object();
-    const QJsonObject llm = root.value(QStringLiteral("llm")).toObject();
-    const QJsonObject tr = root.value(QStringLiteral("translation")).toObject();
+    const QJsonObject stRoot = stDoc.object();
+    const QJsonObject stLlm = stRoot.value(QStringLiteral("llm")).toObject();
+    const QJsonObject stTr = stRoot.value(QStringLiteral("translation")).toObject();
 
-    settings.llm.enabled = llm.value(QStringLiteral("enabled")).toBool(true);
-    settings.llm.baseUrl = readString(llm, "baseUrl", settings.llm.baseUrl);
-    settings.llm.apiKey = readString(llm, "apiKey", settings.llm.apiKey);
-    settings.llm.model = readString(llm, "model", settings.llm.model);
-    settings.llm.temperature = llm.value(QStringLiteral("temperature")).toDouble(0.2);
-    settings.llm.reasoningEffort = readString(llm, "reasoningEffort", QString());
-    settings.llm.timeoutMs = llm.value(QStringLiteral("timeoutMs")).toInt(40000);
+    stSettings.llm.enabled = stLlm.value(QStringLiteral("enabled")).toBool(true);
+    stSettings.llm.baseUrl = readString(stLlm, "baseUrl", stSettings.llm.baseUrl);
+    stSettings.llm.apiKey = readString(stLlm, "apiKey", stSettings.llm.apiKey);
+    stSettings.llm.model = readString(stLlm, "model", stSettings.llm.model);
+    stSettings.llm.temperature = stLlm.value(QStringLiteral("temperature")).toDouble(0.2);
+    stSettings.llm.reasoningEffort = readString(stLlm, "reasoningEffort", QString());
+    stSettings.llm.timeoutMs = stLlm.value(QStringLiteral("timeoutMs")).toInt(40000);
 
-    settings.translation.maxHistoryMessages =
-        tr.value(QStringLiteral("maxHistoryMessages")).toInt(12);
-    settings.translation.cacheSize = tr.value(QStringLiteral("cacheSize")).toInt(500);
+    stSettings.translation.maxHistoryMessages =
+        stTr.value(QStringLiteral("maxHistoryMessages")).toInt(12);
+    stSettings.translation.cacheSize = stTr.value(QStringLiteral("cacheSize")).toInt(500);
 
     /* 可选的「翻译专用模型」：没写这段就沿用上面的 llm */
-    const QJsonObject trLlm = tr.value(QStringLiteral("llm")).toObject();
-    if (!trLlm.isEmpty()) {
-        settings.translation.llm.enabled = trLlm.value(QStringLiteral("enabled")).toBool(true);
+    const QJsonObject stTrLlm = stTr.value(QStringLiteral("llm")).toObject();
+    if (!stTrLlm.isEmpty()) {
+        stSettings.translation.llm.enabled = stTrLlm.value(QStringLiteral("enabled")).toBool(true);
         /* baseUrl 缺省时继承主模型；apiKey 只在「同一服务商」时继承—— */
         /* 否则会把 A 家的 Key 发给 B 家，结果是一堆 401 */
-        settings.translation.llm.baseUrl = readString(trLlm, "baseUrl", settings.llm.baseUrl);
-        QString trKey = readString(trLlm, "apiKey", QString());
-        if (trKey.isEmpty() && settings.translation.llm.baseUrl == settings.llm.baseUrl) {
-            trKey = settings.llm.apiKey;
+        stSettings.translation.llm.baseUrl = readString(stTrLlm, "baseUrl", stSettings.llm.baseUrl);
+        QString strTrKey = readString(stTrLlm, "apiKey", QString());
+        if (strTrKey.isEmpty() && stSettings.translation.llm.baseUrl == stSettings.llm.baseUrl) {
+            strTrKey = stSettings.llm.apiKey;
         }
-        settings.translation.llm.apiKey = trKey;
-        settings.translation.llm.model = readString(trLlm, "model", settings.llm.model);
+        stSettings.translation.llm.apiKey = strTrKey;
+        stSettings.translation.llm.model = readString(stTrLlm, "model", stSettings.llm.model);
         /* 翻译要稳定，温度默认比对话更低 */
-        settings.translation.llm.temperature =
-            trLlm.value(QStringLiteral("temperature")).toDouble(0.1);
-        settings.translation.llm.reasoningEffort =
-            readString(trLlm, "reasoningEffort", QString());
-        settings.translation.llm.timeoutMs =
-            trLlm.value(QStringLiteral("timeoutMs")).toInt(30000);
-        settings.translation.hasOwnLlm = true;
+        stSettings.translation.llm.temperature =
+            stTrLlm.value(QStringLiteral("temperature")).toDouble(0.1);
+        stSettings.translation.llm.reasoningEffort =
+            readString(stTrLlm, "reasoningEffort", QString());
+        stSettings.translation.llm.timeoutMs =
+            stTrLlm.value(QStringLiteral("timeoutMs")).toInt(30000);
+        stSettings.translation.hasOwnLlm = true;
     }
 
-    settings.loaded = true;
+    stSettings.loaded = true;
 
     /* 云端必须带 Key；本地/自建服务可以留空 */
-    if (settings.llm.enabled && settings.llm.apiKey.trimmed().isEmpty()
-        && !isLocalOrLan(settings.llm.baseUrl)) {
-        settings.llm.enabled = false;
+    if (stSettings.llm.enabled && stSettings.llm.apiKey.trimmed().isEmpty()
+        && !isLocalOrLan(stSettings.llm.baseUrl)) {
+        stSettings.llm.enabled = false;
 
         /* 区分「没配」和「配错」：完全是内置默认值说明这是自动生成的空模板， */
         /* 用户可能正等服务端下发配置，不该弹错误打扰他。 */
-        const bool looksUnconfigured =
-            settings.llm.baseUrl == QStringLiteral("https://api.deepseek.com")
-            && settings.llm.model == QStringLiteral("deepseek-chat");
-        if (!looksUnconfigured) {
-            settings.error = QStringLiteral("配置文件里没有填 apiKey，翻译已停用");
+        const bool nLooksUnconfigured =
+            stSettings.llm.baseUrl == QStringLiteral("https://api.deepseek.com")
+            && stSettings.llm.model == QStringLiteral("deepseek-chat");
+        if (!nLooksUnconfigured) {
+            stSettings.error = QStringLiteral("配置文件里没有填 apiKey，翻译已停用");
         } else {
-            settings.missing = true;
+            stSettings.missing = true;
         }
     }
 
     /* 翻译专用模型配了但不可用：回退到主模型，别让翻译整个挂掉 */
-    if (settings.translation.hasOwnLlm && settings.translation.llm.enabled
-        && settings.translation.llm.apiKey.trimmed().isEmpty()
-        && !isLocalOrLan(settings.translation.llm.baseUrl)) {
-        settings.translation.hasOwnLlm = false;
-        if (settings.error.isEmpty()) {
-            settings.error = QStringLiteral("翻译专用模型缺少 apiKey，已回退到主模型");
+    if (stSettings.translation.hasOwnLlm && stSettings.translation.llm.enabled
+        && stSettings.translation.llm.apiKey.trimmed().isEmpty()
+        && !isLocalOrLan(stSettings.translation.llm.baseUrl)) {
+        stSettings.translation.hasOwnLlm = false;
+        if (stSettings.error.isEmpty()) {
+            stSettings.error = QStringLiteral("翻译专用模型缺少 apiKey，已回退到主模型");
         }
     }
 
-    return settings;
+    return stSettings;
 }
 
 /*
- * 功能描述:  执行 load 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  加载load。
  * 作者:      JaTin
- * return:    返回值，含义见功能描述。
+ * return:    返回 Settings_S 类型的处理结果，具体含义见功能描述。
  */
 Settings_S load() {
-    Settings_S settings;
-    settings.path = resolvePath();
+    Settings_S stSettings;
+    stSettings.path = resolvePath();
 
-    QFile file(settings.path);
-    if (!file.open(QIODevice::ReadOnly)) {
-        settings.error = QStringLiteral("找不到配置文件：%1").arg(settings.path);
+    QFile stFile(stSettings.path);
+    if (!stFile.open(QIODevice::ReadOnly)) {
+        stSettings.error = QStringLiteral("找不到配置文件：%1").arg(stSettings.path);
         /* 可能由服务端下发，不算错误 */
-        settings.missing = true;
-        return settings;
+        stSettings.missing = true;
+        return stSettings;
     }
 
-    const QByteArray data = file.readAll();
-    file.close();
+    const QByteArray byData = stFile.readAll();
+    stFile.close();
 
-    return parse(data, settings.path);
+    return parse(byData, stSettings.path);
 }
 
 /*
- * 功能描述:  执行 loadTransport 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  加载传输层；实现上按协议字段组装或解析 JSON。
  * 作者:      JaTin
- * return:    返回值，含义见功能描述。
+ * return:    返回 TransportSettings_S 类型的处理结果，具体含义见功能描述。
  */
 TransportSettings_S loadTransport() {
-    TransportSettings_S settings;
+    TransportSettings_S stSettings;
 
     /* 新文件名优先；读不到再回退旧版 agora.json（声网时期的配置） */
-    QString path = defaultConfigDir() + QStringLiteral("/transport.json");
-    if (!QFileInfo::exists(path)) {
-        const QString legacy = defaultConfigDir() + QStringLiteral("/agora.json");
-        if (QFileInfo::exists(legacy)) path = legacy;
+    QString strPath = defaultConfigDir() + QStringLiteral("/transport.json");
+    if (!QFileInfo::exists(strPath)) {
+        const QString strLegacy = defaultConfigDir() + QStringLiteral("/agora.json");
+        if (QFileInfo::exists(strLegacy)) strPath = strLegacy;
     }
-    if (!QFileInfo::exists(path)) {
-        const QString userDir =
+    if (!QFileInfo::exists(strPath)) {
+        const QString strUserDir =
             QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)
             + QStringLiteral("/DialoguePratice/");
-        if (QFileInfo::exists(userDir + QStringLiteral("transport.json"))) {
-            path = userDir + QStringLiteral("transport.json");
-        } else if (QFileInfo::exists(userDir + QStringLiteral("agora.json"))) {
-            path = userDir + QStringLiteral("agora.json");
+        if (QFileInfo::exists(strUserDir + QStringLiteral("transport.json"))) {
+            strPath = strUserDir + QStringLiteral("transport.json");
+        } else if (QFileInfo::exists(strUserDir + QStringLiteral("agora.json"))) {
+            strPath = strUserDir + QStringLiteral("agora.json");
         }
     }
-    settings.path = path;
+    stSettings.path = strPath;
 
-    QFile file(path);
-    if (file.open(QIODevice::ReadOnly)) {
-        QJsonParseError parseError{};
-        const QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &parseError);
-        file.close();
-        if (parseError.error == QJsonParseError::NoError && doc.isObject()) {
-            settings.transport =
-                readString(doc.object(), "transport", settings.transport);
-            settings.loaded = true;
+    QFile stFile(strPath);
+    if (stFile.open(QIODevice::ReadOnly)) {
+        QJsonParseError stParseError{};
+        const QJsonDocument stDoc = QJsonDocument::fromJson(stFile.readAll(), &stParseError);
+        stFile.close();
+        if (stParseError.error == QJsonParseError::NoError && stDoc.isObject()) {
+            stSettings.transport =
+                readString(stDoc.object(), "transport", stSettings.transport);
+            stSettings.loaded = true;
         }
     }
 
     /* 环境变量覆盖：临时切换不用改文件 */
-    const QByteArray envTransport = qgetenv("DP_TRANSPORT");
-    if (!envTransport.isEmpty()) settings.transport = QString::fromUtf8(envTransport);
+    const QByteArray byEnvTransport = qgetenv("DP_TRANSPORT");
+    if (!byEnvTransport.isEmpty()) stSettings.transport = QString::fromUtf8(byEnvTransport);
 
-    return settings;
+    return stSettings;
 }
 
 /* namespace AppConfig */

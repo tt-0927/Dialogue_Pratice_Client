@@ -26,58 +26,58 @@
 #include <QVBoxLayout>
 
 /*
- * 功能描述:  执行 CMainWindow 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  构造 CMainWindow 对象，完成成员初始化与依赖注入。
  * 作者:      JaTin
- * param [in]  parent  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget* parent) : QMainWindow(。
+ * return:    无返回值（构造函数或析构函数）。
  */
-CMainWindow::CMainWindow(QWidget* parent) : QMainWindow(parent) {
+CMainWindow::CMainWindow(QWidget* pParent) : QMainWindow(pParent) {
     setWindowTitle(QStringLiteral("Dialogue Pratice"));
     resize(1080, 720);
     setMinimumSize(940, 620);
 
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
-    auto* central = new QWidget(this);
-    central->setObjectName("AppRoot");
-    auto* layout = new QVBoxLayout(central);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(0);
+    auto* pCentral = new QWidget(this);
+    pCentral->setObjectName("AppRoot");
+    auto* pLayout = new QVBoxLayout(pCentral);
+    pLayout->setContentsMargins(0, 0, 0, 0);
+    pLayout->setSpacing(0);
 
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
-    m_pStack = new QStackedWidget(central);
+    m_pStack = new QStackedWidget(pCentral);
     m_pLoginPage = new CLoginPage(m_pStack);
     m_pHomePage = new CHomePage(m_pStack);
     m_pChatPage = new ChatPage(m_pStack);
     m_pStack->addWidget(m_pLoginPage);
     m_pStack->addWidget(m_pHomePage);
     m_pStack->addWidget(m_pChatPage);
-    layout->addWidget(m_pStack);
+    pLayout->addWidget(m_pStack);
 
-    setCentralWidget(central);
+    setCentralWidget(pCentral);
 
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
-    m_pBanner = new QLabel(central);
+    m_pBanner = new QLabel(pCentral);
     m_pBanner->setObjectName("Banner");
     m_pBanner->setAlignment(Qt::AlignCenter);
     m_pBanner->hide();
 
     /* 传输层：局域网自研服务端（声网 RTM 支持已移除，见 docs/plan-agora-rtm.md） */
-    const AppConfig::TransportSettings_S transport = AppConfig::loadTransport();
-    if (transport.transport.compare(QLatin1String("server"), Qt::CaseInsensitive) != 0) {
+    const AppConfig::TransportSettings_S stTransport = AppConfig::loadTransport();
+    if (stTransport.transport.compare(QLatin1String("server"), Qt::CaseInsensitive) != 0) {
         qWarning() << "配置里的 transport 不是 server，但 RTM 支持已移除，仍按 server 运行："
-                   << transport.transport;
+                   << stTransport.transport;
     }
     m_pBridge = new CProtocolBridge(this);
     m_strTransportName = QStringLiteral("server");
 
     /* 本地消息缓存：兜住服务端重启后丢掉的历史 */
     m_pStore = new CMessageStore();
-    const QString dbPath =
+    const QString strDbPath =
         QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
         + QStringLiteral("/history.db");
-    QString storeError;
-    if (!m_pStore->open(dbPath, &storeError)) {
-        qWarning() << "本地消息缓存不可用：" << storeError;
+    QString strStoreError;
+    if (!m_pStore->open(strDbPath, &strStoreError)) {
+        qWarning() << "本地消息缓存不可用：" << strStoreError;
     }
 
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
@@ -99,8 +99,8 @@ CMainWindow::CMainWindow(QWidget* parent) : QMainWindow(parent) {
     connect(m_pChatPage, &ChatPage::backRequested, this, &CMainWindow::onLeaveRoom);
     connect(m_pChatPage, &ChatPage::sendRequested, this, &CMainWindow::onSendMessage);
     connect(m_pChatPage, &ChatPage::sendVoiceRequested, this,
-            [this](const QByteArray& audio, int durationMs) {
-                m_pBridge->sendVoice(audio, durationMs);
+            [this](const QByteArray& byAudio, int nDurationMs) {
+                m_pBridge->sendVoice(byAudio, nDurationMs);
             });
     connect(m_pChatPage, &ChatPage::notice, this, &CMainWindow::showBanner);
 
@@ -120,43 +120,43 @@ CMainWindow::CMainWindow(QWidget* parent) : QMainWindow(parent) {
 CMainWindow::~CMainWindow() = default;
 
 /*
- * 功能描述:  执行 resizeEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  重新计算尺寸事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * param [in]   pEvent           事件，类型 QResizeEvent*。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMainWindow::resizeEvent(QResizeEvent* event) {
-    QMainWindow::resizeEvent(event);
+void CMainWindow::resizeEvent(QResizeEvent* pEvent) {
+    QMainWindow::resizeEvent(pEvent);
     positionBanner();
 }
 
 /* ---------------------------------------------------------------- 登录 */
 
 /*
- * 功能描述:  执行 onLoginRequested 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  完成登录onrequested。
  * 作者:      JaTin
- * param [in]  host  参数。
- * param [in]  port  参数。
- * param [in]  name  参数。
- * return:    void
+ * param [in]   strHost          服务器主机地址，类型 const QString&。
+ * param [in]   uPort            服务器端口，类型 quint16。
+ * param [in]   strName          名称或昵称，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMainWindow::onLoginRequested(const QString& host, quint16 port, const QString& name) {
-    m_strLastHost = host;
-    m_uLastPort = port;
-    m_strPendingHost = host;
-    m_uPendingPort = port;
-    m_strPendingName = name;
+void CMainWindow::onLoginRequested(const QString& strHost, quint16 uPort, const QString& strName) {
+    m_strLastHost = strHost;
+    m_uLastPort = uPort;
+    m_strPendingHost = strHost;
+    m_uPendingPort = uPort;
+    m_strPendingName = strName;
 
     resetReconnectState();
     m_pLoginPage->clearError();
     m_pLoginPage->setBusy(true);
-    m_pBridge->connectToServer(host, port);
+    m_pBridge->connectToServer(strHost, uPort);
 }
 
 /*
- * 功能描述:  执行 onBridgeConnected 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  执行on 协议桥接器 connected。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CMainWindow::onBridgeConnected() {
     if (m_nReconnecting) {
@@ -168,19 +168,19 @@ void CMainWindow::onBridgeConnected() {
 }
 
 /*
- * 功能描述:  执行 onLoginSucceeded 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  登录成功后切换到主页并初始化会话上下文。
  * 作者:      JaTin
- * param [in]  userId  参数。
- * param [in]  name  参数。
- * param [in]  age  参数。
- * param [in]  desc  参数。
- * return:    void
+ * param [in]   lUserId          用户编号，类型 qint64。
+ * param [in]   strName          名称或昵称，类型 const QString&。
+ * param [in]   nAge             年龄（0 到 150），类型 int。
+ * param [in]   strDesc          个人简介，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMainWindow::onLoginSucceeded(qint64 userId, const QString& name, int age, const QString& desc) {
-    m_uSelfId = userId;
-    m_strSelfName = name;
-    m_nSelfAge = age;
-    m_strSelfDesc = desc;
+void CMainWindow::onLoginSucceeded(qint64 lUserId, const QString& strName, int nAge, const QString& strDesc) {
+    m_uSelfId = lUserId;
+    m_strSelfName = strName;
+    m_nSelfAge = nAge;
+    m_strSelfDesc = strDesc;
 
     m_pLoginPage->setBusy(false);
     m_pHomePage->setProfile(m_uSelfId, m_strSelfName, m_nSelfAge, m_strSelfDesc);
@@ -200,60 +200,60 @@ void CMainWindow::onLoginSucceeded(qint64 userId, const QString& name, int age, 
     m_pStack->setCurrentWidget(m_pHomePage);
     m_pHomePage->focusRoomInput();
 
-    showBanner(QStringLiteral("登录成功，账号 ID %1").arg(userId), false);
+    showBanner(QStringLiteral("登录成功，账号 ID %1").arg(lUserId), false);
 }
 
 /* ---------------------------------------------------------------- 房间 */
 
 /*
- * 功能描述:  执行 onJoinRoom 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  加入on 房间。
  * 作者:      JaTin
- * param [in]  room  参数。
- * return:    void
+ * param [in]   strRoom          房间号，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMainWindow::onJoinRoom(const QString& room) {
-    m_strPendingRoom = room;
+void CMainWindow::onJoinRoom(const QString& strRoom) {
+    m_strPendingRoom = strRoom;
     m_pHomePage->clearError();
     m_pHomePage->setBusy(true);
-    m_pBridge->joinRoom(room);
+    m_pBridge->joinRoom(strRoom);
 }
 
 /*
- * 功能描述:  执行 onRoomJoined 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  执行on 房间 joined。
  * 作者:      JaTin
- * param [in]  room  参数。
- * param [in]  created  参数。
- * param [in]  members  参数。
- * return:    void
+ * param [in]   strRoom          房间号，类型 const QString&。
+ * param [in]   nCreated         输入数据，类型 bool。
+ * param [in]   aMembers         初始成员列表，类型 const QVector<MemberInfo_S>&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMainWindow::onRoomJoined(const QString& room, bool created, const QVector<MemberInfo_S>& members) {
+void CMainWindow::onRoomJoined(const QString& strRoom, bool nCreated, const QVector<MemberInfo_S>& aMembers) {
     m_pHomePage->setBusy(false);
 
     if (m_nReconnecting) {
-        m_pChatPage->resumeRoom(room, members, m_uSelfId, m_strSelfName);
+        m_pChatPage->resumeRoom(strRoom, aMembers, m_uSelfId, m_strSelfName);
         m_pStack->setCurrentWidget(m_pChatPage);
         finishReconnect();
         return;
     }
 
-    m_pChatPage->enterRoom(room, created, members, m_uSelfId, m_strSelfName);
+    m_pChatPage->enterRoom(strRoom, nCreated, aMembers, m_uSelfId, m_strSelfName);
     m_pStack->setCurrentWidget(m_pChatPage);
 
     /* 服务端/声网的历史之外，再用本地缓存补齐（按 seq 去重，不会重复） */
     if (m_pStore != nullptr && m_pStore->isOpen()) {
-        m_pStore->prune(m_strTransportName, room, 500);
-        m_pChatPage->mergeHistory(m_pStore->loadRecent(m_strTransportName, room, 200));
+        m_pStore->prune(m_strTransportName, strRoom, 500);
+        m_pChatPage->mergeHistory(m_pStore->loadRecent(m_strTransportName, strRoom, 200));
     }
 
-    showBanner(created ? QStringLiteral("房间 %1 不存在，已自动创建").arg(room)
-                       : QStringLiteral("已加入房间 %1").arg(room),
+    showBanner(nCreated ? QStringLiteral("房间 %1 不存在，已自动创建").arg(strRoom)
+                       : QStringLiteral("已加入房间 %1").arg(strRoom),
                false);
 }
 
 /*
- * 功能描述:  执行 onLeaveRoom 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  退出on 房间。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CMainWindow::onLeaveRoom() {
     if (!m_pChatPage->room().isEmpty()) {
@@ -268,97 +268,132 @@ void CMainWindow::onLeaveRoom() {
 /* ---------------------------------------------------------------- 消息 */
 
 /*
- * 功能描述:  执行 onSendMessage 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  发送on 消息内容。
  * 作者:      JaTin
- * param [in]  text  参数。
- * return:    void
+ * param [in]   strText          消息文本，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMainWindow::onSendMessage(const QString& text) {
-    m_pBridge->sendChat(text);
+void CMainWindow::onSendMessage(const QString& strText) {
+    m_pBridge->sendChat(strText);
 }
 
 /*
- * 功能描述:  执行 onHistoryReceived 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  执行on 历史消息 received。
  * 作者:      JaTin
- * param [in]  room  参数。
- * param [in]  messages  参数。
- * return:    void
+ * param [in]   strRoom          房间号，类型 const QString&。
+ * param [in]   aMessages        消息记录，类型 const QVector<ChatMessage_S>&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMainWindow::onHistoryReceived(const QString& room, const QVector<ChatMessage_S>& messages) {
+void CMainWindow::onHistoryReceived(const QString& strRoom, const QVector<ChatMessage_S>& aMessages) {
     if (m_pStack->currentWidget() != m_pChatPage) return;
-    if (!room.isEmpty() && room != m_pChatPage->room()) return;
-    m_pChatPage->mergeHistory(messages);
+    if (!strRoom.isEmpty() && strRoom != m_pChatPage->room()) return;
+    m_pChatPage->mergeHistory(aMessages);
 }
 
-void CMainWindow::onVoiceReceived(qint64 seq, qint64 from, const QString& name,
-                                 const QString& room, const QByteArray& audio,
-                                 int durationMs, qint64 ts) {
+/*
+ * 功能描述:  执行on 语音消息 received。
+ * 作者:      JaTin
+ * param [in]   lSeq             全局消息序号，类型 qint64。
+ * param [in]   lFrom            输入数据，类型 qint64。
+ * param [in]   strName          名称或昵称，类型 const QString&。
+ * param [in]   strRoom          房间号，类型 const QString&。
+ * param [in]   byAudio          Opus 编码的音频数据，类型 const QByteArray&。
+ * param [in]   nDurationMs      语音时长，单位毫秒，类型 int。
+ * param [in]   lTs              Unix 毫秒时间戳，类型 qint64。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
+ */
+void CMainWindow::onVoiceReceived(qint64 lSeq, qint64 lFrom, const QString& strName,
+                                 const QString& strRoom, const QByteArray& byAudio,
+                                 int nDurationMs, qint64 lTs) {
     if (m_pStack->currentWidget() != m_pChatPage) return;
-    if (room != m_pChatPage->room()) return;
+    if (strRoom != m_pChatPage->room()) return;
 
-    m_pChatPage->appendVoice(seq, from, name, audio, durationMs, ts);
+    m_pChatPage->appendVoice(lSeq, lFrom, strName, byAudio, nDurationMs, lTs);
 }
 
-void CMainWindow::onChatReceived(qint64 seq, qint64 from, const QString& name, const QString& room,
-                                const QString& text, qint64 ts) {
+/*
+ * 功能描述:  收到聊天消息时更新数据模型并刷新消息视图。
+ * 作者:      JaTin
+ * param [in]   lSeq             全局消息序号，类型 qint64。
+ * param [in]   lFrom            输入数据，类型 qint64。
+ * param [in]   strName          名称或昵称，类型 const QString&。
+ * param [in]   strRoom          房间号，类型 const QString&。
+ * param [in]   strText          消息文本，类型 const QString&。
+ * param [in]   lTs              Unix 毫秒时间戳，类型 qint64。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
+ */
+void CMainWindow::onChatReceived(qint64 lSeq, qint64 lFrom, const QString& strName, const QString& strRoom,
+                                const QString& strText, qint64 lTs) {
     if (m_pStack->currentWidget() != m_pChatPage) return;
-    if (room != m_pChatPage->room()) return;
+    if (strRoom != m_pChatPage->room()) return;
 
     if (m_pStore != nullptr && m_pStore->isOpen()) {
-        ChatMessage_S message;
-        message.seq = seq;
-        message.from = from;
-        message.name = name;
-        message.text = text;
-        message.ts = ts;
-        m_pStore->save(m_strTransportName, room, message);
+        ChatMessage_S strMessage;
+        strMessage.seq = lSeq;
+        strMessage.from = lFrom;
+        strMessage.name = strName;
+        strMessage.text = strText;
+        strMessage.ts = lTs;
+        m_pStore->save(m_strTransportName, strRoom, strMessage);
     }
 
-    m_pChatPage->appendChat(seq, from, name, text, ts);
+    m_pChatPage->appendChat(lSeq, lFrom, strName, strText, lTs);
 }
 
-void CMainWindow::onSystemMessage(const QString& event, const QString& room, qint64 userId,
-                                 const QString& name, const QString& oldName,
-                                 const QString& text, qint64 ts) {
-    if (event == QStringLiteral("welcome")) return;
+/*
+ * 功能描述:  执行on 系统提示词消息内容。
+ * 作者:      JaTin
+ * param [in]   pEvent           事件，类型 const QString&。
+ * param [in]   strRoom          房间号，类型 const QString&。
+ * param [in]   lUserId          用户编号，类型 qint64。
+ * param [in]   strName          名称或昵称，类型 const QString&。
+ * param [in]   strOldName       输入数据，类型 const QString&。
+ * param [in]   strText          消息文本，类型 const QString&。
+ * param [in]   lTs              Unix 毫秒时间戳，类型 qint64。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
+ */
+void CMainWindow::onSystemMessage(const QString& pEvent, const QString& strRoom, qint64 lUserId,
+                                 const QString& strName, const QString& strOldName,
+                                 const QString& strText, qint64 lTs) {
+    if (pEvent == QStringLiteral("welcome")) return;
     if (m_pStack->currentWidget() != m_pChatPage) return;
-    if (!room.isEmpty() && room != m_pChatPage->room()) return;
-    m_pChatPage->onSystemEvent(event, userId, name, oldName, text, ts);
+    if (!strRoom.isEmpty() && strRoom != m_pChatPage->room()) return;
+    m_pChatPage->onSystemEvent(pEvent, lUserId, strName, strOldName, strText, lTs);
 }
 
 /* ---------------------------------------------------------------- 资料 */
 
 /*
- * 功能描述:  执行 onEditProfile 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  执行onedit 个人资料；实现上连接 Qt 信号与槽。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CMainWindow::onEditProfile() {
-    auto* dialog = new CProfileDialog(m_strSelfName, m_nSelfAge, m_strSelfDesc, this);
-    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    auto* pDialog = new CProfileDialog(m_strSelfName, m_nSelfAge, m_strSelfDesc, this);
+    pDialog->setAttribute(Qt::WA_DeleteOnClose);
 
-    connect(dialog, &CProfileDialog::saved, this,
-            [this](const QString& name, int age, const QString& desc) {
-                m_pBridge->updateProfile(name, age, desc);
+    connect(pDialog, &CProfileDialog::saved, this,
+            [this](const QString& strName, int nAge, const QString& strDesc) {
+                m_pBridge->updateProfile(strName, nAge, strDesc);
             });
 
-    dialog->exec();
+    pDialog->exec();
 }
 
 /*
- * 功能描述:  执行 onProfileUpdated 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  执行on 个人资料 updated。
  * 作者:      JaTin
- * param [in]  userId  参数。
- * param [in]  name  参数。
- * param [in]  age  参数。
- * param [in]  desc  参数。
- * return:    void
+ * param [in]   lUserId          用户编号，类型 qint64。
+ * param [in]   strName          名称或昵称，类型 const QString&。
+ * param [in]   nAge             年龄（0 到 150），类型 int。
+ * param [in]   strDesc          个人简介，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMainWindow::onProfileUpdated(qint64 userId, const QString& name, int age, const QString& desc) {
-    Q_UNUSED(userId)
-    m_strSelfName = name;
-    m_nSelfAge = age;
-    m_strSelfDesc = desc;
+void CMainWindow::onProfileUpdated(qint64 lUserId, const QString& strName, int nAge, const QString& strDesc) {
+    Q_UNUSED(lUserId)
+    m_strSelfName = strName;
+    m_nSelfAge = nAge;
+    m_strSelfDesc = strDesc;
     m_pHomePage->setProfile(m_uSelfId, m_strSelfName, m_nSelfAge, m_strSelfDesc);
     showBanner(QStringLiteral("个人信息已更新"), false);
 }
@@ -366,9 +401,9 @@ void CMainWindow::onProfileUpdated(qint64 userId, const QString& name, int age, 
 /* ---------------------------------------------------------------- 断线重连 */
 
 /*
- * 功能描述:  执行 onDisconnected 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  连接断开时清理会话状态并提示用户重新连接。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CMainWindow::onDisconnected() {
     if (m_nSuppressDisconnectNotice) {
@@ -383,9 +418,9 @@ void CMainWindow::onDisconnected() {
 }
 
 /*
- * 功能描述:  执行 onReconnectTimeout 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  重新连接ontimeout。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CMainWindow::onReconnectTimeout() {
     if (m_strLastHost.isEmpty()) {
@@ -396,14 +431,14 @@ void CMainWindow::onReconnectTimeout() {
 }
 
 /*
- * 功能描述:  执行 scheduleReconnect 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  重新连接schedule。
  * 作者:      JaTin
- * param [in]  reason  参数。
- * return:    void
+ * param [in]   strReason        失败原因描述，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMainWindow::scheduleReconnect(const QString& reason) {
+void CMainWindow::scheduleReconnect(const QString& strReason) {
     if (m_nReconnectAttempt >= kMaxReconnectAttempts) {
-        resetToLogin(QStringLiteral("重连失败（%1），请检查服务端后重新登录").arg(reason));
+        resetToLogin(QStringLiteral("重连失败（%1），请检查服务端后重新登录").arg(strReason));
         return;
     }
 
@@ -420,9 +455,9 @@ void CMainWindow::scheduleReconnect(const QString& reason) {
 }
 
 /*
- * 功能描述:  执行 finishReconnect 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  重新连接finish。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CMainWindow::finishReconnect() {
     m_nReconnecting = false;
@@ -432,9 +467,9 @@ void CMainWindow::finishReconnect() {
 }
 
 /*
- * 功能描述:  执行 resetReconnectState 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  重置reconnect 状态。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CMainWindow::resetReconnectState() {
     m_pReconnectTimer->stop();
@@ -445,66 +480,66 @@ void CMainWindow::resetReconnectState() {
 /* ---------------------------------------------------------------- 错误 */
 
 /*
- * 功能描述:  执行 onServerError 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  执行on 服务端错误。
  * 作者:      JaTin
- * param [in]  code  参数。
- * param [in]  text  参数。
- * return:    void
+ * param [in]   strCode          输入数据，类型 const QString&。
+ * param [in]   strText          消息文本，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMainWindow::onServerError(const QString& code, const QString& text) {
-    Q_UNUSED(code)
+void CMainWindow::onServerError(const QString& strCode, const QString& strText) {
+    Q_UNUSED(strCode)
 
     if (m_nReconnecting) {
-        resetToLogin(QStringLiteral("重连被服务端拒绝：%1").arg(text));
+        resetToLogin(QStringLiteral("重连被服务端拒绝：%1").arg(strText));
         return;
     }
 
     if (m_pStack->currentWidget() == m_pLoginPage) {
         m_pLoginPage->setBusy(false);
-        m_pLoginPage->showError(text.isEmpty() ? QStringLiteral("登录失败") : text);
+        m_pLoginPage->showError(strText.isEmpty() ? QStringLiteral("登录失败") : strText);
         m_nSuppressDisconnectNotice = true;
         m_pBridge->disconnectFromServer();
         return;
     }
     if (m_pStack->currentWidget() == m_pHomePage) {
         m_pHomePage->setBusy(false);
-        m_pHomePage->showError(text);
+        m_pHomePage->showError(strText);
         return;
     }
-    showBanner(text, true);
+    showBanner(strText, true);
 }
 
 /*
- * 功能描述:  执行 onNetworkError 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  执行onnetwork 错误。
  * 作者:      JaTin
- * param [in]  message  参数。
- * return:    void
+ * param [in]   strMessage       消息内容，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMainWindow::onNetworkError(const QString& message) {
+void CMainWindow::onNetworkError(const QString& strMessage) {
     if (m_pStack->currentWidget() == m_pLoginPage) {
         m_pLoginPage->setBusy(false);
-        m_pLoginPage->showError(message);
+        m_pLoginPage->showError(strMessage);
         resetReconnectState();
         return;
     }
 
     /* 已登录状态下出现任何网络错误（RST、超时、断网）都走重连，而不是踢回登录页。 */
     if (m_nReconnecting || m_uSelfId != 0) {
-        scheduleReconnect(message);
+        scheduleReconnect(strMessage);
         return;
     }
 
-    showBanner(message, true);
-    resetToLogin(message);
+    showBanner(strMessage, true);
+    resetToLogin(strMessage);
 }
 
 /*
- * 功能描述:  执行 resetToLogin 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  重置tologin。
  * 作者:      JaTin
- * param [in]  reason  参数。
- * return:    void
+ * param [in]   strReason        失败原因描述，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMainWindow::resetToLogin(const QString& reason) {
+void CMainWindow::resetToLogin(const QString& strReason) {
     resetReconnectState();
     m_pChatPage->clearRoom();
     m_pHomePage->setBusy(false);
@@ -518,15 +553,15 @@ void CMainWindow::resetToLogin(const QString& reason) {
     m_strSelfDesc.clear();
     m_strPendingRoom.clear();
 
-    if (!reason.isEmpty()) {
-        m_pLoginPage->showError(reason);
+    if (!strReason.isEmpty()) {
+        m_pLoginPage->showError(strReason);
     }
 }
 
 /*
- * 功能描述:  执行 onLogout 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  退出登录on。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CMainWindow::onLogout() {
     m_nSuppressDisconnectNotice = true;
@@ -537,35 +572,35 @@ void CMainWindow::onLogout() {
 /* ---------------------------------------------------------------- 顶部提示条 */
 
 /*
- * 功能描述:  执行 showBanner 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  显示提示条。
  * 作者:      JaTin
- * param [in]  text  参数。
- * param [in]  error  参数。
- * return:    void
+ * param [in]   strText          消息文本，类型 const QString&。
+ * param [in]   nError           错误信息，类型 bool。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMainWindow::showBanner(const QString& text, bool error) {
-    m_pBanner->setObjectName(error ? QStringLiteral("BannerError") : QStringLiteral("Banner"));
+void CMainWindow::showBanner(const QString& strText, bool nError) {
+    m_pBanner->setObjectName(nError ? QStringLiteral("BannerError") : QStringLiteral("Banner"));
     m_pBanner->style()->unpolish(m_pBanner);
     m_pBanner->style()->polish(m_pBanner);
 
-    m_pBanner->setText(text);
+    m_pBanner->setText(strText);
     m_pBanner->adjustSize();
     m_pBanner->show();
     m_pBanner->raise();
     positionBanner();
 
     /* 错误信息留久一点，免得用户没看清就消失 */
-    m_pBannerTimer->start(error ? 6000 : 3200);
+    m_pBannerTimer->start(nError ? 6000 : 3200);
 }
 
 /*
- * 功能描述:  执行 positionBanner 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  执行position 提示条。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CMainWindow::positionBanner() {
     if (m_pBanner == nullptr || !m_pBanner->isVisible()) return;
     m_pBanner->adjustSize();
-    const int x = (width() - m_pBanner->width()) / 2;
-    m_pBanner->move(qMax(0, x), 76);
+    const int nX = (width() - m_pBanner->width()) / 2;
+    m_pBanner->move(qMax(0, nX), 76);
 }

@@ -32,45 +32,51 @@ constexpr int kMaxEnglishLength = 120;
 
 /* 字符串数组或按行拆分时没有中文，只有英文。 */
 /*
- * 功能描述:  执行 englishOnly 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  获取englishonly。
  * 作者:      JaTin
- * param [in]  text  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   strText          消息文本，类型 const QString&。
+ * return:    返回 Suggestion_S 类型的处理结果，具体含义见功能描述。
  */
-Suggestion_S englishOnly(const QString& text) {
-    Suggestion_S item;
-    item.english = text;
-    return item;
+Suggestion_S englishOnly(const QString& strText) {
+    Suggestion_S stItem;
+    stItem.english = strText;
+    return stItem;
 }
 
 /* namespace */
 }
 
-CReplyService::CReplyService(QObject* parent) : QObject(parent) {}
+/*
+ * 功能描述:  构造 CReplyService 对象，完成成员初始化与依赖注入。
+ * 作者:      JaTin
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject* parent) : QObject(。
+ * return:    无返回值（构造函数或析构函数）。
+ */
+CReplyService::CReplyService(QObject* pParent) : QObject(pParent) {}
 
 /*
- * 功能描述:  执行 setClient 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  设置客户端；实现上连接 Qt 信号与槽。
  * 作者:      JaTin
- * param [in]  client  参数。
- * return:    void
+ * param [in]   pClient          客户端，类型 CLlmClient*。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CReplyService::setClient(CLlmClient* client) {
+void CReplyService::setClient(CLlmClient* pClient) {
     if (m_pClient != nullptr) {
         disconnect(m_pClient, nullptr, this, nullptr);
     }
-    m_pClient = client;
+    m_pClient = pClient;
     if (m_pClient == nullptr) return;
 
-    connect(m_pClient, &CLlmClient::finished, this, [this](int requestId, const QString& text) {
+    connect(m_pClient, &CLlmClient::finished, this, [this](int requestId, const QString& strText) {
         /* 不是本次请求 */
         if (requestId != m_nCurrentId) return;
         m_nBusy = false;
-        const QVector<Suggestion_S> items = parseSuggestions(text);
-        if (items.isEmpty()) {
+        const QVector<Suggestion_S> aItems = parseSuggestions(strText);
+        if (aItems.isEmpty()) {
             emit failed(QStringLiteral("模型没有给出可用的建议"));
             return;
         }
-        emit suggestionsReady(items);
+        emit suggestionsReady(aItems);
     });
     connect(m_pClient, &CLlmClient::failed, this, [this](int requestId, const QString& reason) {
         if (requestId != m_nCurrentId) return;
@@ -80,34 +86,34 @@ void CReplyService::setClient(CLlmClient* client) {
 }
 
 /*
- * 功能描述:  执行 isEnabled 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  判断启用状态。
  * 作者:      JaTin
- * return:    返回值，含义见功能描述。
+ * return:    成功返回 true；参数非法或执行失败时返回 false。
  */
 bool CReplyService::isEnabled() const {
     return m_pClient != nullptr && m_pClient->isEnabled();
 }
 
 /*
- * 功能描述:  执行 request 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  请求request。
  * 作者:      JaTin
- * param [in]  context  参数。
- * return:    void
+ * param [in]   aContext         上下文，类型 const QVector<ChatMessage_S>&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CReplyService::request(const QVector<ChatMessage_S>& context) {
-    if (!isEnabled() || m_nBusy || context.isEmpty()) return;
+void CReplyService::request(const QVector<ChatMessage_S>& aContext) {
+    if (!isEnabled() || m_nBusy || aContext.isEmpty()) return;
 
-    QString dialog;
-    for (const ChatMessage_S& message : context) {
-        dialog += QStringLiteral("%1: %2\n").arg(message.name, message.text);
+    QString strDialog;
+    for (const ChatMessage_S& stMessage : aContext) {
+        strDialog += QStringLiteral("%1: %2\n").arg(stMessage.name, stMessage.text);
     }
 
-    const QString user =
-        QStringLiteral("对话上下文：\n%1\n请给出 3 条「我」可以回复对方的话，每条带中文翻译。").arg(dialog);
+    const QString strUser =
+        QStringLiteral("对话上下文：\n%1\n请给出 3 条「我」可以回复对方的话，每条带中文翻译。").arg(strDialog);
 
     m_nBusy = true;
     /* 每条要输出英文 + 中文，token 比纯英文多，上限提到 400 */
-    m_nCurrentId = m_pClient->chat(QString::fromUtf8(kSystemPrompt), user, 400);
+    m_nCurrentId = m_pClient->chat(QString::fromUtf8(kSystemPrompt), strUser, 400);
     if (m_nCurrentId <= 0) {
         m_nBusy = false;
         emit failed(QStringLiteral("LLM 未启用"));
@@ -115,65 +121,65 @@ void CReplyService::request(const QVector<ChatMessage_S>& context) {
 }
 
 /*
- * 功能描述:  执行 parseSuggestions 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  解析智能建议列表；实现上按协议字段组装或解析 JSON。
  * 作者:      JaTin
- * param [in]  raw  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   strRaw           输入数据，类型 const QString&。
+ * return:    返回 QVector<Suggestion_S> 类型的处理结果，具体含义见功能描述。
  */
-QVector<Suggestion_S> CReplyService::parseSuggestions(const QString& raw) {
-    QVector<Suggestion_S> result;
+QVector<Suggestion_S> CReplyService::parseSuggestions(const QString& strRaw) {
+    QVector<Suggestion_S> aResult;
 
-    QString text = raw.trimmed();
-    const int begin = text.indexOf(QLatin1Char('['));
-    const int end = text.lastIndexOf(QLatin1Char(']'));
+    QString strText = strRaw.trimmed();
+    const int nBegin = strText.indexOf(QLatin1Char('['));
+    const int nEnd = strText.lastIndexOf(QLatin1Char(']'));
 
     /* 1) 优先按 JSON 数组解析（模型可能包一层代码块） */
-    if (begin >= 0 && end > begin) {
-        const QByteArray candidate = text.mid(begin, end - begin + 1).toUtf8();
-        QJsonParseError parseError{};
-        const QJsonDocument doc = QJsonDocument::fromJson(candidate, &parseError);
-        if (parseError.error == QJsonParseError::NoError && doc.isArray()) {
-            for (const QJsonValue& value : doc.array()) {
-                if (value.isObject()) {
+    if (nBegin >= 0 && nEnd > nBegin) {
+        const QByteArray byCandidate = strText.mid(nBegin, nEnd - nBegin + 1).toUtf8();
+        QJsonParseError stParseError{};
+        const QJsonDocument stDoc = QJsonDocument::fromJson(byCandidate, &stParseError);
+        if (stParseError.error == QJsonParseError::NoError && stDoc.isArray()) {
+            for (const QJsonValue& stValue : stDoc.array()) {
+                if (stValue.isObject()) {
                     /* 新格式：{"en": "...", "zh": "..."} */
-                    const QJsonObject obj = value.toObject();
-                    Suggestion_S item;
-                    item.english = obj.value(QStringLiteral("en")).toString().trimmed();
-                    item.chinese = obj.value(QStringLiteral("zh")).toString().trimmed();
-                    if (item.english.isEmpty()) {
+                    const QJsonObject stObj = stValue.toObject();
+                    Suggestion_S strItem;
+                    strItem.english = stObj.value(QStringLiteral("en")).toString().trimmed();
+                    strItem.chinese = stObj.value(QStringLiteral("zh")).toString().trimmed();
+                    if (strItem.english.isEmpty()) {
                         /* 模型偶尔把字段写成 english / chinese */
-                        item.english = obj.value(QStringLiteral("english")).toString().trimmed();
-                        item.chinese = obj.value(QStringLiteral("chinese")).toString().trimmed();
+                        strItem.english = stObj.value(QStringLiteral("english")).toString().trimmed();
+                        strItem.chinese = stObj.value(QStringLiteral("chinese")).toString().trimmed();
                     }
-                    if (!item.english.isEmpty()) result.append(item);
+                    if (!strItem.english.isEmpty()) aResult.append(strItem);
                 } else {
                     /* 兼容旧格式：纯字符串数组 */
-                    const QString item = value.toString().trimmed();
-                    if (!item.isEmpty()) result.append(englishOnly(item));
+                    const QString strItem = stValue.toString().trimmed();
+                    if (!strItem.isEmpty()) aResult.append(englishOnly(strItem));
                 }
             }
         }
     }
 
     /* 2) 退化成按行拆分，去掉 "1." "- " 这类前缀 */
-    if (result.isEmpty()) {
-        static const QRegularExpression prefix(
+    if (aResult.isEmpty()) {
+        static const QRegularExpression stPrefix(
             QStringLiteral("^\\s*(?:[-*•]|\\d+[.、)])\\s*"));
-        for (const QString& line : text.split(QLatin1Char('\n'))) {
-            QString item = line.trimmed();
-            item.remove(prefix);
-            item.remove(QLatin1Char('"'));
-            if (item.isEmpty() || item.startsWith(QLatin1Char('[')) || item.startsWith(QLatin1Char(']'))) {
+        for (const QString& strLine : strText.split(QLatin1Char('\n'))) {
+            QString strItem = strLine.trimmed();
+            strItem.remove(stPrefix);
+            strItem.remove(QLatin1Char('"'));
+            if (strItem.isEmpty() || strItem.startsWith(QLatin1Char('[')) || strItem.startsWith(QLatin1Char(']'))) {
                 continue;
             }
-            result.append(englishOnly(item));
+            aResult.append(englishOnly(strItem));
         }
     }
 
     /* 最多 3 条，太长的不像建议 */
-    while (result.size() > kMaxSuggestions) result.removeLast();
-    for (int i = result.size() - 1; i >= 0; --i) {
-        if (result.at(i).english.size() > kMaxEnglishLength) result.removeAt(i);
+    while (aResult.size() > kMaxSuggestions) aResult.removeLast();
+    for (int i = aResult.size() - 1; i >= 0; --i) {
+        if (aResult.at(i).english.size() > kMaxEnglishLength) aResult.removeAt(i);
     }
-    return result;
+    return aResult;
 }

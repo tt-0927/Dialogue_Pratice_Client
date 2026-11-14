@@ -17,79 +17,78 @@
 #include <QPainterPath>
 
 /*
- * 功能描述:  执行 CAvatar 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  构造 CAvatar 对象，完成成员初始化与依赖注入。
  * 作者:      JaTin
- * param [in]  parent  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget* parent) : QWidget(。
+ * return:    无返回值（构造函数或析构函数）。
  */
-CAvatar::CAvatar(QWidget* parent) : QWidget(parent) {
+CAvatar::CAvatar(QWidget* pParent) : QWidget(pParent) {
     setAttribute(Qt::WA_TransparentForMouseEvents, false);
 }
 
 /*
- * 功能描述:  执行 setText 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  设置文本。
  * 作者:      JaTin
- * param [in]  text  参数。
- * return:    void
+ * param [in]   strText          消息文本，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CAvatar::setText(const QString& text) {
-    m_strText = text.left(1).toUpper();
+void CAvatar::setText(const QString& strText) {
+    m_strText = strText.left(1).toUpper();
     update();
 }
 
 /*
- * 功能描述:  执行 setColor 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  设置颜色。
  * 作者:      JaTin
- * param [in]  color  参数。
- * return:    void
+ * param [in]   stColor          颜色，类型 const QColor&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CAvatar::setColor(const QColor& color) {
-    m_stColor = color;
+void CAvatar::setColor(const QColor& stColor) {
+    m_stColor = stColor;
     update();
 }
 
 /*
- * 功能描述:  执行 setFontPx 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  设置字体 px。
  * 作者:      JaTin
- * param [in]  px  参数。
- * return:    void
+ * param [in]   nPx              输入数据，类型 int。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CAvatar::setFontPx(int px) {
-    m_nFontPx = px;
+void CAvatar::setFontPx(int nPx) {
+    m_nFontPx = nPx;
     update();
 }
 
 /*
- * 功能描述:  执行 colorForId 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  获取颜色 for 编号。
  * 作者:      JaTin
- * param [in]  id  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   lId              编号，类型 qint64。
+ * return:    返回 QColor 类型的处理结果，具体含义见功能描述。
  */
-QColor CAvatar::colorForId(qint64 id) {
-    return theme::avatarColorFor(id);
+QColor CAvatar::colorForId(qint64 lId) {
+    return theme::avatarColorFor(lId);
 }
 
 /*
- * 功能描述:  执行 paintEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  绘制事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CAvatar::paintEvent(QPaintEvent* /*event*/) {
-    QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing, true);
+    QPainter stP(this);
+    stP.setRenderHint(QPainter::Antialiasing, true);
 
-    const QRectF r = rect().adjusted(0, 0, -1, -1);
-    p.setPen(Qt::NoPen);
-    p.setBrush(m_stColor);
-    p.drawEllipse(r);
+    const QRectF stR = rect().adjusted(0, 0, -1, -1);
+    stP.setPen(Qt::NoPen);
+    stP.setBrush(m_stColor);
+    stP.drawEllipse(stR);
 
     if (m_strText.isEmpty()) return;
 
-    QFont f = font();
-    f.setPixelSize(m_nFontPx);
-    f.setBold(true);
-    p.setFont(f);
-    p.setPen(Qt::white);
-    p.drawText(r, Qt::AlignCenter, m_strText);
+    QFont stF = font();
+    stF.setPixelSize(m_nFontPx);
+    stF.setBold(true);
+    stP.setFont(stF);
+    stP.setPen(Qt::white);
+    stP.drawText(stR, Qt::AlignCenter, m_strText);
 }

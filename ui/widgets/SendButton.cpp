@@ -16,79 +16,78 @@
 #include <QPaintEvent>
 
 /*
- * 功能描述:  执行 CSendButton 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  构造 CSendButton 对象，完成成员初始化与依赖注入。
  * 作者:      JaTin
- * param [in]  parent  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget* parent) : QAbstractButton(。
+ * return:    无返回值（构造函数或析构函数）。
  */
-CSendButton::CSendButton(QWidget* parent) : QAbstractButton(parent) {
+CSendButton::CSendButton(QWidget* pParent) : QAbstractButton(pParent) {
     setCursor(Qt::PointingHandCursor);
     setFixedSize(40, 40);
     setToolTip(QStringLiteral("发送 (Enter)"));
 }
 
 /*
- * 功能描述:  执行 enterEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  进入事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * param [in]   pEvent           事件，类型 QEnterEvent*。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CSendButton::enterEvent(QEnterEvent* event) {
+void CSendButton::enterEvent(QEnterEvent* pEvent) {
     m_nHovered = true;
     update();
-    QAbstractButton::enterEvent(event);
+    QAbstractButton::enterEvent(pEvent);
 }
 
 /*
- * 功能描述:  执行 leaveEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  退出事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * param [in]   pEvent           事件，类型 QEvent*。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CSendButton::leaveEvent(QEvent* event) {
+void CSendButton::leaveEvent(QEvent* pEvent) {
     m_nHovered = false;
     update();
-    QAbstractButton::leaveEvent(event);
+    QAbstractButton::leaveEvent(pEvent);
 }
 
 /*
- * 功能描述:  执行 paintEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  绘制事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CSendButton::paintEvent(QPaintEvent* /*event*/) {
-    QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing, true);
+    QPainter stP(this);
+    stP.setRenderHint(QPainter::Antialiasing, true);
 
-    const QRectF r = rect().adjusted(0.5, 0.5, -0.5, -0.5);
+    const QRectF stR = rect().adjusted(0.5, 0.5, -0.5, -0.5);
 
-    QColor bg = theme::accent;
+    QColor stBg = theme::accent;
     if (!isEnabled()) {
-        bg = QColor("#B9D4F2");
+        stBg = QColor("#B9D4F2");
     } else if (isDown()) {
-        bg = theme::accentPressed;
+        stBg = theme::accentPressed;
     } else if (m_nHovered) {
-        bg = theme::accentHover;
+        stBg = theme::accentHover;
     }
 
-    p.setPen(Qt::NoPen);
-    p.setBrush(bg);
-    p.drawEllipse(r);
+    stP.setPen(Qt::NoPen);
+    stP.setBrush(stBg);
+    stP.drawEllipse(stR);
 
     /* 纸飞机：以 40x40 为基准绘制 */
-    const qreal s = r.width() / 40.0;
-    p.translate(r.topLeft());
-    p.scale(s, s);
+    const qreal stS = stR.width() / 40.0;
+    stP.translate(stR.topLeft());
+    stP.scale(stS, stS);
 
-    QPainterPath plane;
-    plane.moveTo(10.0, 19.6);
-    plane.lineTo(30.0, 10.8);
-    plane.lineTo(23.2, 29.2);
-    plane.lineTo(19.4, 21.3);
-    plane.closeSubpath();
+    QPainterPath stPlane;
+    stPlane.moveTo(10.0, 19.6);
+    stPlane.lineTo(30.0, 10.8);
+    stPlane.lineTo(23.2, 29.2);
+    stPlane.lineTo(19.4, 21.3);
+    stPlane.closeSubpath();
 
-    p.setBrush(Qt::white);
-    p.setPen(Qt::NoPen);
-    p.drawPath(plane);
+    stP.setBrush(Qt::white);
+    stP.setPen(Qt::NoPen);
+    stP.drawPath(stPlane);
 }

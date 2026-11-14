@@ -28,177 +28,177 @@
 namespace {
 
 /*
- * 功能描述:  执行 makeKeyLabel 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  构造密钥标签；实现上创建 Qt 控件并纳入父子对象树。
  * 作者:      JaTin
- * param [in]  text  参数。
- * param [in]  parent  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   strText          消息文本，类型 const QString&。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget*。
+ * return:    成功返回对象指针；未找到或失败时返回 nullptr。
  */
-QLabel* makeKeyLabel(const QString& text, QWidget* parent) {
+QLabel* makeKeyLabel(const QString& strText, QWidget* pParent) {
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
-    auto* label = new QLabel(text, parent);
-    label->setObjectName("KeyLabel");
-    label->setFixedWidth(76);
-    label->setAlignment(Qt::AlignLeft | Qt::AlignTop);
-    return label;
+    auto* pLabel = new QLabel(strText, pParent);
+    pLabel->setObjectName("KeyLabel");
+    pLabel->setFixedWidth(76);
+    pLabel->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    return pLabel;
 }
 
 /*
- * 功能描述:  执行 makeValueLabel 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  构造数值标签；实现上创建 Qt 控件并纳入父子对象树。
  * 作者:      JaTin
- * param [in]  parent  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget*。
+ * return:    成功返回对象指针；未找到或失败时返回 nullptr。
  */
-QLabel* makeValueLabel(QWidget* parent) {
+QLabel* makeValueLabel(QWidget* pParent) {
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
-    auto* label = new QLabel(parent);
-    label->setObjectName("ValueLabel");
-    label->setWordWrap(true);
-    label->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    return label;
+    auto* pLabel = new QLabel(pParent);
+    pLabel->setObjectName("ValueLabel");
+    pLabel->setWordWrap(true);
+    pLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    return pLabel;
 }
 
 /* namespace */
 }
 
 /*
- * 功能描述:  执行 CHomePage 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  构造 CHomePage 对象，完成成员初始化与依赖注入。
  * 作者:      JaTin
- * param [in]  parent  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget* parent) : QWidget(。
+ * return:    无返回值（构造函数或析构函数）。
  */
-CHomePage::CHomePage(QWidget* parent) : QWidget(parent) {
+CHomePage::CHomePage(QWidget* pParent) : QWidget(pParent) {
     setObjectName("AppRoot");
 
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
-    auto* root = new QVBoxLayout(this);
-    root->setContentsMargins(0, 0, 0, 0);
-    root->setSpacing(0);
+    auto* pRoot = new QVBoxLayout(this);
+    pRoot->setContentsMargins(0, 0, 0, 0);
+    pRoot->setSpacing(0);
 
     /* ---- 顶栏 ---- */
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
-    auto* topBar = new QFrame(this);
-    topBar->setObjectName("TopBar");
-    topBar->setFixedHeight(60);
-    auto* topLayout = new QHBoxLayout(topBar);
-    topLayout->setContentsMargins(24, 0, 24, 0);
-    topLayout->setSpacing(12);
+    auto* pTopBar = new QFrame(this);
+    pTopBar->setObjectName("TopBar");
+    pTopBar->setFixedHeight(60);
+    auto* pTopLayout = new QHBoxLayout(pTopBar);
+    pTopLayout->setContentsMargins(24, 0, 24, 0);
+    pTopLayout->setSpacing(12);
 
-    auto* appTitle = new QLabel(QStringLiteral("Dialogue Pratice"), topBar);
-    appTitle->setObjectName("AppTitle");
-    topLayout->addWidget(appTitle);
-    topLayout->addStretch(1);
+    auto* pAppTitle = new QLabel(QStringLiteral("Dialogue Pratice"), pTopBar);
+    pAppTitle->setObjectName("AppTitle");
+    pTopLayout->addWidget(pAppTitle);
+    pTopLayout->addStretch(1);
 
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
-    m_pServerLabel = new QLabel(topBar);
+    m_pServerLabel = new QLabel(pTopBar);
     m_pServerLabel->setObjectName("HintLabel");
-    topLayout->addWidget(m_pServerLabel);
+    pTopLayout->addWidget(m_pServerLabel);
 
-    auto* logoutBtn = new QPushButton(QStringLiteral("退出登录"), topBar);
-    logoutBtn->setObjectName("LinkButton");
-    logoutBtn->setCursor(Qt::PointingHandCursor);
-    topLayout->addWidget(logoutBtn);
+    auto* pLogoutBtn = new QPushButton(QStringLiteral("退出登录"), pTopBar);
+    pLogoutBtn->setObjectName("LinkButton");
+    pLogoutBtn->setCursor(Qt::PointingHandCursor);
+    pTopLayout->addWidget(pLogoutBtn);
 
-    root->addWidget(topBar);
+    pRoot->addWidget(pTopBar);
 
     /* ---- 主体 ---- */
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
-    auto* body = new QWidget(this);
-    auto* bodyLayout = new QVBoxLayout(body);
-    bodyLayout->setContentsMargins(24, 28, 24, 28);
-    bodyLayout->addStretch(1);
+    auto* pBody = new QWidget(this);
+    auto* pBodyLayout = new QVBoxLayout(pBody);
+    pBodyLayout->setContentsMargins(24, 28, 24, 28);
+    pBodyLayout->addStretch(1);
 
-    auto* card = new QFrame(body);
-    m_pCard = card;
-    card->setObjectName("Card");
+    auto* pCard = new QFrame(pBody);
+    m_pCard = pCard;
+    pCard->setObjectName("Card");
     /* 初始值，resizeEvent 会再校准 */
-    card->setFixedWidth(core::ui::cardWidth(width(), 560));
+    pCard->setFixedWidth(core::ui::cardWidth(width(), 560));
 
-    auto* shadow = new QGraphicsDropShadowEffect(card);
-    shadow->setBlurRadius(36);
-    shadow->setOffset(0, 10);
-    shadow->setColor(QColor(16, 24, 40, 26));
-    card->setGraphicsEffect(shadow);
+    auto* pShadow = new QGraphicsDropShadowEffect(pCard);
+    pShadow->setBlurRadius(36);
+    pShadow->setOffset(0, 10);
+    pShadow->setColor(QColor(16, 24, 40, 26));
+    pCard->setGraphicsEffect(pShadow);
 
-    auto* cardLayout = new QVBoxLayout(card);
-    cardLayout->setContentsMargins(32, 28, 32, 28);
-    cardLayout->setSpacing(16);
+    auto* pCardLayout = new QVBoxLayout(pCard);
+    pCardLayout->setContentsMargins(32, 28, 32, 28);
+    pCardLayout->setSpacing(16);
 
     /* 头像 + 姓名 */
-    auto* headerRow = new QHBoxLayout();
-    headerRow->setSpacing(16);
+    auto* pHeaderRow = new QHBoxLayout();
+    pHeaderRow->setSpacing(16);
 
-    m_pAvatar = new CAvatar(card);
+    m_pAvatar = new CAvatar(pCard);
     m_pAvatar->setFixedSize(72, 72);
     m_pAvatar->setFontPx(30);
-    headerRow->addWidget(m_pAvatar, 0, Qt::AlignTop);
+    pHeaderRow->addWidget(m_pAvatar, 0, Qt::AlignTop);
 
-    auto* nameColumn = new QVBoxLayout();
-    nameColumn->setSpacing(4);
+    auto* pNameColumn = new QVBoxLayout();
+    pNameColumn->setSpacing(4);
 
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
-    m_pNameLabel = new QLabel(card);
+    m_pNameLabel = new QLabel(pCard);
     m_pNameLabel->setStyleSheet(QStringLiteral("font-size: 18pt; font-weight: 700;"));
-    nameColumn->addWidget(m_pNameLabel);
+    pNameColumn->addWidget(m_pNameLabel);
 
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
-    m_pIdLabel = new QLabel(card);
+    m_pIdLabel = new QLabel(pCard);
     m_pIdLabel->setObjectName("SubTitle");
-    nameColumn->addWidget(m_pIdLabel);
-    nameColumn->addStretch(1);
+    pNameColumn->addWidget(m_pIdLabel);
+    pNameColumn->addStretch(1);
 
-    headerRow->addLayout(nameColumn, 1);
-    cardLayout->addLayout(headerRow);
+    pHeaderRow->addLayout(pNameColumn, 1);
+    pCardLayout->addLayout(pHeaderRow);
 
     /* 资料区 */
-    auto* infoBox = new QFrame(card);
-    infoBox->setObjectName("InfoBox");
-    auto* grid = new QGridLayout(infoBox);
-    grid->setContentsMargins(18, 14, 18, 14);
-    grid->setHorizontalSpacing(12);
-    grid->setVerticalSpacing(10);
+    auto* pInfoBox = new QFrame(pCard);
+    pInfoBox->setObjectName("InfoBox");
+    auto* pGrid = new QGridLayout(pInfoBox);
+    pGrid->setContentsMargins(18, 14, 18, 14);
+    pGrid->setHorizontalSpacing(12);
+    pGrid->setVerticalSpacing(10);
 
-    m_pNameValue = makeValueLabel(infoBox);
-    m_pAgeValue = makeValueLabel(infoBox);
-    m_pDescValue = makeValueLabel(infoBox);
+    m_pNameValue = makeValueLabel(pInfoBox);
+    m_pAgeValue = makeValueLabel(pInfoBox);
+    m_pDescValue = makeValueLabel(pInfoBox);
 
-    grid->addWidget(makeKeyLabel(QStringLiteral("姓名"), infoBox), 0, 0);
-    grid->addWidget(m_pNameValue, 0, 1);
-    grid->addWidget(makeKeyLabel(QStringLiteral("年龄"), infoBox), 1, 0);
-    grid->addWidget(m_pAgeValue, 1, 1);
-    grid->addWidget(makeKeyLabel(QStringLiteral("个人描述"), infoBox), 2, 0);
-    grid->addWidget(m_pDescValue, 2, 1);
-    grid->setColumnStretch(1, 1);
+    pGrid->addWidget(makeKeyLabel(QStringLiteral("姓名"), pInfoBox), 0, 0);
+    pGrid->addWidget(m_pNameValue, 0, 1);
+    pGrid->addWidget(makeKeyLabel(QStringLiteral("年龄"), pInfoBox), 1, 0);
+    pGrid->addWidget(m_pAgeValue, 1, 1);
+    pGrid->addWidget(makeKeyLabel(QStringLiteral("个人描述"), pInfoBox), 2, 0);
+    pGrid->addWidget(m_pDescValue, 2, 1);
+    pGrid->setColumnStretch(1, 1);
 
-    cardLayout->addWidget(infoBox);
+    pCardLayout->addWidget(pInfoBox);
 
-    auto* editBtn = new QPushButton(QStringLiteral("编辑个人信息"), card);
-    editBtn->setObjectName("GhostButton");
-    editBtn->setCursor(Qt::PointingHandCursor);
-    editBtn->setMinimumHeight(40);
-    cardLayout->addWidget(editBtn);
+    auto* pEditBtn = new QPushButton(QStringLiteral("编辑个人信息"), pCard);
+    pEditBtn->setObjectName("GhostButton");
+    pEditBtn->setCursor(Qt::PointingHandCursor);
+    pEditBtn->setMinimumHeight(40);
+    pCardLayout->addWidget(pEditBtn);
 
-    auto* divider = new QFrame(card);
-    divider->setObjectName("Divider");
-    divider->setFrameShape(QFrame::HLine);
-    cardLayout->addWidget(divider);
+    auto* pDivider = new QFrame(pCard);
+    pDivider->setObjectName("Divider");
+    pDivider->setFrameShape(QFrame::HLine);
+    pCardLayout->addWidget(pDivider);
 
     /* 房间区 */
-    auto* sectionTitle = new QLabel(QStringLiteral("加入房间"), card);
-    sectionTitle->setObjectName("SectionTitle");
-    cardLayout->addWidget(sectionTitle);
+    auto* pSectionTitle = new QLabel(QStringLiteral("加入房间"), pCard);
+    pSectionTitle->setObjectName("SectionTitle");
+    pCardLayout->addWidget(pSectionTitle);
 
-    auto* sectionHint = new QLabel(
-        QStringLiteral("输入房间号即可加入；房间不存在时会自动创建。"), card);
-    sectionHint->setObjectName("HintLabel");
-    sectionHint->setWordWrap(true);
-    cardLayout->addWidget(sectionHint);
+    auto* pSectionHint = new QLabel(
+        QStringLiteral("输入房间号即可加入；房间不存在时会自动创建。"), pCard);
+    pSectionHint->setObjectName("HintLabel");
+    pSectionHint->setWordWrap(true);
+    pCardLayout->addWidget(pSectionHint);
 
-    auto* roomRow = new QHBoxLayout();
-    roomRow->setSpacing(10);
+    auto* pRoomRow = new QHBoxLayout();
+    pRoomRow->setSpacing(10);
 
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
-    m_pRoomEdit = new QLineEdit(card);
+    m_pRoomEdit = new QLineEdit(pCard);
     m_pRoomEdit->setObjectName("Field");
     m_pRoomEdit->setPlaceholderText(QStringLiteral("房间号，例如 1001"));
     m_pRoomEdit->setMaxLength(32);
@@ -206,47 +206,47 @@ CHomePage::CHomePage(QWidget* parent) : QWidget(parent) {
     m_pRoomEdit->setValidator(new QRegularExpressionValidator(
         QRegularExpression(QStringLiteral("[A-Za-z0-9_-]{0,32}")), m_pRoomEdit));
     m_pRoomEdit->setMinimumHeight(42);
-    roomRow->addWidget(m_pRoomEdit, 1);
+    pRoomRow->addWidget(m_pRoomEdit, 1);
 
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
-    m_pJoinBtn = new QPushButton(QStringLiteral("进入房间"), card);
+    m_pJoinBtn = new QPushButton(QStringLiteral("进入房间"), pCard);
     m_pJoinBtn->setObjectName("PrimaryButton");
     m_pJoinBtn->setCursor(Qt::PointingHandCursor);
     m_pJoinBtn->setMinimumHeight(42);
     m_pJoinBtn->setMinimumWidth(120);
-    roomRow->addWidget(m_pJoinBtn, 0);
+    pRoomRow->addWidget(m_pJoinBtn, 0);
 
-    cardLayout->addLayout(roomRow);
+    pCardLayout->addLayout(pRoomRow);
 
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
-    m_pErrorLabel = new QLabel(card);
+    m_pErrorLabel = new QLabel(pCard);
     m_pErrorLabel->setObjectName("ErrorText");
     m_pErrorLabel->setWordWrap(true);
     m_pErrorLabel->setVisible(false);
-    cardLayout->addWidget(m_pErrorLabel);
+    pCardLayout->addWidget(m_pErrorLabel);
 
-    bodyLayout->addWidget(card, 0, Qt::AlignHCenter);
-    bodyLayout->addStretch(2);
-    root->addWidget(body, 1);
+    pBodyLayout->addWidget(pCard, 0, Qt::AlignHCenter);
+    pBodyLayout->addStretch(2);
+    pRoot->addWidget(pBody, 1);
 
-    connect(editBtn, &QPushButton::clicked, this, &CHomePage::editProfileRequested);
+    connect(pEditBtn, &QPushButton::clicked, this, &CHomePage::editProfileRequested);
     connect(m_pJoinBtn, &QPushButton::clicked, this, &CHomePage::submitRoom);
     connect(m_pRoomEdit, &QLineEdit::returnPressed, this, &CHomePage::submitRoom);
-    connect(logoutBtn, &QPushButton::clicked, this, &CHomePage::logoutRequested);
+    connect(pLogoutBtn, &QPushButton::clicked, this, &CHomePage::logoutRequested);
 }
 
 /*
- * 功能描述:  执行 resizeEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  重新计算尺寸事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * param [in]   pEvent           事件，类型 QResizeEvent*。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CHomePage::resizeEvent(QResizeEvent* event) {
-    QWidget::resizeEvent(event);
+void CHomePage::resizeEvent(QResizeEvent* pEvent) {
+    QWidget::resizeEvent(pEvent);
     if (m_pCard == nullptr) return;
 
-    const int target = core::ui::cardWidth(width(), 560);
-    if (m_pCard->width() != target) m_pCard->setFixedWidth(target);
+    const int nTarget = core::ui::cardWidth(width(), 560);
+    if (m_pCard->width() != nTarget) m_pCard->setFixedWidth(nTarget);
 
     /* 窄屏顶栏塞不下「标题 + 连接状态 + 退出登录」三样， */
     /* 不处理的话标题会被裁成「Dialogue Pr」这种半截文本。 */
@@ -257,67 +257,67 @@ void CHomePage::resizeEvent(QResizeEvent* event) {
 }
 
 /*
- * 功能描述:  执行 setProfile 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  设置个人资料。
  * 作者:      JaTin
- * param [in]  id  参数。
- * param [in]  name  参数。
- * param [in]  age  参数。
- * param [in]  desc  参数。
- * return:    void
+ * param [in]   lId              编号，类型 qint64。
+ * param [in]   strName          名称或昵称，类型 const QString&。
+ * param [in]   nAge             年龄（0 到 150），类型 int。
+ * param [in]   strDesc          个人简介，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CHomePage::setProfile(qint64 id, const QString& name, int age, const QString& desc) {
-    m_pAvatar->setText(name);
-    m_pAvatar->setColor(CAvatar::colorForId(id));
-    m_pNameLabel->setText(name);
-    m_pIdLabel->setText(QStringLiteral("账号 ID %1").arg(id));
-    m_pNameValue->setText(name);
-    m_pAgeValue->setText(age > 0 ? QStringLiteral("%1 岁").arg(age)
+void CHomePage::setProfile(qint64 lId, const QString& strName, int nAge, const QString& strDesc) {
+    m_pAvatar->setText(strName);
+    m_pAvatar->setColor(CAvatar::colorForId(lId));
+    m_pNameLabel->setText(strName);
+    m_pIdLabel->setText(QStringLiteral("账号 ID %1").arg(lId));
+    m_pNameValue->setText(strName);
+    m_pAgeValue->setText(nAge > 0 ? QStringLiteral("%1 岁").arg(nAge)
                                : QStringLiteral("未填写"));
-    m_pDescValue->setText(desc.isEmpty() ? QStringLiteral("还没有填写个人描述")
-                                       : desc);
+    m_pDescValue->setText(strDesc.isEmpty() ? QStringLiteral("还没有填写个人描述")
+                                       : strDesc);
 }
 
 /*
- * 功能描述:  执行 setServerText 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  设置服务端文本。
  * 作者:      JaTin
- * param [in]  text  参数。
- * return:    void
+ * param [in]   strText          消息文本，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CHomePage::setServerText(const QString& text) {
-    m_pServerLabel->setText(text);
+void CHomePage::setServerText(const QString& strText) {
+    m_pServerLabel->setText(strText);
 }
 
 /*
- * 功能描述:  执行 submitRoom 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  提交房间。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CHomePage::submitRoom() {
     clearError();
-    const QString room = m_pRoomEdit->text().trimmed();
-    if (room.isEmpty()) {
+    const QString strRoom = m_pRoomEdit->text().trimmed();
+    if (strRoom.isEmpty()) {
         showError(QStringLiteral("请先输入房间号"));
         m_pRoomEdit->setFocus();
         return;
     }
-    emit joinRoomRequested(room);
+    emit joinRoomRequested(strRoom);
 }
 
 /*
- * 功能描述:  执行 showError 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  显示错误。
  * 作者:      JaTin
- * param [in]  message  参数。
- * return:    void
+ * param [in]   strMessage       消息内容，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CHomePage::showError(const QString& message) {
-    m_pErrorLabel->setText(message);
+void CHomePage::showError(const QString& strMessage) {
+    m_pErrorLabel->setText(strMessage);
     m_pErrorLabel->setVisible(true);
 }
 
 /*
- * 功能描述:  执行 clearError 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  清空错误。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CHomePage::clearError() {
     m_pErrorLabel->clear();
@@ -325,21 +325,21 @@ void CHomePage::clearError() {
 }
 
 /*
- * 功能描述:  执行 setBusy 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  设置busy。
  * 作者:      JaTin
- * param [in]  busy  参数。
- * return:    void
+ * param [in]   nBusy            输入数据，类型 bool。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CHomePage::setBusy(bool busy) {
-    m_pJoinBtn->setEnabled(!busy);
-    m_pJoinBtn->setText(busy ? QStringLiteral("进入中…") : QStringLiteral("进入房间"));
-    m_pRoomEdit->setEnabled(!busy);
+void CHomePage::setBusy(bool nBusy) {
+    m_pJoinBtn->setEnabled(!nBusy);
+    m_pJoinBtn->setText(nBusy ? QStringLiteral("进入中…") : QStringLiteral("进入房间"));
+    m_pRoomEdit->setEnabled(!nBusy);
 }
 
 /*
- * 功能描述:  执行 focusRoomInput 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  聚焦房间输入。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CHomePage::focusRoomInput() {
     m_pRoomEdit->setFocus();

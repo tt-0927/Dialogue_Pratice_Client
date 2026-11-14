@@ -17,65 +17,65 @@
 #include <cstring>
 
 /*
- * 功能描述:  执行 main 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  程序入口：解析命令行参数、初始化服务端并运行事件循环。
  * 作者:      JaTin
- * param [in]  argc  参数。
- * param [in]  argv  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   nArgc            输入数据，类型 int。
+ * param [in]   strArgv          输入数据，类型 char**。
+ * return:    返回处理结果码；0 表示成功，负值或 -1 表示失败。
  */
-int main(int argc, char** argv) {
+int main(int nArgc, char** strArgv) {
     if (qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM")) {
         qputenv("QT_QPA_PLATFORM", "offscreen");
     }
-    QGuiApplication app(argc, argv);
+    QGuiApplication stApp(nArgc, strArgv);
 
     /* rapid 模式：同一句每 800ms 点一次，共 6 次（音频 2.1s，每次都打断上一段） */
-    const bool rapid = (argc > 1 && std::strcmp(argv[1], "rapid") == 0);
-    const int intervalMs = rapid ? 800 : 4000;
-    const int times = rapid ? 6 : 4;
+    const bool nRapid = (nArgc > 1 && std::strcmp(strArgv[1], "rapid") == 0);
+    const int nIntervalMs = nRapid ? 800 : 4000;
+    const int nTimes = nRapid ? 6 : 4;
 
-    CTtsService tts;
-    tts.setPaths(QString::fromUtf8(DP_PIPER_BIN), QString::fromUtf8(DP_PIPER_MODEL));
-    if (!tts.isAvailable()) {
+    CTtsService stTts;
+    stTts.setPaths(QString::fromUtf8(DP_PIPER_BIN), QString::fromUtf8(DP_PIPER_MODEL));
+    if (!stTts.isAvailable()) {
         std::fprintf(stderr, "Piper 不可用\n");
         return 2;
     }
 
-    QObject::connect(&tts, &CTtsService::failed, [](const QString& message) {
+    QObject::connect(&stTts, &CTtsService::failed, [](const QString& message) {
         std::printf("[fail] %s\n", message.toUtf8().constData());
         std::fflush(stdout);
     });
-    QObject::connect(&tts, &CTtsService::speakingChanged, [](bool speaking) {
+    QObject::connect(&stTts, &CTtsService::speakingChanged, [](bool speaking) {
         std::printf("[speaking] %d\n", speaking ? 1 : 0);
         std::fflush(stdout);
     });
 
-    const QStringList texts = {
+    const QStringList strTexts = {
         QStringLiteral("Hello there, this is a short test."),
         QStringLiteral("Hello there, this is a short test."),
         QStringLiteral("Nice to meet you, how are you today?"),
         QStringLiteral("Hello there, this is a short test."),
     };
-    const QString same = QStringLiteral("Hello there, this is a short test.");
+    const QString strSame = QStringLiteral("Hello there, this is a short test.");
 
-    int index = 0;
-    auto fire = [&]() {
-        if (index >= times) {
+    int nIndex = 0;
+    auto stFire = [&]() {
+        if (nIndex >= nTimes) {
             std::printf("=== done ===\n");
             QCoreApplication::quit();
             return;
         }
-        const QString text = rapid ? same : texts.at(index % texts.size());
-        std::printf("=== speak #%d (t=%dms) ===\n", index + 1, index * intervalMs);
+        const QString strText = nRapid ? strSame : strTexts.at(nIndex % strTexts.size());
+        std::printf("=== speak #%d (t=%dms) ===\n", nIndex + 1, nIndex * nIntervalMs);
         std::fflush(stdout);
-        tts.speak(text);
-        ++index;
+        stTts.speak(strText);
+        ++nIndex;
     };
 
-    fire();
-    QTimer timer;
-    QObject::connect(&timer, &QTimer::timeout, fire);
-    timer.start(intervalMs);
+    stFire();
+    QTimer stTimer;
+    QObject::connect(&stTimer, &QTimer::timeout, stFire);
+    stTimer.start(nIntervalMs);
 
-    return app.exec();
+    return stApp.exec();
 }

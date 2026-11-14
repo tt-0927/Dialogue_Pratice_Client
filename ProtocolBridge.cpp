@@ -16,56 +16,56 @@
 namespace {
 
 /*
- * 功能描述:  执行 jstr 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  获取jstr。
  * 作者:      JaTin
- * param [in]  j  参数。
- * param [in]  key  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   stJ              输入数据，类型 const dp::Json&。
+ * param [in]   strKey           缓存键，类型 const char*。
+ * return:    返回构造好的字符串；无内容时返回空字符串。
  */
-QString jstr(const dp::Json& j, const char* key) {
-    const auto it = j.find(key);
-    if (it == j.end() || !it->is_string()) return QString();
-    return QString::fromStdString(it->get<std::string>());
+QString jstr(const dp::Json& stJ, const char* strKey) {
+    const auto stIt = stJ.find(strKey);
+    if (stIt == stJ.end() || !stIt->is_string()) return QString();
+    return QString::fromStdString(stIt->get<std::string>());
 }
 
 /*
- * 功能描述:  执行 jint 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  获取jint。
  * 作者:      JaTin
- * param [in]  j  参数。
- * param [in]  key  参数。
- * param [in]  def  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   stJ              输入数据，类型 const dp::Json&。
+ * param [in]   strKey           缓存键，类型 const char*。
+ * param [in]   lDef             输入数据，类型 qint64。
+ * return:    返回处理结果码；0 表示成功，负值或 -1 表示失败。
  */
-qint64 jint(const dp::Json& j, const char* key, qint64 def = 0) {
-    const auto it = j.find(key);
-    if (it == j.end() || !it->is_number_integer()) return def;
-    return static_cast<qint64>(it->get<long long>());
+qint64 jint(const dp::Json& stJ, const char* strKey, qint64 lDef = 0) {
+    const auto stIt = stJ.find(strKey);
+    if (stIt == stJ.end() || !stIt->is_number_integer()) return lDef;
+    return static_cast<qint64>(stIt->get<long long>());
 }
 
 /*
- * 功能描述:  执行 jbool 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  获取jbool。
  * 作者:      JaTin
- * param [in]  j  参数。
- * param [in]  key  参数。
- * param [in]  false  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   stJ              输入数据，类型 const dp::Json&。
+ * param [in]   strKey           缓存键，类型 const char*。
+ * param [in]   lDef             输入数据，类型 bool。
+ * return:    成功返回 true；参数非法或执行失败时返回 false。
  */
-bool jbool(const dp::Json& j, const char* key, bool def = false) {
-    const auto it = j.find(key);
-    if (it == j.end() || !it->is_boolean()) return def;
-    return it->get<bool>();
+bool jbool(const dp::Json& stJ, const char* strKey, bool lDef = false) {
+    const auto stIt = stJ.find(strKey);
+    if (stIt == stJ.end() || !stIt->is_boolean()) return lDef;
+    return stIt->get<bool>();
 }
 
 /* namespace */
 }
 
 /*
- * 功能描述:  执行 CProtocolBridge 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  构造 CProtocolBridge 对象，完成成员初始化与依赖注入。
  * 作者:      JaTin
- * param [in]  parent  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject* parent) : ChatTransport(。
+ * return:    无返回值（构造函数或析构函数）。
  */
-CProtocolBridge::CProtocolBridge(QObject* parent) : ChatTransport(parent) {
+CProtocolBridge::CProtocolBridge(QObject* pParent) : ChatTransport(pParent) {
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     m_pSocket = new QTcpSocket(this);
 
@@ -97,26 +97,26 @@ CProtocolBridge::CProtocolBridge(QObject* parent) : ChatTransport(parent) {
 }
 
 /*
- * 功能描述:  执行 connectToServer 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  建立连接to 服务端。
  * 作者:      JaTin
- * param [in]  host  参数。
- * param [in]  port  参数。
- * return:    void
+ * param [in]   strHost          服务器主机地址，类型 const QString&。
+ * param [in]   uPort            服务器端口，类型 quint16。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CProtocolBridge::connectToServer(const QString& host, quint16 port) {
+void CProtocolBridge::connectToServer(const QString& strHost, quint16 uPort) {
     if (m_pSocket->state() != QAbstractSocket::UnconnectedState) {
         m_pSocket->abort();
     }
     m_stDecoder = dp::CFrameDecoder();
     m_nConnecting = true;
-    m_pSocket->connectToHost(host, port);
+    m_pSocket->connectToHost(strHost, uPort);
     m_pConnectTimer->start();
 }
 
 /*
- * 功能描述:  执行 disconnectFromServer 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  断开连接from 服务端。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CProtocolBridge::disconnectFromServer() {
     if (m_pSocket->state() == QAbstractSocket::ConnectedState) {
@@ -127,18 +127,18 @@ void CProtocolBridge::disconnectFromServer() {
 }
 
 /*
- * 功能描述:  执行 isConnected 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  判断connected。
  * 作者:      JaTin
- * return:    返回值，含义见功能描述。
+ * return:    成功返回 true；参数非法或执行失败时返回 false。
  */
 bool CProtocolBridge::isConnected() const {
     return m_pSocket->state() == QAbstractSocket::ConnectedState;
 }
 
 /*
- * 功能描述:  执行 onConnected 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  连接建立后恢复房间上下文并拉取历史消息。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CProtocolBridge::onConnected() {
     m_nConnecting = false;
@@ -148,9 +148,9 @@ void CProtocolBridge::onConnected() {
 }
 
 /*
- * 功能描述:  执行 onDisconnected 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  连接断开时清理会话状态并提示用户重新连接。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CProtocolBridge::onDisconnected() {
     m_pPingTimer->stop();
@@ -159,13 +159,13 @@ void CProtocolBridge::onDisconnected() {
 }
 
 /*
- * 功能描述:  执行 onSocketError 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  执行on 套接字错误。
  * 作者:      JaTin
- * param [in]  error  参数。
- * return:    void
+ * param [in]   stError          错误信息，类型 QAbstractSocket::SocketError。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CProtocolBridge::onSocketError(QAbstractSocket::SocketError error) {
-    if (error == QAbstractSocket::RemoteHostClosedError) {
+void CProtocolBridge::onSocketError(QAbstractSocket::SocketError stError) {
+    if (stError == QAbstractSocket::RemoteHostClosedError) {
         /* 交给 disconnected() 统一处理，避免重复提示 */
         return;
     }
@@ -177,123 +177,123 @@ void CProtocolBridge::onSocketError(QAbstractSocket::SocketError error) {
 }
 
 /*
- * 功能描述:  执行 onReadyRead 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  读取onready。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CProtocolBridge::onReadyRead() {
-    const QByteArray data = m_pSocket->readAll();
-    m_stDecoder.append(data.constData(), static_cast<size_t>(data.size()));
+    const QByteArray byData = m_pSocket->readAll();
+    m_stDecoder.append(byData.constData(), static_cast<size_t>(byData.size()));
 
     for (;;) {
-        dp::Frame_S frame;
-        const dp::CFrameDecoder::Result_EN r = m_stDecoder.next(frame);
-        if (r == dp::CFrameDecoder::NeedMore) break;
-        if (r == dp::CFrameDecoder::Fatal) {
+        dp::Frame_S stFrame;
+        const dp::CFrameDecoder::Result_EN stR = m_stDecoder.next(stFrame);
+        if (stR == dp::CFrameDecoder::NeedMore) break;
+        if (stR == dp::CFrameDecoder::Fatal) {
             emit networkError(QStringLiteral("协议错误：%1")
                                   .arg(QString::fromStdString(m_stDecoder.lastError())));
             m_pSocket->abort();
             return;
         }
-        handleFrame(frame);
+        handleFrame(stFrame);
     }
 }
 
 /*
- * 功能描述:  执行 handleFrame 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  处理协议帧。
  * 作者:      JaTin
- * param [in]  frame  参数。
- * return:    void
+ * param [in]   stFrame          协议帧，类型 const dp::Frame_S&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CProtocolBridge::handleFrame(const dp::Frame_S& frame) {
-    dp::Json j = dp::Json::object();
-    if (!frame.payload.empty()) {
-        j = dp::Json::parse(frame.payload, nullptr, false);
-        if (j.is_discarded() || !j.is_object()) {
+void CProtocolBridge::handleFrame(const dp::Frame_S& stFrame) {
+    dp::Json stJ = dp::Json::object();
+    if (!stFrame.payload.empty()) {
+        stJ = dp::Json::parse(stFrame.payload, nullptr, false);
+        if (stJ.is_discarded() || !stJ.is_object()) {
             emit networkError(QStringLiteral("服务端返回了非法 JSON"));
             return;
         }
     }
 
-    switch (frame.op) {
+    switch (stFrame.op) {
         case dp::OpCode_EN::LoginResp:
-            emit loginSucceeded(jint(j, "userId"), jstr(j, "name"),
-                                static_cast<int>(jint(j, "age")), jstr(j, "desc"));
+            emit loginSucceeded(jint(stJ, "userId"), jstr(stJ, "name"),
+                                static_cast<int>(jint(stJ, "age")), jstr(stJ, "desc"));
             break;
 
         case dp::OpCode_EN::ProfileResp:
-            emit profileUpdated(jint(j, "userId"), jstr(j, "name"),
-                                static_cast<int>(jint(j, "age")), jstr(j, "desc"));
+            emit profileUpdated(jint(stJ, "userId"), jstr(stJ, "name"),
+                                static_cast<int>(jint(stJ, "age")), jstr(stJ, "desc"));
             break;
 
         case dp::OpCode_EN::RoomState: {
-            QVector<MemberInfo_S> members;
-            const auto it = j.find("members");
-            if (it != j.end() && it->is_array()) {
-                for (const auto& m : *it) {
-                    MemberInfo_S info;
-                    info.id = jint(m, "id");
-                    info.name = jstr(m, "name");
-                    members.push_back(info);
+            QVector<MemberInfo_S> aMembers;
+            const auto stIt = stJ.find("members");
+            if (stIt != stJ.end() && stIt->is_array()) {
+                for (const auto& stM : *stIt) {
+                    MemberInfo_S stInfo;
+                    stInfo.id = jint(stM, "id");
+                    stInfo.name = jstr(stM, "name");
+                    aMembers.push_back(stInfo);
                 }
             }
-            emit roomJoined(jstr(j, "room"), jbool(j, "created", false), members);
+            emit roomJoined(jstr(stJ, "room"), jbool(stJ, "created", false), aMembers);
             break;
         }
 
         case dp::OpCode_EN::ChatPush:
-            emit chatReceived(jint(j, "seq"), jint(j, "from"), jstr(j, "name"), jstr(j, "room"),
-                              jstr(j, "text"), jint(j, "ts"));
+            emit chatReceived(jint(stJ, "seq"), jint(stJ, "from"), jstr(stJ, "name"), jstr(stJ, "room"),
+                              jstr(stJ, "text"), jint(stJ, "ts"));
             break;
 
         case dp::OpCode_EN::VoicePush: {
-            const std::string b64 = jstr(j, "opus").toStdString();
-            const std::string raw = dp::base64Decode(b64);
-            emit voiceReceived(jint(j, "seq"), jint(j, "from"), jstr(j, "name"), jstr(j, "room"),
-                               QByteArray(raw.data(), static_cast<int>(raw.size())),
-                               static_cast<int>(jint(j, "durationMs")), jint(j, "ts"));
+            const std::string strB64 = jstr(stJ, "opus").toStdString();
+            const std::string strRaw = dp::base64Decode(strB64);
+            emit voiceReceived(jint(stJ, "seq"), jint(stJ, "from"), jstr(stJ, "name"), jstr(stJ, "room"),
+                               QByteArray(strRaw.data(), static_cast<int>(strRaw.size())),
+                               static_cast<int>(jint(stJ, "durationMs")), jint(stJ, "ts"));
             break;
         }
 
         case dp::OpCode_EN::HistoryResp: {
-            QVector<ChatMessage_S> messages;
-            const auto it = j.find("messages");
-            if (it != j.end() && it->is_array()) {
-                messages.reserve(static_cast<int>(it->size()));
-                for (const auto& m : *it) {
-                    ChatMessage_S msg;
-                    msg.seq = jint(m, "seq");
-                    msg.from = jint(m, "from");
-                    msg.name = jstr(m, "name");
-                    msg.ts = jint(m, "ts");
+            QVector<ChatMessage_S> aMessages;
+            const auto stIt = stJ.find("messages");
+            if (stIt != stJ.end() && stIt->is_array()) {
+                aMessages.reserve(static_cast<int>(stIt->size()));
+                for (const auto& stM : *stIt) {
+                    ChatMessage_S stMsg;
+                    stMsg.seq = jint(stM, "seq");
+                    stMsg.from = jint(stM, "from");
+                    stMsg.name = jstr(stM, "name");
+                    stMsg.ts = jint(stM, "ts");
 
                     /* kind 缺省视为 text，兼容没有该字段的旧服务端 */
-                    const std::string kind = jstr(m, "kind").toStdString();
-                    if (kind == "voice") {
-                        msg.kind = MessageKind_EN::Voice;
-                        msg.durationMs = jint(m, "durationMs");
-                        const std::string b64 = jstr(m, "opus").toStdString();
-                        const std::string raw = dp::base64Decode(b64);
-                        msg.audio = QByteArray(raw.data(), static_cast<int>(raw.size()));
+                    const std::string strKind = jstr(stM, "kind").toStdString();
+                    if (strKind == "voice") {
+                        stMsg.kind = MessageKind_EN::Voice;
+                        stMsg.durationMs = jint(stM, "durationMs");
+                        const std::string strB64 = jstr(stM, "opus").toStdString();
+                        const std::string strRaw = dp::base64Decode(strB64);
+                        stMsg.audio = QByteArray(strRaw.data(), static_cast<int>(strRaw.size()));
                     } else {
-                        msg.kind = MessageKind_EN::Text;
-                        msg.text = jstr(m, "text");
+                        stMsg.kind = MessageKind_EN::Text;
+                        stMsg.text = jstr(stM, "text");
                     }
-                    messages.push_back(msg);
+                    aMessages.push_back(stMsg);
                 }
             }
-            emit historyReceived(jstr(j, "room"), messages);
+            emit historyReceived(jstr(stJ, "room"), aMessages);
             break;
         }
 
         case dp::OpCode_EN::SystemMsg:
-            emit systemMessage(jstr(j, "event"), jstr(j, "room"), jint(j, "userId"),
-                               jstr(j, "name"), jstr(j, "oldName"), jstr(j, "text"),
-                               jint(j, "ts"));
+            emit systemMessage(jstr(stJ, "event"), jstr(stJ, "room"), jint(stJ, "userId"),
+                               jstr(stJ, "name"), jstr(stJ, "oldName"), jstr(stJ, "text"),
+                               jint(stJ, "ts"));
             break;
 
         case dp::OpCode_EN::ErrorMsg:
-            emit serverError(jstr(j, "code"), jstr(j, "text"));
+            emit serverError(jstr(stJ, "code"), jstr(stJ, "text"));
             break;
 
         case dp::OpCode_EN::Pong:
@@ -307,96 +307,96 @@ void CProtocolBridge::handleFrame(const dp::Frame_S& frame) {
 }
 
 /*
- * 功能描述:  执行 sendJson 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  发送JSON 对象；实现上向目标会话或整个房间下发数据。
  * 作者:      JaTin
- * param [in]  op  参数。
- * param [in]  payload  参数。
- * return:    void
+ * param [in]   enOp             协议操作码，类型 dp::OpCode_EN。
+ * param [in]   stPayload        协议载荷内容，类型 const dp::Json&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CProtocolBridge::sendJson(dp::OpCode_EN op, const dp::Json& payload) {
+void CProtocolBridge::sendJson(dp::OpCode_EN enOp, const dp::Json& stPayload) {
     if (m_pSocket->state() != QAbstractSocket::ConnectedState) return;
-    const std::string frame = dp::encodeFrame(op, payload);
-    m_pSocket->write(frame.data(), static_cast<qint64>(frame.size()));
+    const std::string stFrame = dp::encodeFrame(enOp, stPayload);
+    m_pSocket->write(stFrame.data(), static_cast<qint64>(stFrame.size()));
 }
 
 /*
- * 功能描述:  执行 login 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  完成登录login；实现上向目标会话或整个房间下发数据。
  * 作者:      JaTin
- * param [in]  name  参数。
- * param [in]  age  参数。
- * param [in]  desc  参数。
- * return:    void
+ * param [in]   strName          名称或昵称，类型 const QString&。
+ * param [in]   nAge             年龄（0 到 150），类型 int。
+ * param [in]   strDesc          个人简介，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CProtocolBridge::login(const QString& name, int age, const QString& desc) {
-    dp::Json j = dp::Json::object();
-    j["name"] = name.toStdString();
-    j["age"] = age;
-    j["desc"] = desc.toStdString();
-    sendJson(dp::OpCode_EN::Login, j);
+void CProtocolBridge::login(const QString& strName, int nAge, const QString& strDesc) {
+    dp::Json stJ = dp::Json::object();
+    stJ["name"] = strName.toStdString();
+    stJ["age"] = nAge;
+    stJ["desc"] = strDesc.toStdString();
+    sendJson(dp::OpCode_EN::Login, stJ);
 }
 
 /*
- * 功能描述:  执行 updateProfile 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  更新个人资料；实现上向目标会话或整个房间下发数据。
  * 作者:      JaTin
- * param [in]  name  参数。
- * param [in]  age  参数。
- * param [in]  desc  参数。
- * return:    void
+ * param [in]   strName          名称或昵称，类型 const QString&。
+ * param [in]   nAge             年龄（0 到 150），类型 int。
+ * param [in]   strDesc          个人简介，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CProtocolBridge::updateProfile(const QString& name, int age, const QString& desc) {
-    dp::Json j = dp::Json::object();
-    j["name"] = name.toStdString();
-    j["age"] = age;
-    j["desc"] = desc.toStdString();
-    sendJson(dp::OpCode_EN::UpdateProfile, j);
+void CProtocolBridge::updateProfile(const QString& strName, int nAge, const QString& strDesc) {
+    dp::Json stJ = dp::Json::object();
+    stJ["name"] = strName.toStdString();
+    stJ["age"] = nAge;
+    stJ["desc"] = strDesc.toStdString();
+    sendJson(dp::OpCode_EN::UpdateProfile, stJ);
 }
 
 /*
- * 功能描述:  执行 joinRoom 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  加入房间；实现上向目标会话或整个房间下发数据。
  * 作者:      JaTin
- * param [in]  room  参数。
- * return:    void
+ * param [in]   strRoom          房间号，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CProtocolBridge::joinRoom(const QString& room) {
-    dp::Json j = dp::Json::object();
-    j["room"] = room.toStdString();
-    sendJson(dp::OpCode_EN::JoinRoom, j);
+void CProtocolBridge::joinRoom(const QString& strRoom) {
+    dp::Json stJ = dp::Json::object();
+    stJ["room"] = strRoom.toStdString();
+    sendJson(dp::OpCode_EN::JoinRoom, stJ);
 }
 
 /*
- * 功能描述:  执行 leaveRoom 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  退出房间；实现上向目标会话或整个房间下发数据。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CProtocolBridge::leaveRoom() {
     sendJson(dp::OpCode_EN::LeaveRoom, dp::Json::object());
 }
 
 /*
- * 功能描述:  执行 sendChat 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  发送chat；实现上向目标会话或整个房间下发数据。
  * 作者:      JaTin
- * param [in]  text  参数。
- * return:    void
+ * param [in]   strText          消息文本，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CProtocolBridge::sendChat(const QString& text) {
-    dp::Json j = dp::Json::object();
-    j["text"] = text.toStdString();
-    sendJson(dp::OpCode_EN::Chat, j);
+void CProtocolBridge::sendChat(const QString& strText) {
+    dp::Json stJ = dp::Json::object();
+    stJ["text"] = strText.toStdString();
+    sendJson(dp::OpCode_EN::Chat, stJ);
 }
 
 /*
- * 功能描述:  执行 sendVoice 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  发送语音消息；实现上向目标会话或整个房间下发数据。
  * 作者:      JaTin
- * param [in]  audio  参数。
- * param [in]  durationMs  参数。
- * return:    void
+ * param [in]   byAudio          Opus 编码的音频数据，类型 const QByteArray&。
+ * param [in]   nDurationMs      语音时长，单位毫秒，类型 int。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CProtocolBridge::sendVoice(const QByteArray& audio, int durationMs) {
-    if (audio.isEmpty()) return;
+void CProtocolBridge::sendVoice(const QByteArray& byAudio, int nDurationMs) {
+    if (byAudio.isEmpty()) return;
 
-    const std::string raw(audio.constData(), static_cast<size_t>(audio.size()));
-    dp::Json j = dp::Json::object();
-    j["durationMs"] = durationMs;
-    j["opus"] = dp::base64Encode(raw);
-    sendJson(dp::OpCode_EN::Voice, j);
+    const std::string strRaw(byAudio.constData(), static_cast<size_t>(byAudio.size()));
+    dp::Json stJ = dp::Json::object();
+    stJ["durationMs"] = nDurationMs;
+    stJ["opus"] = dp::base64Encode(strRaw);
+    sendJson(dp::OpCode_EN::Voice, stJ);
 }

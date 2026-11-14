@@ -29,27 +29,27 @@ namespace {
 
 /* 诊断模式：只做「WAV -> 文本」，用来在没有麦克风的环境验证语音链路。 */
 /*
- * 功能描述:  执行 runVoiceDiagnostic 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  运行语音消息 diagnostic；实现上连接 Qt 信号与槽。
  * 作者:      JaTin
- * param [in]  wavPath  参数。
- * param [in]  modelPath  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   strWavPath       输入数据，类型 const QString&。
+ * param [in]   strModelPath     输入数据，类型 const QString&。
+ * return:    返回处理结果码；0 表示成功，负值或 -1 表示失败。
  */
-int runVoiceDiagnostic(const QString& wavPath, const QString& modelPath) {
-    CVoiceRecorder voice;
-    voice.setModelPath(modelPath);
+int runVoiceDiagnostic(const QString& strWavPath, const QString& strModelPath) {
+    CVoiceRecorder stVoice;
+    stVoice.setModelPath(strModelPath);
 
-    QObject::connect(&voice, &CVoiceRecorder::modelLoaded, &voice,
-                     [&voice, wavPath](bool ok, const QString& message) {
+    QObject::connect(&stVoice, &CVoiceRecorder::modelLoaded, &stVoice,
+                     [&stVoice, strWavPath](bool ok, const QString& message) {
                          if (!ok) {
                              std::fprintf(stderr, "模型加载失败: %s\n", message.toUtf8().constData());
                              QCoreApplication::exit(2);
                              return;
                          }
-                         voice.transcribeFile(wavPath);
+                         stVoice.transcribeFile(strWavPath);
                      });
 
-    QObject::connect(&voice, &CVoiceRecorder::textReady, &voice,
+    QObject::connect(&stVoice, &CVoiceRecorder::textReady, &stVoice,
                      [](const QString& text, qint64 elapsedMs) {
                          std::printf("%s\n", text.toUtf8().constData());
                          std::fprintf(stderr, "识别耗时 %lld ms\n",
@@ -57,12 +57,12 @@ int runVoiceDiagnostic(const QString& wavPath, const QString& modelPath) {
                          QCoreApplication::exit(0);
                      });
 
-    QObject::connect(&voice, &CVoiceRecorder::failed, &voice, [](const QString& message) {
+    QObject::connect(&stVoice, &CVoiceRecorder::failed, &stVoice, [](const QString& message) {
         std::fprintf(stderr, "识别失败: %s\n", message.toUtf8().constData());
         QCoreApplication::exit(3);
     });
 
-    voice.start();
+    stVoice.start();
     return QCoreApplication::exec();
 }
 
@@ -70,75 +70,74 @@ int runVoiceDiagnostic(const QString& wavPath, const QString& modelPath) {
 }
 
 /*
- * 功能描述:  执行 main 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  程序入口：解析命令行参数、初始化服务端并运行事件循环。
  * 作者:      JaTin
- * param [in]  argc  参数。
- * param [in]  argv  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   nArgc            输入数据，类型 int。
+ * return:    返回处理结果码；0 表示成功，负值或 -1 表示失败。
  */
-int main(int argc, char* argv[]) {
-    QApplication app(argc, argv);
+int main(int nArgc, char* argv[]) {
+    QApplication stApp(nArgc, argv);
 
     QCoreApplication::setOrganizationName(QStringLiteral("DialoguePratice"));
     QCoreApplication::setApplicationName(QStringLiteral("Client"));
     QCoreApplication::setApplicationVersion(QStringLiteral("0.1.0"));
 
-    QCommandLineParser parser;
-    parser.setApplicationDescription(QStringLiteral("Dialogue Pratice 客户端"));
-    parser.addHelpOption();
-    parser.addVersionOption();
+    QCommandLineParser stParser;
+    stParser.setApplicationDescription(QStringLiteral("Dialogue Pratice 客户端"));
+    stParser.addHelpOption();
+    stParser.addVersionOption();
 
-    QCommandLineOption voiceFileOption(
+    QCommandLineOption stVoiceFileOption(
         QStringLiteral("voice-file"),
         QStringLiteral("识别指定 WAV（16kHz/单声道/16-bit）后退出，用于验证语音链路"),
         QStringLiteral("path"));
-    QCommandLineOption configOption(
+    QCommandLineOption stConfigOption(
         QStringLiteral("config"),
         QStringLiteral("LLM 配置文件路径，默认 config/llm.json"),
         QStringLiteral("path"));
-    parser.addOption(configOption);
-    QCommandLineOption sayOption(
+    stParser.addOption(stConfigOption);
+    QCommandLineOption stSayOption(
         QStringLiteral("say"),
         QStringLiteral("用 Piper 合成并播放一段英文后退出，用于验证 TTS 链路"),
         QStringLiteral("text"));
-    parser.addOption(sayOption);
-    QCommandLineOption modelOption(
+    stParser.addOption(stSayOption);
+    QCommandLineOption stModelOption(
         QStringLiteral("model"),
         QStringLiteral("语音模型路径，默认 models/ggml-base.en.bin"),
         QStringLiteral("path"));
-    parser.addOption(voiceFileOption);
-    parser.addOption(modelOption);
-    parser.process(app);
+    stParser.addOption(stVoiceFileOption);
+    stParser.addOption(stModelOption);
+    stParser.process(stApp);
 
-    if (parser.isSet(configOption)) {
-        AppConfig::setPathOverride(parser.value(configOption));
+    if (stParser.isSet(stConfigOption)) {
+        AppConfig::setPathOverride(stParser.value(stConfigOption));
     }
 
-    const QString modelPath = parser.isSet(modelOption)
-                                  ? parser.value(modelOption)
+    const QString strModelPath = stParser.isSet(stModelOption)
+                                  ? stParser.value(stModelOption)
                                   : QString::fromUtf8(DP_DEFAULT_MODEL_PATH);
 
-    if (parser.isSet(voiceFileOption)) {
-        return runVoiceDiagnostic(parser.value(voiceFileOption), modelPath);
+    if (stParser.isSet(stVoiceFileOption)) {
+        return runVoiceDiagnostic(stParser.value(stVoiceFileOption), strModelPath);
     }
 
-    if (parser.isSet(sayOption)) {
-        CTtsService tts;
-        tts.setPaths(QString::fromUtf8(DP_PIPER_BIN), QString::fromUtf8(DP_PIPER_MODEL));
-        if (!tts.isAvailable()) {
+    if (stParser.isSet(stSayOption)) {
+        CTtsService stTts;
+        stTts.setPaths(QString::fromUtf8(DP_PIPER_BIN), QString::fromUtf8(DP_PIPER_MODEL));
+        if (!stTts.isAvailable()) {
             std::fprintf(stderr, "未安装 Piper，请运行 scripts/setup_tts.sh\n");
             return 4;
         }
-        QObject::connect(&tts, &CTtsService::failed, &tts, [](const QString& message) {
+        QObject::connect(&stTts, &CTtsService::failed, &stTts, [](const QString& message) {
             std::fprintf(stderr, "TTS 失败: %s\n", message.toUtf8().constData());
             QCoreApplication::exit(5);
         });
-        QObject::connect(&tts, &CTtsService::speakingChanged, &tts, [](bool speaking) {
+        QObject::connect(&stTts, &CTtsService::speakingChanged, &stTts, [](bool speaking) {
             if (speaking) std::fprintf(stderr, "开始播放\n");
         });
-        tts.speak(parser.value(sayOption));
-        QTimer::singleShot(4000, &app, [] { QCoreApplication::quit(); });
-        return app.exec();
+        stTts.speak(stParser.value(stSayOption));
+        QTimer::singleShot(4000, &stApp, [] { QCoreApplication::quit(); });
+        return stApp.exec();
     }
 
     qRegisterMetaType<MemberInfo_S>();
@@ -152,10 +151,10 @@ int main(int argc, char* argv[]) {
     qRegisterMetaType<business::ChatItem_S>();
     qRegisterMetaType<QVector<business::ChatItem_S>>("QVector<business::ChatItem_S>");
 
-    app.setStyleSheet(theme::styleSheet());
+    stApp.setStyleSheet(theme::styleSheet());
 
-    CMainWindow window;
-    window.show();
+    CMainWindow stWindow;
+    stWindow.show();
 
-    return app.exec();
+    return stApp.exec();
 }

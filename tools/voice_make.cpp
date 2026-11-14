@@ -18,49 +18,49 @@
 namespace {
 
 /*
- * 功能描述:  执行 readWavPcm 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  读取wavpcm；失败时返回 false。
  * 作者:      JaTin
- * param [in]  path  参数。
- * param [out]  pcm  参数。
- * param [out]  error  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   strPath          文件路径，类型 const QString&。
+ * param [out]  byPcm            输入数据，类型 QByteArray&。
+ * param [out]  strError         错误信息，类型 QString&。
+ * return:    成功返回 true；参数非法或执行失败时返回 false。
  */
-bool readWavPcm(const QString& path, QByteArray& pcm, QString& error) {
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly)) {
-        error = QStringLiteral("打不开文件");
+bool readWavPcm(const QString& strPath, QByteArray& byPcm, QString& strError) {
+    QFile stFile(strPath);
+    if (!stFile.open(QIODevice::ReadOnly)) {
+        strError = QStringLiteral("打不开文件");
         return false;
     }
-    const QByteArray all = file.readAll();
-    file.close();
+    const QByteArray byAll = stFile.readAll();
+    stFile.close();
 
-    if (all.size() < 44 || all.left(4) != "RIFF" || all.mid(8, 4) != "WAVE") {
-        error = QStringLiteral("不是 WAV");
+    if (byAll.size() < 44 || byAll.left(4) != "RIFF" || byAll.mid(8, 4) != "WAVE") {
+        strError = QStringLiteral("不是 WAV");
         return false;
     }
 
-    int pos = 12;
-    int channels = 0;
-    int sampleRate = 0;
-    int bits = 0;
-    while (pos + 8 <= all.size()) {
-        const QByteArray id = all.mid(pos, 4);
-        const auto size = *reinterpret_cast<const quint32*>(all.constData() + pos + 4);
-        pos += 8;
-        if (id == "fmt ") {
-            channels = *reinterpret_cast<const quint16*>(all.constData() + pos + 2);
-            sampleRate = *reinterpret_cast<const quint32*>(all.constData() + pos + 4);
-            bits = *reinterpret_cast<const quint16*>(all.constData() + pos + 14);
-        } else if (id == "data") {
-            pcm = all.mid(pos, static_cast<int>(size));
+    int nPos = 12;
+    int nChannels = 0;
+    int nSampleRate = 0;
+    int nBits = 0;
+    while (nPos + 8 <= byAll.size()) {
+        const QByteArray byId = byAll.mid(nPos, 4);
+        const auto stSize = *reinterpret_cast<const quint32*>(byAll.constData() + nPos + 4);
+        nPos += 8;
+        if (byId == "fmt ") {
+            nChannels = *reinterpret_cast<const quint16*>(byAll.constData() + nPos + 2);
+            nSampleRate = *reinterpret_cast<const quint32*>(byAll.constData() + nPos + 4);
+            nBits = *reinterpret_cast<const quint16*>(byAll.constData() + nPos + 14);
+        } else if (byId == "data") {
+            byPcm = byAll.mid(nPos, static_cast<int>(stSize));
             break;
         }
-        pos += static_cast<int>(size) + (size % 2);
+        nPos += static_cast<int>(stSize) + (stSize % 2);
     }
 
-    if (channels != 1 || sampleRate != CVoiceCodec::kSampleRate || bits != 16) {
-        error = QStringLiteral("需要 16kHz/单声道/16bit，实际 %1Hz %2ch %3bit")
-                    .arg(sampleRate).arg(channels).arg(bits);
+    if (nChannels != 1 || nSampleRate != CVoiceCodec::kSampleRate || nBits != 16) {
+        strError = QStringLiteral("需要 16kHz/单声道/16bit，实际 %1Hz %2ch %3bit")
+                    .arg(nSampleRate).arg(nChannels).arg(nBits);
         return false;
     }
     return true;
@@ -70,34 +70,34 @@ bool readWavPcm(const QString& path, QByteArray& pcm, QString& error) {
 }
 
 /*
- * 功能描述:  执行 main 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  程序入口：解析命令行参数、初始化服务端并运行事件循环。
  * 作者:      JaTin
- * param [in]  argc  参数。
- * param [in]  argv  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   nArgc            输入数据，类型 int。
+ * param [in]   strArgv          输入数据，类型 char**。
+ * return:    返回处理结果码；0 表示成功，负值或 -1 表示失败。
  */
-int main(int argc, char** argv) {
-    QCoreApplication app(argc, argv);
-    if (argc < 2) {
-        std::fprintf(stderr, "用法: %s <16k 单声道 wav>\n", argv[0]);
+int main(int nArgc, char** strArgv) {
+    QCoreApplication stApp(nArgc, strArgv);
+    if (nArgc < 2) {
+        std::fprintf(stderr, "用法: %s <16k 单声道 wav>\n", strArgv[0]);
         return 1;
     }
 
-    QByteArray pcm;
-    QString error;
-    if (!readWavPcm(QString::fromLocal8Bit(argv[1]), pcm, error)) {
-        std::fprintf(stderr, "读取失败: %s\n", error.toUtf8().constData());
+    QByteArray byPcm;
+    QString strError;
+    if (!readWavPcm(QString::fromLocal8Bit(strArgv[1]), byPcm, strError)) {
+        std::fprintf(stderr, "读取失败: %s\n", strError.toUtf8().constData());
         return 2;
     }
 
-    const QByteArray container = CVoiceCodec::encode(pcm);
-    if (container.isEmpty()) {
+    const QByteArray byContainer = CVoiceCodec::encode(byPcm);
+    if (byContainer.isEmpty()) {
         std::fprintf(stderr, "编码失败: %s\n", CVoiceCodec::lastError().toUtf8().constData());
         return 3;
     }
 
     /* stdout 只输出一行：<durationMs> <base64> */
-    std::printf("%d %s\n", CVoiceCodec::durationMs(container),
-                container.toBase64().constData());
+    std::printf("%d %s\n", CVoiceCodec::durationMs(byContainer),
+                byContainer.toBase64().constData());
     return 0;
 }

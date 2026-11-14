@@ -28,19 +28,25 @@ const char* kInputSystem =
 /* namespace */
 }
 
-CTranslationService::CTranslationService(QObject* parent) : QObject(parent) {}
+/*
+ * 功能描述:  构造 CTranslationService 对象，完成成员初始化与依赖注入。
+ * 作者:      JaTin
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject* parent) : QObject(。
+ * return:    无返回值（构造函数或析构函数）。
+ */
+CTranslationService::CTranslationService(QObject* pParent) : QObject(pParent) {}
 
 /*
- * 功能描述:  执行 setClient 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  设置客户端；实现上连接 Qt 信号与槽。
  * 作者:      JaTin
- * param [in]  client  参数。
- * return:    void
+ * param [in]   pClient          客户端，类型 CLlmClient*。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CTranslationService::setClient(CLlmClient* client) {
+void CTranslationService::setClient(CLlmClient* pClient) {
     if (m_pClient != nullptr) {
         disconnect(m_pClient, nullptr, this, nullptr);
     }
-    m_pClient = client;
+    m_pClient = pClient;
     if (m_pClient != nullptr) {
         connect(m_pClient, &CLlmClient::finished, this, &CTranslationService::onFinished);
         connect(m_pClient, &CLlmClient::failed, this, &CTranslationService::onFailed);
@@ -48,149 +54,149 @@ void CTranslationService::setClient(CLlmClient* client) {
 }
 
 /*
- * 功能描述:  执行 isEnabled 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  判断启用状态。
  * 作者:      JaTin
- * return:    返回值，含义见功能描述。
+ * return:    成功返回 true；参数非法或执行失败时返回 false。
  */
 bool CTranslationService::isEnabled() const {
     return m_pClient != nullptr && m_pClient->isEnabled();
 }
 
 /*
- * 功能描述:  执行 looksEnglish 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  获取looksenglish；失败时返回 false。
  * 作者:      JaTin
- * param [in]  text  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   strText          消息文本，类型 const QString&。
+ * return:    成功返回 true；参数非法或执行失败时返回 false。
  */
-bool CTranslationService::looksEnglish(const QString& text) {
-    int latinRun = 0;
-    bool hasLatinWord = false;
-    for (const QChar c : text) {
+bool CTranslationService::looksEnglish(const QString& strText) {
+    int nLatinRun = 0;
+    bool nHasLatinWord = false;
+    for (const QChar stC : strText) {
         /* 含汉字，不是纯英文 */
-        if (c.unicode() >= 0x4E00 && c.unicode() <= 0x9FFF) return false;
-        if (c.isLetter() && c.unicode() < 128) {
-            if (++latinRun >= 2) hasLatinWord = true;
+        if (stC.unicode() >= 0x4E00 && stC.unicode() <= 0x9FFF) return false;
+        if (stC.isLetter() && stC.unicode() < 128) {
+            if (++nLatinRun >= 2) nHasLatinWord = true;
         } else {
-            latinRun = 0;
+            nLatinRun = 0;
         }
     }
-    return hasLatinWord;
+    return nHasLatinWord;
 }
 
 /*
- * 功能描述:  执行 looksChinese 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  获取lookschinese；失败时返回 false。
  * 作者:      JaTin
- * param [in]  text  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   strText          消息文本，类型 const QString&。
+ * return:    成功返回 true；参数非法或执行失败时返回 false。
  */
-bool CTranslationService::looksChinese(const QString& text) {
-    for (const QChar c : text) {
-        if (c.unicode() >= 0x4E00 && c.unicode() <= 0x9FFF) return true;
+bool CTranslationService::looksChinese(const QString& strText) {
+    for (const QChar stC : strText) {
+        if (stC.unicode() >= 0x4E00 && stC.unicode() <= 0x9FFF) return true;
     }
     return false;
 }
 
 /*
- * 功能描述:  执行 requestMessage 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  请求消息内容。
  * 作者:      JaTin
- * param [in]  seq  参数。
- * param [in]  english  参数。
- * return:    void
+ * param [in]   lSeq             全局消息序号，类型 qint64。
+ * param [in]   strEnglish       输入数据，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CTranslationService::requestMessage(qint64 seq, const QString& english) {
-    if (!isEnabled() || english.trimmed().isEmpty()) return;
-    if (!looksEnglish(english)) return;
+void CTranslationService::requestMessage(qint64 lSeq, const QString& strEnglish) {
+    if (!isEnabled() || strEnglish.trimmed().isEmpty()) return;
+    if (!looksEnglish(strEnglish)) return;
 
-    Job_S job;
-    job.kind = Kind_EN::Message;
-    job.seq = seq;
-    job.text = english.trimmed();
-    enqueue(job);
+    Job_S stJob;
+    stJob.kind = Kind_EN::Message;
+    stJob.seq = lSeq;
+    stJob.text = strEnglish.trimmed();
+    enqueue(stJob);
 }
 
 /*
- * 功能描述:  执行 requestInput 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  请求输入。
  * 作者:      JaTin
- * param [in]  chinese  参数。
- * return:    void
+ * param [in]   strChinese       输入数据，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CTranslationService::requestInput(const QString& chinese) {
+void CTranslationService::requestInput(const QString& strChinese) {
     if (!isEnabled()) return;
-    const QString text = chinese.trimmed();
-    if (text.isEmpty() || !looksChinese(text)) return;
+    const QString strText = strChinese.trimmed();
+    if (strText.isEmpty() || !looksChinese(strText)) return;
 
     /* 用户连续打字时只保留最新一条，避免排一堆过期的输入翻译 */
     for (int i = queue_.size() - 1; i >= 0; --i) {
         if (queue_.at(i).kind == Kind_EN::Input) queue_.removeAt(i);
     }
 
-    Job_S job;
-    job.kind = Kind_EN::Input;
-    job.seq = 0;
-    job.text = text;
-    enqueue(job);
+    Job_S stJob;
+    stJob.kind = Kind_EN::Input;
+    stJob.seq = 0;
+    stJob.text = strText;
+    enqueue(stJob);
 }
 
 /*
- * 功能描述:  执行 cacheKey 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  根据任务类型与文本生成译文缓存键。
  * 作者:      JaTin
- * param [in]  kind  参数。
- * param [in]  text  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   enKind           消息类型，类型 Kind_EN。
+ * param [in]   strText          消息文本，类型 const QString&。
+ * return:    返回构造好的字符串；无内容时返回空字符串。
  */
-QString CTranslationService::cacheKey(Kind_EN kind, const QString& text) {
-    return (kind == Kind_EN::Message ? QStringLiteral("M:") : QStringLiteral("I:")) + text;
+QString CTranslationService::cacheKey(Kind_EN enKind, const QString& strText) {
+    return (enKind == Kind_EN::Message ? QStringLiteral("M:") : QStringLiteral("I:")) + strText;
 }
 
 /*
- * 功能描述:  执行 cachePut 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  执行缓存 put。
  * 作者:      JaTin
- * param [in]  key  参数。
- * param [in]  value  参数。
- * return:    void
+ * param [in]   strKey           缓存键，类型 const QString&。
+ * param [in]   strValue         待设置的数值，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CTranslationService::cachePut(const QString& key, const QString& value) {
-    if (m_strCache.contains(key)) return;
-    m_strCache.insert(key, value);
-    m_strCacheOrder.append(key);
+void CTranslationService::cachePut(const QString& strKey, const QString& strValue) {
+    if (m_strCache.contains(strKey)) return;
+    m_strCache.insert(strKey, strValue);
+    m_strCacheOrder.append(strKey);
     while (m_strCacheOrder.size() > kMaxCacheEntries) {
         m_strCache.remove(m_strCacheOrder.takeFirst());
     }
 }
 
 /*
- * 功能描述:  执行 enqueue 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  入队enqueue。
  * 作者:      JaTin
- * param [in]  job  参数。
- * return:    void
+ * param [in]   stJob            任务，类型 const Job_S&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CTranslationService::enqueue(const Job_S& job) {
-    const QString key = cacheKey(job.kind, job.text);
+void CTranslationService::enqueue(const Job_S& stJob) {
+    const QString strKey = cacheKey(stJob.kind, stJob.text);
 
     /* 命中缓存：立刻回调，不进队列 */
-    const auto hit = m_strCache.constFind(key);
-    if (hit != m_strCache.constEnd()) {
-        deliver(job, hit.value());
+    const auto stHit = m_strCache.constFind(strKey);
+    if (stHit != m_strCache.constEnd()) {
+        deliver(stJob, stHit.value());
         return;
     }
 
     /* 同一句已在请求中：登记为等待者，等首个请求返回后一起回调。 */
     /* 这里若直接 return，后来者会永远停在「翻译中」——重复句子很常见。 */
-    const auto pending = m_strInFlight.find(key);
-    if (pending != m_strInFlight.end()) {
-        pending->append(job);
+    const auto stPending = m_strInFlight.find(strKey);
+    if (stPending != m_strInFlight.end()) {
+        stPending->append(stJob);
         return;
     }
 
-    m_strInFlight.insert(key, QVector<Job_S>{job});
-    queue_.append(job);
+    m_strInFlight.insert(strKey, QVector<Job_S>{stJob});
+    queue_.append(stJob);
     pump();
 }
 
 /*
- * 功能描述:  执行 pump 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  驱动待处理队列，逐条取出任务并提交执行。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CTranslationService::pump() {
     if (m_nBusy || queue_.isEmpty() || !isEnabled()) return;
@@ -198,43 +204,43 @@ void CTranslationService::pump() {
     current_ = queue_.takeFirst();
     m_nBusy = true;
 
-    const bool toChinese = (current_.kind == Kind_EN::Message);
-    m_nCurrentId = m_pClient->chat(QString::fromUtf8(toChinese ? kMessageSystem : kInputSystem),
+    const bool nToChinese = (current_.kind == Kind_EN::Message);
+    m_nCurrentId = m_pClient->chat(QString::fromUtf8(nToChinese ? kMessageSystem : kInputSystem),
                                current_.text,
-                               toChinese ? 256 : 200);
+                               nToChinese ? 256 : 200);
 
     if (m_nCurrentId <= 0) {
         m_nBusy = false;
-        const QVector<Job_S> waiters = m_strInFlight.take(cacheKey(current_.kind, current_.text));
-        for (const Job_S& job : waiters) {
-            emit failed(job.seq, QStringLiteral("翻译服务未启用"));
+        const QVector<Job_S> aWaiters = m_strInFlight.take(cacheKey(current_.kind, current_.text));
+        for (const Job_S& stJob : aWaiters) {
+            emit failed(stJob.seq, QStringLiteral("翻译服务未启用"));
         }
     }
 }
 
 /*
- * 功能描述:  执行 onFinished 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  异步请求完成回调，解析结果并分发给对应的等待方。
  * 作者:      JaTin
- * param [in]  requestId  参数。
- * param [in]  text  参数。
- * return:    void
+ * param [in]   nRequestId       请求编号，类型 int。
+ * param [in]   strText          消息文本，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CTranslationService::onFinished(int requestId, const QString& text) {
+void CTranslationService::onFinished(int nRequestId, const QString& strText) {
     /* 过期响应（理论上不会发生，串行队列） */
-    if (requestId != m_nCurrentId) return;
+    if (nRequestId != m_nCurrentId) return;
 
     m_nBusy = false;
-    const QString key = cacheKey(current_.kind, current_.text);
+    const QString strKey = cacheKey(current_.kind, current_.text);
 
     /* 取出所有等待同一译文的任务（含首个请求者本身） */
-    QVector<Job_S> waiters = m_strInFlight.take(key);
-    if (waiters.isEmpty()) waiters.append(current_);
+    QVector<Job_S> aWaiters = m_strInFlight.take(strKey);
+    if (aWaiters.isEmpty()) aWaiters.append(current_);
 
-    const QString result = cleanOutput(text);
-    if (result.isEmpty()) {
+    const QString strResult = cleanOutput(strText);
+    if (strResult.isEmpty()) {
         DP_LOG_WARN(kTag, QStringLiteral("empty translation for: %1").arg(current_.text));
-        for (const Job_S& job : waiters) {
-            emit failed(job.seq, QStringLiteral("模型返回空译文"));
+        for (const Job_S& stJob : aWaiters) {
+            emit failed(stJob.seq, QStringLiteral("模型返回空译文"));
         }
         pump();
         return;
@@ -242,93 +248,93 @@ void CTranslationService::onFinished(int requestId, const QString& text) {
 
     /* 小模型偶尔会把原文原样吐回来（尤其含下划线标识符的短句）， */
     /* 这种"译文"没有意义，按失败处理更诚实。 */
-    if (result.compare(current_.text, Qt::CaseInsensitive) == 0) {
+    if (strResult.compare(current_.text, Qt::CaseInsensitive) == 0) {
         DP_LOG_WARN(kTag, QStringLiteral("model echoed source text: %1").arg(current_.text));
-        for (const Job_S& job : waiters) {
-            emit failed(job.seq, QStringLiteral("模型没有翻译，返回了原文"));
+        for (const Job_S& stJob : aWaiters) {
+            emit failed(stJob.seq, QStringLiteral("模型没有翻译，返回了原文"));
         }
         pump();
         return;
     }
 
-    cachePut(key, result);
-    for (const Job_S& job : waiters) {
-        deliver(job, result);
+    cachePut(strKey, strResult);
+    for (const Job_S& stJob : aWaiters) {
+        deliver(stJob, strResult);
     }
     pump();
 }
 
 /*
- * 功能描述:  执行 onFailed 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  异步请求失败回调，记录错误原因并通知上层。
  * 作者:      JaTin
- * param [in]  requestId  参数。
- * param [in]  reason  参数。
- * return:    void
+ * param [in]   nRequestId       请求编号，类型 int。
+ * param [in]   strReason        失败原因描述，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CTranslationService::onFailed(int requestId, const QString& reason) {
-    if (requestId != m_nCurrentId) return;
+void CTranslationService::onFailed(int nRequestId, const QString& strReason) {
+    if (nRequestId != m_nCurrentId) return;
 
     m_nBusy = false;
-    const QVector<Job_S> waiters = m_strInFlight.take(cacheKey(current_.kind, current_.text));
+    const QVector<Job_S> aWaiters = m_strInFlight.take(cacheKey(current_.kind, current_.text));
 
-    DP_LOG_WARN(kTag, QStringLiteral("LLM request failed: %1").arg(reason));
-    for (const Job_S& job : waiters) {
-        emit failed(job.seq, reason);
+    DP_LOG_WARN(kTag, QStringLiteral("LLM request failed: %1").arg(strReason));
+    for (const Job_S& stJob : aWaiters) {
+        emit failed(stJob.seq, strReason);
     }
     /* 一条失败不影响后面的 */
     pump();
 }
 
 /*
- * 功能描述:  执行 deliver 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  把处理完成的响应投递回对应的请求方。
  * 作者:      JaTin
- * param [in]  job  参数。
- * param [in]  result  参数。
- * return:    void
+ * param [in]   stJob            任务，类型 const Job_S&。
+ * param [in]   strResult        处理结果，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CTranslationService::deliver(const Job_S& job, const QString& result) {
-    if (job.kind == Kind_EN::Message) {
-        emit messageTranslated(job.seq, result);
+void CTranslationService::deliver(const Job_S& stJob, const QString& strResult) {
+    if (stJob.kind == Kind_EN::Message) {
+        emit messageTranslated(stJob.seq, strResult);
     } else {
-        emit inputTranslated(job.text, result);
+        emit inputTranslated(stJob.text, strResult);
     }
 }
 
 /*
- * 功能描述:  执行 cleanOutput 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  清洗模型输出，去除多余符号与思考过程残留。
  * 作者:      JaTin
- * param [in]  raw  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   strRaw           输入数据，类型 const QString&。
+ * return:    返回构造好的字符串；无内容时返回空字符串。
  */
-QString CTranslationService::cleanOutput(const QString& raw) {
-    QString s = raw.trimmed();
+QString CTranslationService::cleanOutput(const QString& strRaw) {
+    QString strS = strRaw.trimmed();
 
-    static const QStringList prefixes = {
+    static const QStringList strPrefixes = {
         QStringLiteral("译文："), QStringLiteral("译文:"),
         QStringLiteral("翻译："), QStringLiteral("翻译:"),
         QStringLiteral("中文："), QStringLiteral("中文:"),
         QStringLiteral("英文："), QStringLiteral("英文:"),
         QStringLiteral("Translation:"), QStringLiteral("English:"),
     };
-    for (const QString& prefix : prefixes) {
-        if (s.startsWith(prefix, Qt::CaseInsensitive)) {
-            s = s.mid(prefix.size()).trimmed();
+    for (const QString& strPrefix : strPrefixes) {
+        if (strS.startsWith(strPrefix, Qt::CaseInsensitive)) {
+            strS = strS.mid(strPrefix.size()).trimmed();
             break;
         }
     }
 
     /* 去掉整体包裹的引号 */
-    if (s.size() >= 2) {
-        const QChar first = s.front();
-        const QChar last = s.back();
-        const bool asciiQuoted = (first == QLatin1Char('"') && last == QLatin1Char('"'))
-                                 || (first == QLatin1Char('\'') && last == QLatin1Char('\''));
-        const bool cjkQuoted = (first.unicode() == 0x201C && last.unicode() == 0x201D)
-                               || (first.unicode() == 0x300C && last.unicode() == 0x300D);
-        if (asciiQuoted || cjkQuoted) {
-            s = s.mid(1, s.size() - 2).trimmed();
+    if (strS.size() >= 2) {
+        const QChar stFirst = strS.front();
+        const QChar stLast = strS.back();
+        const bool nAsciiQuoted = (stFirst == QLatin1Char('"') && stLast == QLatin1Char('"'))
+                                 || (stFirst == QLatin1Char('\'') && stLast == QLatin1Char('\''));
+        const bool nCjkQuoted = (stFirst.unicode() == 0x201C && stLast.unicode() == 0x201D)
+                               || (stFirst.unicode() == 0x300C && stLast.unicode() == 0x300D);
+        if (nAsciiQuoted || nCjkQuoted) {
+            strS = strS.mid(1, strS.size() - 2).trimmed();
         }
     }
 
-    return s;
+    return strS;
 }

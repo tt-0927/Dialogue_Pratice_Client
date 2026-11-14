@@ -15,101 +15,100 @@
 #include <QPaintEvent>
 
 /*
- * 功能描述:  执行 CMicButton 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  构造 CMicButton 对象，完成成员初始化与依赖注入。
  * 作者:      JaTin
- * param [in]  parent  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget* parent) : QAbstractButton(。
+ * return:    无返回值（构造函数或析构函数）。
  */
-CMicButton::CMicButton(QWidget* parent) : QAbstractButton(parent) {
+CMicButton::CMicButton(QWidget* pParent) : QAbstractButton(pParent) {
     setCursor(Qt::PointingHandCursor);
     setFixedSize(40, 40);
     setToolTip(QStringLiteral("点击开始语音输入"));
 }
 
 /*
- * 功能描述:  执行 setRecording 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  设置recording。
  * 作者:      JaTin
- * param [in]  recording  参数。
- * return:    void
+ * param [in]   nRecording       输入数据，类型 bool。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMicButton::setRecording(bool recording) {
-    if (m_nRecording == recording) return;
-    m_nRecording = recording;
-    setToolTip(recording ? QStringLiteral("点击结束录音并识别")
+void CMicButton::setRecording(bool nRecording) {
+    if (m_nRecording == nRecording) return;
+    m_nRecording = nRecording;
+    setToolTip(nRecording ? QStringLiteral("点击结束录音并识别")
                          : QStringLiteral("点击开始语音输入"));
     update();
 }
 
 /*
- * 功能描述:  执行 enterEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  进入事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * param [in]   pEvent           事件，类型 QEnterEvent*。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMicButton::enterEvent(QEnterEvent* event) {
+void CMicButton::enterEvent(QEnterEvent* pEvent) {
     m_nHovered = true;
     update();
-    QAbstractButton::enterEvent(event);
+    QAbstractButton::enterEvent(pEvent);
 }
 
 /*
- * 功能描述:  执行 leaveEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  退出事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * param [in]   pEvent           事件，类型 QEvent*。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CMicButton::leaveEvent(QEvent* event) {
+void CMicButton::leaveEvent(QEvent* pEvent) {
     m_nHovered = false;
     update();
-    QAbstractButton::leaveEvent(event);
+    QAbstractButton::leaveEvent(pEvent);
 }
 
 /*
- * 功能描述:  执行 paintEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  绘制事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CMicButton::paintEvent(QPaintEvent* /*event*/) {
-    QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing, true);
+    QPainter stP(this);
+    stP.setRenderHint(QPainter::Antialiasing, true);
 
-    const QRectF r = rect().adjusted(0.5, 0.5, -0.5, -0.5);
+    const QRectF stR = rect().adjusted(0.5, 0.5, -0.5, -0.5);
 
-    QColor bg = m_nRecording ? QColor("#FDE7E7") : QColor("#F2F5F9");
-    QColor fg = m_nRecording ? QColor("#E5484D") : theme::accent;
+    QColor stBg = m_nRecording ? QColor("#FDE7E7") : QColor("#F2F5F9");
+    QColor stFg = m_nRecording ? QColor("#E5484D") : theme::accent;
 
     if (!isEnabled()) {
-        bg = QColor("#F4F6F9");
-        fg = QColor("#B9C2CE");
+        stBg = QColor("#F4F6F9");
+        stFg = QColor("#B9C2CE");
     } else if (m_nHovered && !m_nRecording) {
-        bg = QColor("#E8EEF6");
+        stBg = QColor("#E8EEF6");
     } else if (m_nHovered && m_nRecording) {
-        bg = QColor("#FBD9D9");
+        stBg = QColor("#FBD9D9");
     }
 
-    p.setPen(Qt::NoPen);
-    p.setBrush(bg);
-    p.drawEllipse(r);
+    stP.setPen(Qt::NoPen);
+    stP.setBrush(stBg);
+    stP.drawEllipse(stR);
 
-    const QPointF c = r.center();
+    const QPointF stC = stR.center();
 
     /* 麦克风头 */
-    p.setBrush(fg);
-    p.setPen(Qt::NoPen);
-    p.drawRoundedRect(QRectF(c.x() - 4.0, c.y() - 12.0, 8.0, 14.0), 4.0, 4.0);
+    stP.setBrush(stFg);
+    stP.setPen(Qt::NoPen);
+    stP.drawRoundedRect(QRectF(stC.x() - 4.0, stC.y() - 12.0, 8.0, 14.0), 4.0, 4.0);
 
     /* 支架：下半圆弧 + 立杆 + 底座 */
-    p.setBrush(Qt::NoBrush);
-    p.setPen(QPen(fg, 1.8, Qt::SolidLine, Qt::RoundCap));
-    p.drawArc(QRectF(c.x() - 7.0, c.y() - 8.0, 14.0, 14.0), 200 * 16, 140 * 16);
-    p.drawLine(QPointF(c.x(), c.y() + 6.0), QPointF(c.x(), c.y() + 10.5));
-    p.drawLine(QPointF(c.x() - 4.0, c.y() + 10.5), QPointF(c.x() + 4.0, c.y() + 10.5));
+    stP.setBrush(Qt::NoBrush);
+    stP.setPen(QPen(stFg, 1.8, Qt::SolidLine, Qt::RoundCap));
+    stP.drawArc(QRectF(stC.x() - 7.0, stC.y() - 8.0, 14.0, 14.0), 200 * 16, 140 * 16);
+    stP.drawLine(QPointF(stC.x(), stC.y() + 6.0), QPointF(stC.x(), stC.y() + 10.5));
+    stP.drawLine(QPointF(stC.x() - 4.0, stC.y() + 10.5), QPointF(stC.x() + 4.0, stC.y() + 10.5));
 
     /* 录音中：右上角红点提示 */
     if (m_nRecording) {
-        p.setPen(Qt::NoPen);
-        p.setBrush(QColor("#E5484D"));
-        p.drawEllipse(QRectF(r.right() - 9.0, r.top() + 3.0, 6.0, 6.0));
+        stP.setPen(Qt::NoPen);
+        stP.setBrush(QColor("#E5484D"));
+        stP.drawEllipse(QRectF(stR.right() - 9.0, stR.top() + 3.0, 6.0, 6.0));
     }
 }

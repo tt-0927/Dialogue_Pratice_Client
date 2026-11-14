@@ -25,64 +25,64 @@ namespace {
 
 /* 给 PCM 加 44 字节 WAV 头（QSoundEffect 只吃 WAV）。 */
 /*
- * 功能描述:  执行 wrapWav 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  包装wav。
  * 作者:      JaTin
- * param [in]  pcm  参数。
- * param [in]  sampleRate  参数。
- * param [in]  channels  参数。
- * param [in]  bitsPerSample  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   byPcm            输入数据，类型 const QByteArray&。
+ * param [in]   nSampleRate      输入数据，类型 int。
+ * param [in]   nChannels        输入数据，类型 int。
+ * param [in]   nBitsPerSample   输入数据，类型 int。
+ * return:    返回字节数据；失败时返回空 QByteArray。
  */
-QByteArray wrapWav(const QByteArray& pcm, int sampleRate, int channels, int bitsPerSample) {
-    const quint32 dataSize = static_cast<quint32>(pcm.size());
-    const quint16 blockAlign = static_cast<quint16>(channels * bitsPerSample / 8);
-    const quint32 byteRate = static_cast<quint32>(sampleRate) * blockAlign;
-    const quint32 riffSize = 36 + dataSize;
+QByteArray wrapWav(const QByteArray& byPcm, int nSampleRate, int nChannels, int nBitsPerSample) {
+    const quint32 uDataSize = static_cast<quint32>(byPcm.size());
+    const quint16 uBlockAlign = static_cast<quint16>(nChannels * nBitsPerSample / 8);
+    const quint32 uByteRate = static_cast<quint32>(nSampleRate) * uBlockAlign;
+    const quint32 uRiffSize = 36 + uDataSize;
 
-    QByteArray wav;
-    wav.reserve(44 + pcm.size());
+    QByteArray byWav;
+    byWav.reserve(44 + byPcm.size());
 
-    auto put32 = [&wav](quint32 v) {
-        wav.append(static_cast<char>(v & 0xFF));
-        wav.append(static_cast<char>((v >> 8) & 0xFF));
-        wav.append(static_cast<char>((v >> 16) & 0xFF));
-        wav.append(static_cast<char>((v >> 24) & 0xFF));
+    auto stPut32 = [&byWav](quint32 v) {
+        byWav.append(static_cast<char>(v & 0xFF));
+        byWav.append(static_cast<char>((v >> 8) & 0xFF));
+        byWav.append(static_cast<char>((v >> 16) & 0xFF));
+        byWav.append(static_cast<char>((v >> 24) & 0xFF));
     };
-    auto put16 = [&wav](quint16 v) {
-        wav.append(static_cast<char>(v & 0xFF));
-        wav.append(static_cast<char>((v >> 8) & 0xFF));
+    auto stPut16 = [&byWav](quint16 v) {
+        byWav.append(static_cast<char>(v & 0xFF));
+        byWav.append(static_cast<char>((v >> 8) & 0xFF));
     };
 
-    wav.append("RIFF", 4);
-    put32(riffSize);
-    wav.append("WAVE", 4);
-    wav.append("fmt ", 4);
+    byWav.append("RIFF", 4);
+    stPut32(uRiffSize);
+    byWav.append("WAVE", 4);
+    byWav.append("fmt ", 4);
     /* fmt 块长度 */
-    put32(16);
+    stPut32(16);
     /* PCM */
-    put16(1);
-    put16(static_cast<quint16>(channels));
-    put32(static_cast<quint32>(sampleRate));
-    put32(byteRate);
-    put16(blockAlign);
-    put16(static_cast<quint16>(bitsPerSample));
-    wav.append("data", 4);
-    put32(dataSize);
-    wav.append(pcm);
+    stPut16(1);
+    stPut16(static_cast<quint16>(nChannels));
+    stPut32(static_cast<quint32>(nSampleRate));
+    stPut32(uByteRate);
+    stPut16(uBlockAlign);
+    stPut16(static_cast<quint16>(nBitsPerSample));
+    byWav.append("data", 4);
+    stPut32(uDataSize);
+    byWav.append(byPcm);
 
-    return wav;
+    return byWav;
 }
 
 /* namespace */
 }
 
 /*
- * 功能描述:  执行 CVoicePlayer 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  构造 CVoicePlayer 对象，完成成员初始化与依赖注入。
  * 作者:      JaTin
- * param [in]  parent  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject* parent) : QObject(。
+ * return:    无返回值（构造函数或析构函数）。
  */
-CVoicePlayer::CVoicePlayer(QObject* parent) : QObject(parent) {
+CVoicePlayer::CVoicePlayer(QObject* pParent) : QObject(pParent) {
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     m_pEffect = new QSoundEffect(this);
     m_pEffect->setVolume(1.0);
@@ -100,51 +100,51 @@ CVoicePlayer::CVoicePlayer(QObject* parent) : QObject(parent) {
     });
 
     connect(m_pEffect, &QSoundEffect::playingChanged, this, [this] {
-        const bool playing = m_pEffect->isPlaying();
-        if (speaking_ == playing) return;
-        speaking_ = playing;
-        if (!playing) current_.clear();
-        emit playingChanged(playing);
+        const bool nPlaying = m_pEffect->isPlaying();
+        if (speaking_ == nPlaying) return;
+        speaking_ = nPlaying;
+        if (!nPlaying) current_.clear();
+        emit playingChanged(nPlaying);
     });
 }
 
 /*
- * 功能描述:  执行 instance 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  获取instance。
  * 作者:      JaTin
- * return:    返回值，含义见功能描述。
+ * return:    成功返回对象指针；未找到或失败时返回 nullptr。
  */
 CVoicePlayer* CVoicePlayer::instance() {
-    static CVoicePlayer player;
-    return &player;
+    static CVoicePlayer stPlayer;
+    return &stPlayer;
 }
 
 /*
- * 功能描述:  执行 wavPathFor 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  获取wav 文件路径 for。
  * 作者:      JaTin
- * param [in]  container  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   byContainer      容器，类型 const QByteArray&。
+ * return:    返回构造好的字符串；无内容时返回空字符串。
  */
-QString CVoicePlayer::wavPathFor(const QByteArray& container) const {
-    const QString dir =
+QString CVoicePlayer::wavPathFor(const QByteArray& byContainer) const {
+    const QString strDir =
         QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/voice");
-    QDir().mkpath(dir);
+    QDir().mkpath(strDir);
 
-    const QByteArray hash =
-        QCryptographicHash::hash(container, QCryptographicHash::Md5).toHex();
-    return dir + QLatin1Char('/') + QString::fromLatin1(hash) + QStringLiteral(".wav");
+    const QByteArray byHash =
+        QCryptographicHash::hash(byContainer, QCryptographicHash::Md5).toHex();
+    return strDir + QLatin1Char('/') + QString::fromLatin1(byHash) + QStringLiteral(".wav");
 }
 
 /*
- * 功能描述:  执行 play 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  播放play。
  * 作者:      JaTin
- * param [in]  container  参数。
- * return:    void
+ * param [in]   byContainer      容器，类型 const QByteArray&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CVoicePlayer::play(const QByteArray& container) {
-    if (container.isEmpty()) return;
+void CVoicePlayer::play(const QByteArray& byContainer) {
+    if (byContainer.isEmpty()) return;
 
     /* 同一条再点一次：先停再从头播（QSoundEffect 的 play 在播放中不会重头） */
-    if (current_ == container && m_pEffect->status() == QSoundEffect::Ready) {
+    if (current_ == byContainer && m_pEffect->status() == QSoundEffect::Ready) {
         m_pEffect->stop();
         m_pEffect->play();
         return;
@@ -152,28 +152,28 @@ void CVoicePlayer::play(const QByteArray& container) {
 
     stop();
 
-    const QString wav = wavPathFor(container);
-    if (!QFileInfo::exists(wav) || QFileInfo(wav).size() <= 44) {
-        const QByteArray pcm = CVoiceCodec::decode(container);
-        if (pcm.isEmpty()) {
+    const QString strWav = wavPathFor(byContainer);
+    if (!QFileInfo::exists(strWav) || QFileInfo(strWav).size() <= 44) {
+        const QByteArray byPcm = CVoiceCodec::decode(byContainer);
+        if (byPcm.isEmpty()) {
             emit failed(QStringLiteral("语音解码失败：%1").arg(CVoiceCodec::lastError()));
             return;
         }
-        const QByteArray payload =
-            wrapWav(pcm, CVoiceCodec::kSampleRate, CVoiceCodec::kChannels, 16);
+        const QByteArray byPayload =
+            wrapWav(byPcm, CVoiceCodec::kSampleRate, CVoiceCodec::kChannels, 16);
 
-        QFile file(wav);
-        if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        QFile stFile(strWav);
+        if (!stFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             emit failed(QStringLiteral("无法写入语音缓存"));
             return;
         }
-        file.write(payload);
-        file.close();
+        stFile.write(byPayload);
+        stFile.close();
     }
 
-    current_ = container;
+    current_ = byContainer;
     m_nPendingPlay = true;
-    m_pEffect->setSource(QUrl::fromLocalFile(wav));
+    m_pEffect->setSource(QUrl::fromLocalFile(strWav));
     if (m_pEffect->status() == QSoundEffect::Ready) {
         m_nPendingPlay = false;
         m_pEffect->play();
@@ -181,9 +181,9 @@ void CVoicePlayer::play(const QByteArray& container) {
 }
 
 /*
- * 功能描述:  执行 stop 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  停止stop。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CVoicePlayer::stop() {
     m_nPendingPlay = false;
@@ -192,9 +192,9 @@ void CVoicePlayer::stop() {
 }
 
 /*
- * 功能描述:  执行 isPlaying 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  判断playing。
  * 作者:      JaTin
- * return:    返回值，含义见功能描述。
+ * return:    成功返回 true；参数非法或执行失败时返回 false。
  */
 bool CVoicePlayer::isPlaying() const {
     return speaking_;

@@ -25,12 +25,12 @@ constexpr qint64 kWavHeaderSize = 44;
 }
 
 /*
- * 功能描述:  执行 CTtsService 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  构造 CTtsService 对象，完成成员初始化与依赖注入。
  * 作者:      JaTin
- * param [in]  parent  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject* parent) : QObject(。
+ * return:    无返回值（构造函数或析构函数）。
  */
-CTtsService::CTtsService(QObject* parent) : QObject(parent) {
+CTtsService::CTtsService(QObject* pParent) : QObject(pParent) {
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     m_pEffect = new QSoundEffect(this);
     m_pEffect->setVolume(1.0);
@@ -49,18 +49,18 @@ CTtsService::CTtsService(QObject* parent) : QObject(parent) {
     });
 
     connect(m_pEffect, &QSoundEffect::playingChanged, this, [this] {
-        const bool playing = m_pEffect->isPlaying();
-        if (speaking_ != playing) {
-            speaking_ = playing;
-            emit speakingChanged(playing);
+        const bool nPlaying = m_pEffect->isPlaying();
+        if (speaking_ != nPlaying) {
+            speaking_ = nPlaying;
+            emit speakingChanged(nPlaying);
         }
     });
 }
 
 /*
- * 功能描述:  执行 CTtsService 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  析构 CTtsService 对象，释放运行期持有的全部资源。
  * 作者:      JaTin
- * return:    返回值，含义见功能描述。
+ * return:    无返回值（构造函数或析构函数）。
  */
 CTtsService::~CTtsService() {
     if (m_pProcess != nullptr) {
@@ -71,21 +71,21 @@ CTtsService::~CTtsService() {
 }
 
 /*
- * 功能描述:  执行 setPaths 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  设置paths。
  * 作者:      JaTin
- * param [in]  piperBin  参数。
- * param [in]  voiceModel  参数。
- * return:    void
+ * param [in]   strPiperBin      输入数据，类型 const QString&。
+ * param [in]   strVoiceModel    输入数据，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CTtsService::setPaths(const QString& piperBin, const QString& voiceModel) {
-    m_strPiperBin = piperBin;
-    m_strVoiceModel = voiceModel;
+void CTtsService::setPaths(const QString& strPiperBin, const QString& strVoiceModel) {
+    m_strPiperBin = strPiperBin;
+    m_strVoiceModel = strVoiceModel;
 }
 
 /*
- * 功能描述:  执行 isAvailable 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  判断available。
  * 作者:      JaTin
- * return:    返回值，含义见功能描述。
+ * return:    成功返回 true；参数非法或执行失败时返回 false。
  */
 bool CTtsService::isAvailable() const {
     return !m_strPiperBin.isEmpty() && QFileInfo::exists(m_strPiperBin)
@@ -93,30 +93,30 @@ bool CTtsService::isAvailable() const {
 }
 
 /*
- * 功能描述:  执行 cachePathFor 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  获取缓存文件路径 for。
  * 作者:      JaTin
- * param [in]  text  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   strText          消息文本，类型 const QString&。
+ * return:    返回构造好的字符串；无内容时返回空字符串。
  */
-QString CTtsService::cachePathFor(const QString& text) const {
-    const QString dir =
+QString CTtsService::cachePathFor(const QString& strText) const {
+    const QString strDir =
         QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/tts");
-    QDir().mkpath(dir);
+    QDir().mkpath(strDir);
 
-    const QByteArray hash =
-        QCryptographicHash::hash(text.toUtf8(), QCryptographicHash::Md5).toHex();
-    return dir + QLatin1Char('/') + QString::fromLatin1(hash) + QStringLiteral(".wav");
+    const QByteArray byHash =
+        QCryptographicHash::hash(strText.toUtf8(), QCryptographicHash::Md5).toHex();
+    return strDir + QLatin1Char('/') + QString::fromLatin1(byHash) + QStringLiteral(".wav");
 }
 
 /*
- * 功能描述:  执行 speak 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  调用本地语音合成把文本转换为音频并播放。
  * 作者:      JaTin
- * param [in]  text  参数。
- * return:    void
+ * param [in]   strText          消息文本，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CTtsService::speak(const QString& text) {
-    const QString trimmed = text.trimmed();
-    if (trimmed.isEmpty()) return;
+void CTtsService::speak(const QString& strText) {
+    const QString strTrimmed = strText.trimmed();
+    if (strTrimmed.isEmpty()) return;
 
     if (!isAvailable()) {
         emit failed(QStringLiteral("未安装 Piper（运行 scripts/setup_tts.sh）"));
@@ -126,25 +126,25 @@ void CTtsService::speak(const QString& text) {
     /* 停掉上一段，也清掉正在合成的半成品 */
     stop();
 
-    m_strCurrentText = trimmed;
+    m_strCurrentText = strTrimmed;
 
-    const auto hit = m_strCache.constFind(trimmed);
-    if (hit != m_strCache.constEnd() && QFileInfo::exists(hit.value())) {
-        playFile(hit.value());
+    const auto stHit = m_strCache.constFind(strTrimmed);
+    if (stHit != m_strCache.constEnd() && QFileInfo::exists(stHit.value())) {
+        playFile(stHit.value());
         return;
     }
 
-    const QString wav = cachePathFor(trimmed);
+    const QString strWav = cachePathFor(strTrimmed);
     /* 大小要过 WAV 头：历史版本可能留下被 kill 截断的半成品文件 */
-    if (QFileInfo::exists(wav) && QFileInfo(wav).size() > kWavHeaderSize) {
-        m_strCache.insert(trimmed, wav);
-        playFile(wav);
+    if (QFileInfo::exists(strWav) && QFileInfo(strWav).size() > kWavHeaderSize) {
+        m_strCache.insert(strTrimmed, strWav);
+        playFile(strWav);
         return;
     }
 
-    m_strPendingPart = wav + QStringLiteral(".part");
-    m_strPendingFinal = wav;
-    m_strPendingText = trimmed;
+    m_strPendingPart = strWav + QStringLiteral(".part");
+    m_strPendingFinal = strWav;
+    m_strPendingText = strTrimmed;
 
     if (m_pProcess == nullptr) {
         /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
@@ -177,11 +177,11 @@ void CTtsService::speak(const QString& text) {
                 return;
             }
 
-            const QString wav = m_strPendingFinal;
-            m_strCache.insert(m_strPendingText, wav);
+            const QString strWav = m_strPendingFinal;
+            m_strCache.insert(m_strPendingText, strWav);
             m_strPendingPart.clear();
             m_strPendingFinal.clear();
-            playFile(wav);
+            playFile(strWav);
         });
     }
 
@@ -193,22 +193,22 @@ void CTtsService::speak(const QString& text) {
         emit failed(QStringLiteral("无法启动 piper"));
         return;
     }
-    m_pProcess->write(trimmed.toUtf8());
+    m_pProcess->write(strTrimmed.toUtf8());
     m_pProcess->closeWriteChannel();
 }
 
 /*
- * 功能描述:  执行 playFile 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  播放文件。
  * 作者:      JaTin
- * param [in]  path  参数。
- * return:    void
+ * param [in]   strPath          文件路径，类型 const QString&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CTtsService::playFile(const QString& path) {
-    if (m_strLoadedPath != path) {
+void CTtsService::playFile(const QString& strPath) {
+    if (m_strLoadedPath != strPath) {
         /* 换文件：setSource 是异步的，等 Ready 再播 */
-        m_strLoadedPath = path;
+        m_strLoadedPath = strPath;
         m_nPendingPlay = true;
-        m_pEffect->setSource(QUrl::fromLocalFile(path));
+        m_pEffect->setSource(QUrl::fromLocalFile(strPath));
         if (m_pEffect->status() == QSoundEffect::Ready) {
             m_nPendingPlay = false;
             m_pEffect->play();
@@ -222,16 +222,16 @@ void CTtsService::playFile(const QString& path) {
 }
 
 /*
- * 功能描述:  执行 stop 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  停止stop。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CTtsService::stop() {
     m_nPendingPlay = false;
     if (m_pEffect != nullptr) m_pEffect->stop();
 
     /* 先清空 pendingPart_ 再 kill，让 finished 回调知道这是主动取消 */
-    const QString part = m_strPendingPart;
+    const QString strPart = m_strPendingPart;
     m_strPendingPart.clear();
     m_strPendingFinal.clear();
 
@@ -239,13 +239,13 @@ void CTtsService::stop() {
         m_pProcess->kill();
         m_pProcess->waitForFinished(500);
     }
-    if (!part.isEmpty()) QFile::remove(part);
+    if (!strPart.isEmpty()) QFile::remove(strPart);
 }
 
 /*
- * 功能描述:  执行 cleanupPartFile 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  执行cleanuppart 文件。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CTtsService::cleanupPartFile() {
     if (!m_strPendingPart.isEmpty()) {

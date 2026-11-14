@@ -16,89 +16,88 @@
 #include <QPaintEvent>
 
 /*
- * 功能描述:  执行 CPlayButton 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  构造 CPlayButton 对象，完成成员初始化与依赖注入。
  * 作者:      JaTin
- * param [in]  parent  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget* parent) : QAbstractButton(。
+ * return:    无返回值（构造函数或析构函数）。
  */
-CPlayButton::CPlayButton(QWidget* parent) : QAbstractButton(parent) {
+CPlayButton::CPlayButton(QWidget* pParent) : QAbstractButton(pParent) {
     setCursor(Qt::PointingHandCursor);
     setFixedSize(22, 22);
     setToolTip(QStringLiteral("播放发音"));
 }
 
 /*
- * 功能描述:  执行 setPlaying 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  设置playing。
  * 作者:      JaTin
- * param [in]  playing  参数。
- * return:    void
+ * param [in]   nPlaying         输入数据，类型 bool。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CPlayButton::setPlaying(bool playing) {
-    if (m_nPlaying == playing) return;
-    m_nPlaying = playing;
-    setToolTip(playing ? QStringLiteral("停止播放") : QStringLiteral("播放发音"));
+void CPlayButton::setPlaying(bool nPlaying) {
+    if (m_nPlaying == nPlaying) return;
+    m_nPlaying = nPlaying;
+    setToolTip(nPlaying ? QStringLiteral("停止播放") : QStringLiteral("播放发音"));
     update();
 }
 
 /*
- * 功能描述:  执行 enterEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  进入事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * param [in]   pEvent           事件，类型 QEnterEvent*。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CPlayButton::enterEvent(QEnterEvent* event) {
+void CPlayButton::enterEvent(QEnterEvent* pEvent) {
     m_nHovered = true;
     update();
-    QAbstractButton::enterEvent(event);
+    QAbstractButton::enterEvent(pEvent);
 }
 
 /*
- * 功能描述:  执行 leaveEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  退出事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * param [in]   pEvent           事件，类型 QEvent*。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CPlayButton::leaveEvent(QEvent* event) {
+void CPlayButton::leaveEvent(QEvent* pEvent) {
     m_nHovered = false;
     update();
-    QAbstractButton::leaveEvent(event);
+    QAbstractButton::leaveEvent(pEvent);
 }
 
 /*
- * 功能描述:  执行 paintEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  绘制事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CPlayButton::paintEvent(QPaintEvent* /*event*/) {
-    QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing, true);
+    QPainter stP(this);
+    stP.setRenderHint(QPainter::Antialiasing, true);
 
-    const QRectF r = rect().adjusted(0.5, 0.5, -0.5, -0.5);
-    const QPointF c = r.center();
-    const QColor accent = theme::accent;
+    const QRectF stR = rect().adjusted(0.5, 0.5, -0.5, -0.5);
+    const QPointF stC = stR.center();
+    const QColor stAccent = theme::accent;
 
     if (m_nHovered && isEnabled()) {
-        p.setPen(Qt::NoPen);
-        p.setBrush(QColor("#E8F0FA"));
-        p.drawEllipse(r);
+        stP.setPen(Qt::NoPen);
+        stP.setBrush(QColor("#E8F0FA"));
+        stP.drawEllipse(stR);
     }
 
-    p.setPen(Qt::NoPen);
-    p.setBrush(isEnabled() ? accent : QColor("#B9C2CE"));
+    stP.setPen(Qt::NoPen);
+    stP.setBrush(isEnabled() ? stAccent : QColor("#B9C2CE"));
 
     if (m_nPlaying) {
         /* 播放中：两根竖条（暂停） */
-        p.drawRoundedRect(QRectF(c.x() - 4.0, c.y() - 4.5, 2.6, 9.0), 1.0, 1.0);
-        p.drawRoundedRect(QRectF(c.x() + 1.4, c.y() - 4.5, 2.6, 9.0), 1.0, 1.0);
+        stP.drawRoundedRect(QRectF(stC.x() - 4.0, stC.y() - 4.5, 2.6, 9.0), 1.0, 1.0);
+        stP.drawRoundedRect(QRectF(stC.x() + 1.4, stC.y() - 4.5, 2.6, 9.0), 1.0, 1.0);
         return;
     }
 
     /* 待播放：三角形 */
-    QPainterPath triangle;
-    triangle.moveTo(c.x() - 3.2, c.y() - 5.0);
-    triangle.lineTo(c.x() + 5.2, c.y());
-    triangle.lineTo(c.x() - 3.2, c.y() + 5.0);
-    triangle.closeSubpath();
-    p.drawPath(triangle);
+    QPainterPath stTriangle;
+    stTriangle.moveTo(stC.x() - 3.2, stC.y() - 5.0);
+    stTriangle.lineTo(stC.x() + 5.2, stC.y());
+    stTriangle.lineTo(stC.x() - 3.2, stC.y() + 5.0);
+    stTriangle.closeSubpath();
+    stP.drawPath(stTriangle);
 }

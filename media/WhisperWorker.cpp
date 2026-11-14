@@ -21,13 +21,20 @@
 
 #include "whisper.h"
 
-CWhisperWorker::CWhisperWorker(QString modelPath, QObject* parent)
-    : QObject(parent), m_strModelPath(std::move(modelPath)) {}
+/*
+ * 功能描述:  构造 CWhisperWorker 对象，完成成员初始化与依赖注入。
+ * 作者:      JaTin
+ * param [in]   strModelPath     输入数据，类型 QString。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject*。
+ * return:    无返回值（构造函数或析构函数）。
+ */
+CWhisperWorker::CWhisperWorker(QString strModelPath, QObject* pParent)
+    : QObject(pParent), m_strModelPath(std::move(strModelPath)) {}
 
 /*
- * 功能描述:  执行 CWhisperWorker 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  析构 CWhisperWorker 对象，释放运行期持有的全部资源。
  * 作者:      JaTin
- * return:    返回值，含义见功能描述。
+ * return:    无返回值（构造函数或析构函数）。
  */
 CWhisperWorker::~CWhisperWorker() {
     if (m_pCtx != nullptr) {
@@ -37,9 +44,9 @@ CWhisperWorker::~CWhisperWorker() {
 }
 
 /*
- * 功能描述:  执行 initialize 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  初始化initialize；实现上调用本地 whisper 完成语音转写。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CWhisperWorker::initialize() {
     if (m_pCtx != nullptr) {
@@ -51,84 +58,84 @@ void CWhisperWorker::initialize() {
         return;
     }
 
-    whisper_context_params params = whisper_context_default_params();
+    whisper_context_params stParams = whisper_context_default_params();
     /* 虚拟机无 GPU；纯 CPU 推理足够应付短句 */
-    params.use_gpu = false;
+    stParams.use_gpu = false;
 
-    QElapsedTimer timer;
-    timer.start();
-    m_pCtx = whisper_init_from_file_with_params(m_strModelPath.toUtf8().constData(), params);
+    QElapsedTimer stTimer;
+    stTimer.start();
+    m_pCtx = whisper_init_from_file_with_params(m_strModelPath.toUtf8().constData(), stParams);
     if (m_pCtx == nullptr) {
         emit initialized(false, QStringLiteral("语音模型加载失败：%1").arg(m_strModelPath));
         return;
     }
 
-    qInfo() << "whisper model loaded in" << timer.elapsed() << "ms:" << m_strModelPath;
+    qInfo() << "whisper model loaded in" << stTimer.elapsed() << "ms:" << m_strModelPath;
     emit initialized(true, QString());
 }
 
 /*
- * 功能描述:  执行 transcribe 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  转写transcribe；实现上调用本地 whisper 完成语音转写。
  * 作者:      JaTin
- * param [in]  pcm  参数。
- * return:    void
+ * param [in]   byPcm            输入数据，类型 const QByteArray&。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CWhisperWorker::transcribe(const QByteArray& pcm) {
+void CWhisperWorker::transcribe(const QByteArray& byPcm) {
     if (m_pCtx == nullptr) {
         emit failed(QStringLiteral("语音模型尚未就绪"));
         return;
     }
     /* < 0.1 秒，没必要送进模型 */
-    if (pcm.size() < 3200) {
+    if (byPcm.size() < 3200) {
         emit failed(QStringLiteral("录音太短，没有识别到语音"));
         return;
     }
 
     /* int16 -> float [-1, 1]，whisper 只吃 float PCM */
-    const int sampleCount = pcm.size() / 2;
-    std::vector<float> samples(static_cast<size_t>(sampleCount));
-    const auto* src = reinterpret_cast<const int16_t*>(pcm.constData());
-    for (int i = 0; i < sampleCount; ++i) {
-        samples[static_cast<size_t>(i)] = static_cast<float>(src[i]) / 32768.0f;
+    const int nSampleCount = byPcm.size() / 2;
+    std::vector<float> fSamples(static_cast<size_t>(nSampleCount));
+    const auto* pSrc = reinterpret_cast<const int16_t*>(byPcm.constData());
+    for (int i = 0; i < nSampleCount; ++i) {
+        fSamples[static_cast<size_t>(i)] = static_cast<float>(pSrc[i]) / 32768.0f;
     }
 
-    whisper_full_params p = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
-    p.print_progress   = false;
-    p.print_special    = false;
-    p.print_realtime   = false;
-    p.print_timestamps = false;
-    p.translate        = false;
+    whisper_full_params stP = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+    stP.print_progress   = false;
+    stP.print_special    = false;
+    stP.print_realtime   = false;
+    stP.print_timestamps = false;
+    stP.translate        = false;
     /* 英语练习场景，锁死英文可减少误判 */
-    p.language         = "en";
+    stP.language         = "en";
     /* 每句独立，不继承上一句上下文 */
-    p.no_context       = true;
-    p.single_segment   = false;
-    p.n_threads        = std::max(1, QThread::idealThreadCount() - 1);
+    stP.no_context       = true;
+    stP.single_segment   = false;
+    stP.n_threads        = std::max(1, QThread::idealThreadCount() - 1);
 
-    QElapsedTimer timer;
-    timer.start();
-    const int rc = whisper_full(m_pCtx, p, samples.data(), sampleCount);
-    const qint64 elapsed = timer.elapsed();
+    QElapsedTimer stTimer;
+    stTimer.start();
+    const int nRc = whisper_full(m_pCtx, stP, fSamples.data(), nSampleCount);
+    const qint64 lElapsed = stTimer.elapsed();
 
-    if (rc != 0) {
-        emit failed(QStringLiteral("语音识别失败（whisper_full 返回 %1）").arg(rc));
+    if (nRc != 0) {
+        emit failed(QStringLiteral("语音识别失败（whisper_full 返回 %1）").arg(nRc));
         return;
     }
 
-    QString text;
-    const int segments = whisper_full_n_segments(m_pCtx);
-    for (int i = 0; i < segments; ++i) {
-        text += QString::fromUtf8(whisper_full_get_segment_text(m_pCtx, i));
+    QString strText;
+    const int nSegments = whisper_full_n_segments(m_pCtx);
+    for (int i = 0; i < nSegments; ++i) {
+        strText += QString::fromUtf8(whisper_full_get_segment_text(m_pCtx, i));
     }
-    text = text.trimmed();
+    strText = strText.trimmed();
 
     /* 静音时 whisper 会输出 [BLANK_AUDIO] / [ Silence ] 这类标记 */
-    if (text.isEmpty() || text.startsWith(QLatin1Char('[')) || text == QLatin1String("()")) {
+    if (strText.isEmpty() || strText.startsWith(QLatin1Char('[')) || strText == QLatin1String("()")) {
         emit failed(QStringLiteral("没有识别到语音，请靠近麦克风重试"));
         return;
     }
 
-    emit finished(text, elapsed);
+    emit finished(strText, lElapsed);
 }
 
 /* !DP_WITH_WHISPER */
@@ -140,25 +147,31 @@ void CWhisperWorker::transcribe(const QByteArray& pcm) {
 
 #include <utility>
 
-CWhisperWorker::CWhisperWorker(QString modelPath, QObject* parent)
-    : QObject(parent), m_strModelPath(std::move(modelPath)) {}
+/*
+ * 功能描述:  构造 CWhisperWorker 对象，完成成员初始化与依赖注入。
+ * 作者:      JaTin
+ * param [in]   strModelPath     输入数据，类型 QString。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject*。
+ * return:    无返回值（构造函数或析构函数）。
+ */
+CWhisperWorker::CWhisperWorker(QString strModelPath, QObject* pParent)
+    : QObject(pParent), m_strModelPath(std::move(strModelPath)) {}
 
 CWhisperWorker::~CWhisperWorker() = default;
 
 /*
- * 功能描述:  执行 initialize 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  初始化initialize。
  * 作者:      JaTin
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CWhisperWorker::initialize() {
     emit initialized(false, QStringLiteral("本平台未编译语音识别（whisper.cpp）"));
 }
 
 /*
- * 功能描述:  执行 transcribe 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  转写transcribe。
  * 作者:      JaTin
- * param [in]  QByteArray  参数。
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CWhisperWorker::transcribe(const QByteArray&) {
     emit failed(QStringLiteral("本平台未编译语音识别（whisper.cpp）"));

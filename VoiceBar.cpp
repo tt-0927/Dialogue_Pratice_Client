@@ -25,148 +25,156 @@ constexpr int kSidePadding = 10;
 constexpr int kPlayArea = 22;
 
 /*
- * 功能描述:  执行 formatDuration 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  把毫秒时长格式化为分秒字符串。
  * 作者:      JaTin
- * param [in]  ms  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   nMs              输入数据，类型 int。
+ * return:    返回构造好的字符串；无内容时返回空字符串。
  */
-QString formatDuration(int ms) {
-    const int totalSeconds = qMax(1, ms / 1000);
-    return QStringLiteral("%1:%2").arg(totalSeconds / 60).arg(totalSeconds % 60, 2, 10, QLatin1Char('0'));
+QString formatDuration(int nMs) {
+    const int nTotalSeconds = qMax(1, nMs / 1000);
+    return QStringLiteral("%1:%2").arg(nTotalSeconds / 60).arg(nTotalSeconds % 60, 2, 10, QLatin1Char('0'));
 }
 
 /* namespace */
 }
 
-CVoiceBar::CVoiceBar(int durationMs, const QByteArray& container, bool outgoing, QWidget* parent)
-    : QWidget(parent), m_nDurationMs(qMax(0, durationMs)), m_nOutgoing(outgoing) {
+/*
+ * 功能描述:  构造 CVoiceBar 对象，完成成员初始化与依赖注入。
+ * 作者:      JaTin
+ * param [in]   nDurationMs      语音时长，单位毫秒，类型 int。
+ * param [in]   byContainer      容器，类型 const QByteArray&。
+ * param [in]   nOutgoing        输入数据，类型 bool。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget*。
+ * return:    无返回值（构造函数或析构函数）。
+ */
+CVoiceBar::CVoiceBar(int nDurationMs, const QByteArray& byContainer, bool nOutgoing, QWidget* pParent)
+    : QWidget(pParent), m_nDurationMs(qMax(0, nDurationMs)), m_nOutgoing(nOutgoing) {
     setCursor(Qt::PointingHandCursor);
     setToolTip(QStringLiteral("点击播放语音"));
     setAttribute(Qt::WA_Hover, true);
 
     /* 用容器哈希生成稳定的柱高：同一条语音每次显示一致 */
-    const QByteArray hash = QCryptographicHash::hash(container, QCryptographicHash::Md5);
+    const QByteArray byHash = QCryptographicHash::hash(byContainer, QCryptographicHash::Md5);
     m_aBars.reserve(kBarCount);
     for (int i = 0; i < kBarCount; ++i) {
-        const auto byte = static_cast<unsigned char>(hash.at(i % hash.size()));
+        const auto stByte = static_cast<unsigned char>(byHash.at(i % byHash.size()));
         /* 0.25 ~ 1.0，避免柱子太矮看不出形状 */
-        m_aBars.append(0.25 + (byte % 100) / 100.0 * 0.75);
+        m_aBars.append(0.25 + (stByte % 100) / 100.0 * 0.75);
     }
 }
 
 /*
- * 功能描述:  执行 setPlaying 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  设置playing。
  * 作者:      JaTin
- * param [in]  playing  参数。
- * return:    void
+ * param [in]   nPlaying         输入数据，类型 bool。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CVoiceBar::setPlaying(bool playing) {
-    if (m_nPlaying == playing) return;
-    m_nPlaying = playing;
-    setToolTip(playing ? QStringLiteral("点击重新播放") : QStringLiteral("点击播放语音"));
+void CVoiceBar::setPlaying(bool nPlaying) {
+    if (m_nPlaying == nPlaying) return;
+    m_nPlaying = nPlaying;
+    setToolTip(nPlaying ? QStringLiteral("点击重新播放") : QStringLiteral("点击播放语音"));
     update();
 }
 
 /*
- * 功能描述:  执行 sizeHint 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  获取长度 hint。
  * 作者:      JaTin
- * return:    返回值，含义见功能描述。
+ * return:    返回 QSize 类型的处理结果，具体含义见功能描述。
  */
 QSize CVoiceBar::sizeHint() const {
     /* 时长越长条越宽，但限制在 90~230 之间，避免长语音撑爆气泡 */
-    const int waveWidth = kBarCount * (kBarWidth + kBarGap) - kBarGap;
-    const int extra = qBound(0, m_nDurationMs / 120, 120);
-    const int width = kSidePadding * 2 + kPlayArea + 8 + waveWidth + extra + 34;
-    return QSize(qBound(150, width, 260), 34);
+    const int nWaveWidth = kBarCount * (kBarWidth + kBarGap) - kBarGap;
+    const int nExtra = qBound(0, m_nDurationMs / 120, 120);
+    const int nWidth = kSidePadding * 2 + kPlayArea + 8 + nWaveWidth + nExtra + 34;
+    return QSize(qBound(150, nWidth, 260), 34);
 }
 
 /*
- * 功能描述:  执行 paintEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  绘制事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
 void CVoiceBar::paintEvent(QPaintEvent* /*event*/) {
-    QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing, true);
+    QPainter stP(this);
+    stP.setRenderHint(QPainter::Antialiasing, true);
 
-    const QColor accent = theme::accent;
-    const QColor waveColor = m_nOutgoing ? QColor("#5F9E3F") : QColor("#7A9BC0");
-    const QColor dimColor = m_nOutgoing ? QColor("#8FBF74") : QColor("#C3D2E2");
+    const QColor stAccent = theme::accent;
+    const QColor stWaveColor = m_nOutgoing ? QColor("#5F9E3F") : QColor("#7A9BC0");
+    const QColor stDimColor = m_nOutgoing ? QColor("#8FBF74") : QColor("#C3D2E2");
 
-    const QRectF r = rect();
-    const qreal centerY = r.center().y();
+    const QRectF stR = rect();
+    const qreal stCenterY = stR.center().y();
 
     /* 播放/暂停图标 */
-    const QPointF iconCenter(kSidePadding + kPlayArea / 2.0, centerY);
-    p.setPen(Qt::NoPen);
-    p.setBrush(m_nHovered ? accent : (m_nOutgoing ? waveColor : accent));
+    const QPointF stIconCenter(kSidePadding + kPlayArea / 2.0, stCenterY);
+    stP.setPen(Qt::NoPen);
+    stP.setBrush(m_nHovered ? stAccent : (m_nOutgoing ? stWaveColor : stAccent));
     if (m_nPlaying) {
-        p.drawRoundedRect(QRectF(iconCenter.x() - 4.0, iconCenter.y() - 5.0, 2.8, 10.0), 1.0, 1.0);
-        p.drawRoundedRect(QRectF(iconCenter.x() + 1.2, iconCenter.y() - 5.0, 2.8, 10.0), 1.0, 1.0);
+        stP.drawRoundedRect(QRectF(stIconCenter.x() - 4.0, stIconCenter.y() - 5.0, 2.8, 10.0), 1.0, 1.0);
+        stP.drawRoundedRect(QRectF(stIconCenter.x() + 1.2, stIconCenter.y() - 5.0, 2.8, 10.0), 1.0, 1.0);
     } else {
-        QPainterPath triangle;
-        triangle.moveTo(iconCenter.x() - 3.5, iconCenter.y() - 5.5);
-        triangle.lineTo(iconCenter.x() + 5.5, iconCenter.y());
-        triangle.lineTo(iconCenter.x() - 3.5, iconCenter.y() + 5.5);
-        triangle.closeSubpath();
-        p.drawPath(triangle);
+        QPainterPath stTriangle;
+        stTriangle.moveTo(stIconCenter.x() - 3.5, stIconCenter.y() - 5.5);
+        stTriangle.lineTo(stIconCenter.x() + 5.5, stIconCenter.y());
+        stTriangle.lineTo(stIconCenter.x() - 3.5, stIconCenter.y() + 5.5);
+        stTriangle.closeSubpath();
+        stP.drawPath(stTriangle);
     }
 
     /* 波形 */
-    const qreal waveLeft = kSidePadding + kPlayArea + 8;
-    const qreal waveWidth = r.width() - waveLeft - 40;
-    const qreal step = (kBarWidth + kBarGap);
-    const int visibleBars = qMax(1, qMin(kBarCount, static_cast<int>(waveWidth / step)));
+    const qreal stWaveLeft = kSidePadding + kPlayArea + 8;
+    const qreal stWaveWidth = stR.width() - stWaveLeft - 40;
+    const qreal stStep = (kBarWidth + kBarGap);
+    const int nVisibleBars = qMax(1, qMin(kBarCount, static_cast<int>(stWaveWidth / stStep)));
 
-    for (int i = 0; i < visibleBars; ++i) {
-        const qreal h = m_aBars.at(i) * 16.0;
-        const QRectF bar(waveLeft + i * step, centerY - h / 2.0, kBarWidth, h);
-        p.setBrush(m_nPlaying ? waveColor : dimColor);
-        p.drawRoundedRect(bar, 1.2, 1.2);
+    for (int i = 0; i < nVisibleBars; ++i) {
+        const qreal stH = m_aBars.at(i) * 16.0;
+        const QRectF stBar(stWaveLeft + i * stStep, stCenterY - stH / 2.0, kBarWidth, stH);
+        stP.setBrush(m_nPlaying ? stWaveColor : stDimColor);
+        stP.drawRoundedRect(stBar, 1.2, 1.2);
     }
 
     /* 时长 */
-    p.setPen(m_nOutgoing ? QColor("#4F7F35") : QColor("#8A94A6"));
-    QFont f = font();
-    f.setPointSizeF(8.5);
-    p.setFont(f);
-    const QString text = formatDuration(m_nDurationMs);
-    p.drawText(QRectF(r.right() - 38, r.top(), 34, r.height()),
-               Qt::AlignRight | Qt::AlignVCenter, text);
+    stP.setPen(m_nOutgoing ? QColor("#4F7F35") : QColor("#8A94A6"));
+    QFont stF = font();
+    stF.setPointSizeF(8.5);
+    stP.setFont(stF);
+    const QString strText = formatDuration(m_nDurationMs);
+    stP.drawText(QRectF(stR.right() - 38, stR.top(), 34, stR.height()),
+               Qt::AlignRight | Qt::AlignVCenter, strText);
 }
 
 /*
- * 功能描述:  执行 mousePressEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  执行mousepress 事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * param [in]   pEvent           事件，类型 QMouseEvent*。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CVoiceBar::mousePressEvent(QMouseEvent* event) {
-    if (event->button() == Qt::LeftButton) emit playRequested();
-    QWidget::mousePressEvent(event);
+void CVoiceBar::mousePressEvent(QMouseEvent* pEvent) {
+    if (pEvent->button() == Qt::LeftButton) emit playRequested();
+    QWidget::mousePressEvent(pEvent);
 }
 
 /*
- * 功能描述:  执行 enterEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  进入事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * param [in]   pEvent           事件，类型 QEnterEvent*。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CVoiceBar::enterEvent(QEnterEvent* event) {
+void CVoiceBar::enterEvent(QEnterEvent* pEvent) {
     m_nHovered = true;
     update();
-    QWidget::enterEvent(event);
+    QWidget::enterEvent(pEvent);
 }
 
 /*
- * 功能描述:  执行 leaveEvent 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  退出事件。
  * 作者:      JaTin
- * param [in]  event  参数。
- * return:    void
+ * param [in]   pEvent           事件，类型 QEvent*。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CVoiceBar::leaveEvent(QEvent* event) {
+void CVoiceBar::leaveEvent(QEvent* pEvent) {
     m_nHovered = false;
     update();
-    QWidget::leaveEvent(event);
+    QWidget::leaveEvent(pEvent);
 }

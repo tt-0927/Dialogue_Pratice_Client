@@ -18,128 +18,128 @@
 #include <QUrl>
 
 /*
- * 功能描述:  执行 CLlmClient 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  构造 CLlmClient 对象，完成成员初始化与依赖注入。
  * 作者:      JaTin
- * param [in]  parent  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject* parent) : QObject(。
+ * return:    无返回值（构造函数或析构函数）。
  */
-CLlmClient::CLlmClient(QObject* parent) : QObject(parent) {
+CLlmClient::CLlmClient(QObject* pParent) : QObject(pParent) {
     /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
     m_pNam = new QNetworkAccessManager(this);
 }
 
 /*
- * 功能描述:  执行 chat 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  获取chat；实现上发起异步 HTTP 请求、按协议字段组装或解析 JSON。
  * 作者:      JaTin
- * param [in]  system  参数。
- * param [in]  user  参数。
- * param [in]  maxTokens  参数。
- * return:    返回值，含义见功能描述。
+ * param [in]   strSystem        系统提示词，类型 const QString&。
+ * param [in]   strUser          用户输入内容，类型 const QString&。
+ * param [in]   nMaxTokens       最大生成 token 数，类型 int。
+ * return:    返回处理结果码；0 表示成功，负值或 -1 表示失败。
  */
-int CLlmClient::chat(const QString& system, const QString& user, int maxTokens) {
+int CLlmClient::chat(const QString& strSystem, const QString& strUser, int nMaxTokens) {
     if (!isEnabled()) return 0;
 
-    const int requestId = m_nNextId++;
+    const int nRequestId = m_nNextId++;
 
-    QJsonObject systemMessage;
-    systemMessage[QStringLiteral("role")] = QStringLiteral("system");
-    systemMessage[QStringLiteral("content")] = system;
+    QJsonObject stSystemMessage;
+    stSystemMessage[QStringLiteral("role")] = QStringLiteral("system");
+    stSystemMessage[QStringLiteral("content")] = strSystem;
 
-    QJsonObject userMessage;
-    userMessage[QStringLiteral("role")] = QStringLiteral("user");
-    userMessage[QStringLiteral("content")] = user;
+    QJsonObject stUserMessage;
+    stUserMessage[QStringLiteral("role")] = QStringLiteral("user");
+    stUserMessage[QStringLiteral("content")] = strUser;
 
-    QJsonArray messages;
-    messages.append(systemMessage);
-    messages.append(userMessage);
+    QJsonArray aMessages;
+    aMessages.append(stSystemMessage);
+    aMessages.append(stUserMessage);
 
-    QJsonObject body;
-    body[QStringLiteral("model")] = m_stConfig.model;
-    body[QStringLiteral("messages")] = messages;
-    body[QStringLiteral("temperature")] = m_stConfig.temperature;
-    body[QStringLiteral("max_tokens")] = maxTokens;
-    body[QStringLiteral("stream")] = false;
+    QJsonObject stBody;
+    stBody[QStringLiteral("model")] = m_stConfig.model;
+    stBody[QStringLiteral("messages")] = aMessages;
+    stBody[QStringLiteral("temperature")] = m_stConfig.temperature;
+    stBody[QStringLiteral("max_tokens")] = nMaxTokens;
+    stBody[QStringLiteral("stream")] = false;
     if (!m_stConfig.reasoningEffort.isEmpty()) {
         /* 推理模型专用：翻译这种任务用 low 能省一半时间，质量不变 */
-        body[QStringLiteral("reasoning_effort")] = m_stConfig.reasoningEffort;
+        stBody[QStringLiteral("reasoning_effort")] = m_stConfig.reasoningEffort;
     }
 
     /* baseUrl 允许三种写法，统一补成 <base>/.../chat/completions： */
     /* https://api.deepseek.com                 -> /v1/chat/completions */
     /* https://dashscope.aliyuncs.com/compatible-mode/v1 -> /chat/completions */
     /* https://x/v1/chat/completions（完整）     -> 原样使用 */
-    QUrl url(m_stConfig.baseUrl);
-    QString path = url.path();
-    while (path.endsWith(QLatin1Char('/'))) path.chop(1);
-    if (!path.endsWith(QStringLiteral("/chat/completions"))) {
-        if (path.endsWith(QStringLiteral("/v1")) || path.endsWith(QStringLiteral("/v2"))) {
-            path += QStringLiteral("/chat/completions");
+    QUrl stUrl(m_stConfig.baseUrl);
+    QString strPath = stUrl.path();
+    while (strPath.endsWith(QLatin1Char('/'))) strPath.chop(1);
+    if (!strPath.endsWith(QStringLiteral("/chat/completions"))) {
+        if (strPath.endsWith(QStringLiteral("/v1")) || strPath.endsWith(QStringLiteral("/v2"))) {
+            strPath += QStringLiteral("/chat/completions");
         } else {
-            path += QStringLiteral("/v1/chat/completions");
+            strPath += QStringLiteral("/v1/chat/completions");
         }
-        url.setPath(path);
+        stUrl.setPath(strPath);
     }
 
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+    QNetworkRequest stRequest(stUrl);
+    stRequest.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     if (!m_stConfig.apiKey.isEmpty()) {
-        request.setRawHeader("Authorization", "Bearer " + m_stConfig.apiKey.toUtf8());
+        stRequest.setRawHeader("Authorization", "Bearer " + m_stConfig.apiKey.toUtf8());
     }
-    request.setTransferTimeout(m_stConfig.timeoutMs);
+    stRequest.setTransferTimeout(m_stConfig.timeoutMs);
 
-    QNetworkReply* reply = m_pNam->post(request, QJsonDocument(body).toJson(QJsonDocument::Compact));
-    connect(reply, &QNetworkReply::finished, this, [this, reply, requestId] {
-        handleReply(reply, requestId);
+    QNetworkReply* pReply = m_pNam->post(stRequest, QJsonDocument(stBody).toJson(QJsonDocument::Compact));
+    connect(pReply, &QNetworkReply::finished, this, [this, pReply, nRequestId] {
+        handleReply(pReply, nRequestId);
     });
 
-    return requestId;
+    return nRequestId;
 }
 
 /*
- * 功能描述:  执行 handleReply 相关的处理，完成参数校验、核心逻辑与结果返回。
+ * 功能描述:  处理回复；实现上按协议字段组装或解析 JSON。
  * 作者:      JaTin
- * param [in]  reply  参数。
- * param [in]  requestId  参数。
- * return:    void
+ * param [in]   pReply           响应对象，类型 QNetworkReply*。
+ * param [in]   nRequestId       请求编号，类型 int。
+ * return:    无返回值；处理结果通过成员状态或信号对外体现。
  */
-void CLlmClient::handleReply(QNetworkReply* reply, int requestId) {
-    reply->deleteLater();
+void CLlmClient::handleReply(QNetworkReply* pReply, int nRequestId) {
+    pReply->deleteLater();
 
-    if (reply->error() != QNetworkReply::NoError) {
-        emit failed(requestId, reply->errorString());
+    if (pReply->error() != QNetworkReply::NoError) {
+        emit failed(nRequestId, pReply->errorString());
         return;
     }
 
-    const QByteArray payload = reply->readAll();
-    QJsonParseError parseError{};
-    const QJsonDocument doc = QJsonDocument::fromJson(payload, &parseError);
-    if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
-        emit failed(requestId, QStringLiteral("返回内容不是合法 JSON"));
+    const QByteArray byPayload = pReply->readAll();
+    QJsonParseError stParseError{};
+    const QJsonDocument stDoc = QJsonDocument::fromJson(byPayload, &stParseError);
+    if (stParseError.error != QJsonParseError::NoError || !stDoc.isObject()) {
+        emit failed(nRequestId, QStringLiteral("返回内容不是合法 JSON"));
         return;
     }
 
-    const QJsonArray choices = doc.object().value(QStringLiteral("choices")).toArray();
-    if (choices.isEmpty()) {
-        emit failed(requestId, QStringLiteral("返回里没有 choices"));
+    const QJsonArray aChoices = stDoc.object().value(QStringLiteral("choices")).toArray();
+    if (aChoices.isEmpty()) {
+        emit failed(nRequestId, QStringLiteral("返回里没有 choices"));
         return;
     }
 
-    const QJsonObject message =
-        choices.first().toObject().value(QStringLiteral("message")).toObject();
-    const QString content = message.value(QStringLiteral("content")).toString().trimmed();
-    if (content.isEmpty()) {
+    const QJsonObject stMessage =
+        aChoices.first().toObject().value(QStringLiteral("message")).toObject();
+    const QString strContent = stMessage.value(QStringLiteral("content")).toString().trimmed();
+    if (strContent.isEmpty()) {
         /* 推理模型（如 spark-x2.6、gpt-6.1-sol）会把 token 全花在 reasoning_content 上， */
         /* max_tokens 不够时正文就是空的。这种情况直接报「空内容」会让人一头雾水。 */
-        const QString reasoning =
-            message.value(QStringLiteral("reasoning_content")).toString();
-        if (!reasoning.isEmpty()) {
-            emit failed(requestId,
+        const QString strReasoning =
+            stMessage.value(QStringLiteral("reasoning_content")).toString();
+        if (!strReasoning.isEmpty()) {
+            emit failed(nRequestId,
                         QStringLiteral("模型只输出了思考过程，没有正文（把 reasoningEffort 设为 none）"));
         } else {
-            emit failed(requestId, QStringLiteral("模型返回了空内容"));
+            emit failed(nRequestId, QStringLiteral("模型返回了空内容"));
         }
         return;
     }
 
-    emit finished(requestId, content);
+    emit finished(nRequestId, strContent);
 }
