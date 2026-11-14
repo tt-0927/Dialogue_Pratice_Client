@@ -1,13 +1,14 @@
-/*
- * 文件名:    voice_make.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  voice_make 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       voice_make.cpp
+ * @brief      voice_make 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* 把 16k 单声道 WAV 编码成 DPV1 容器并输出 Base64， */
-/* 供 peer_bot.py 之类的测试工具直接当作 Voice 帧的 opus 字段发出去。 */
+/**
+ * @brief  把 16k 单声道 WAV 编码成 DPV1 容器并输出 Base64， 供 peer_bot.py 之类的测试工具直接当作 Voice 帧的 opus 字段发出去。
+ */
 #include "media/VoiceCodec.h"
 
 #include <QCoreApplication>
@@ -17,13 +18,13 @@
 
 namespace {
 
-/*
- * 功能描述:  读取wavpcm；失败时返回 false。
- * 作者:      JaTin
- * param [in]   strPath          文件路径，类型 const QString&。
- * param [out]  byPcm            输入数据，类型 QByteArray&。
- * param [out]  strError         错误信息，类型 QString&。
- * return:    成功返回 true；参数非法或执行失败时返回 false。
+/**
+ * @brief      读取 wavpcm；失败时返回 false。
+ * @param[in] strPath        文件路径；类型 const QString&。
+ * @param[out] byPcm          输入数据；类型 QByteArray&。
+ * @param[out] strError       错误信息；类型 QString&。
+ * @return     成功返回 true；参数非法或执行失败时返回 false。
+ * @author     JaTin
  */
 bool readWavPcm(const QString& strPath, QByteArray& byPcm, QString& strError) {
     QFile stFile(strPath);
@@ -66,15 +67,17 @@ bool readWavPcm(const QString& strPath, QByteArray& byPcm, QString& strError) {
     return true;
 }
 
-/* namespace */
+/**
+ * @brief  namespace。
+ */
 }
 
-/*
- * 功能描述:  程序入口：解析命令行参数、初始化服务端并运行事件循环。
- * 作者:      JaTin
- * param [in]   nArgc            输入数据，类型 int。
- * param [in]   strArgv          输入数据，类型 char**。
- * return:    返回处理结果码；0 表示成功，负值或 -1 表示失败。
+/**
+ * @brief      程序入口：解析命令行参数、初始化服务端并运行事件循环。
+ * @param[in] nArgc          输入数据；类型 int。
+ * @param[in] strArgv        输入数据；类型 char**。
+ * @return     返回处理结果码；0 表示成功，负值或 -1 表示失败。
+ * @author     JaTin
  */
 int main(int nArgc, char** strArgv) {
     QCoreApplication stApp(nArgc, strArgv);
@@ -96,7 +99,9 @@ int main(int nArgc, char** strArgv) {
         return 3;
     }
 
-    /* stdout 只输出一行：<durationMs> <base64> */
+    /**
+     * @brief  stdout 只输出一行：<durationMs> <base64>。
+     */
     std::printf("%d %s\n", CVoiceCodec::durationMs(byContainer),
                 byContainer.toBase64().constData());
     return 0;

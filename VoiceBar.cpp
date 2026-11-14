@@ -1,12 +1,14 @@
-/*
- * 文件名:    VoiceBar.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  CVoiceBar 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       VoiceBar.cpp
+ * @brief      CVoiceBar 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* CVoiceBar.cpp */
+/**
+ * @brief  CVoiceBar.cpp。
+ */
 #include "VoiceBar.h"
 
 #include "Theme.h"
@@ -18,34 +20,56 @@
 
 namespace {
 
+/**
+ * @brief  统计工具条。
+ * @note   取值 26。
+ */
 constexpr int kBarCount = 26;
+/**
+ * @brief  k工具条Gap。
+ * @note   取值 2。
+ */
 constexpr int kBarGap = 2;
+/**
+ * @brief  k工具条Width。
+ * @note   取值 3。
+ */
 constexpr int kBarWidth = 3;
+/**
+ * @brief  kSidePadding。
+ * @note   取值 10。
+ */
 constexpr int kSidePadding = 10;
+/**
+ * @brief  播放area。
+ * @note   取值 22。
+ */
 constexpr int kPlayArea = 22;
 
-/*
- * 功能描述:  把毫秒时长格式化为分秒字符串。
- * 作者:      JaTin
- * param [in]   nMs              输入数据，类型 int。
- * return:    返回构造好的字符串；无内容时返回空字符串。
+/**
+ * @brief      把毫秒时长格式化为分秒字符串。
+ * @param[in] nMs            输入数据；类型 int。
+ * @return     返回构造好的字符串；无内容时返回空字符串。
+ * @author     JaTin
  */
 QString formatDuration(int nMs) {
     const int nTotalSeconds = qMax(1, nMs / 1000);
     return QStringLiteral("%1:%2").arg(nTotalSeconds / 60).arg(nTotalSeconds % 60, 2, 10, QLatin1Char('0'));
 }
 
-/* namespace */
+/**
+ * @brief  namespace。
+ */
 }
 
-/*
- * 功能描述:  构造 CVoiceBar 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   nDurationMs      语音时长，单位毫秒，类型 int。
- * param [in]   byContainer      容器，类型 const QByteArray&。
- * param [in]   nOutgoing        输入数据，类型 bool。
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget*。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      构造 CVoiceBar 对象，完成成员初始化与依赖注入。
+ * @param[in] nDurationMs    语音时长，单位毫秒；类型 int。
+ * @param[in] byContainer    容器；类型 const QByteArray&。
+ * @param[in] nOutgoing      输入数据；类型 bool。
+ * @param[in] pParent        Qt 父对象指针，用于对象树所有权管理；类型 QWidget*。
+ * @return     构造/析构函数无返回值。
+ * @author     JaTin
  */
 CVoiceBar::CVoiceBar(int nDurationMs, const QByteArray& byContainer, bool nOutgoing, QWidget* pParent)
     : QWidget(pParent), m_nDurationMs(qMax(0, nDurationMs)), m_nOutgoing(nOutgoing) {
@@ -53,21 +77,25 @@ CVoiceBar::CVoiceBar(int nDurationMs, const QByteArray& byContainer, bool nOutgo
     setToolTip(QStringLiteral("点击播放语音"));
     setAttribute(Qt::WA_Hover, true);
 
-    /* 用容器哈希生成稳定的柱高：同一条语音每次显示一致 */
+    /**
+     * @brief  用容器哈希生成稳定的柱高：同一条语音每次显示一致。
+     */
     const QByteArray byHash = QCryptographicHash::hash(byContainer, QCryptographicHash::Md5);
     m_aBars.reserve(kBarCount);
     for (int i = 0; i < kBarCount; ++i) {
         const auto stByte = static_cast<unsigned char>(byHash.at(i % byHash.size()));
-        /* 0.25 ~ 1.0，避免柱子太矮看不出形状 */
+        /**
+         * @brief  0.25 ~ 1.0，避免柱子太矮看不出形状。
+         */
         m_aBars.append(0.25 + (stByte % 100) / 100.0 * 0.75);
     }
 }
 
-/*
- * 功能描述:  设置playing。
- * 作者:      JaTin
- * param [in]   nPlaying         输入数据，类型 bool。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      设置 playing相关的数据并返回处理结果。
+ * @param[in] nPlaying       输入数据；类型 bool。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CVoiceBar::setPlaying(bool nPlaying) {
     if (m_nPlaying == nPlaying) return;
@@ -76,23 +104,27 @@ void CVoiceBar::setPlaying(bool nPlaying) {
     update();
 }
 
-/*
- * 功能描述:  获取长度 hint。
- * 作者:      JaTin
- * return:    返回 QSize 类型的处理结果，具体含义见功能描述。
+/**
+ * @brief      获取长度 hint。
+ * @note       本函数无输入参数。
+ * @return     返回 QSize CVoiceBar:: 类型的处理结果。
+ * @author     JaTin
  */
 QSize CVoiceBar::sizeHint() const {
-    /* 时长越长条越宽，但限制在 90~230 之间，避免长语音撑爆气泡 */
+    /**
+     * @brief  时长越长条越宽，但限制在 90~230 之间，避免长语音撑爆气泡。
+     */
     const int nWaveWidth = kBarCount * (kBarWidth + kBarGap) - kBarGap;
     const int nExtra = qBound(0, m_nDurationMs / 120, 120);
     const int nWidth = kSidePadding * 2 + kPlayArea + 8 + nWaveWidth + nExtra + 34;
     return QSize(qBound(150, nWidth, 260), 34);
 }
 
-/*
- * 功能描述:  绘制事件。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      绘制事件。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CVoiceBar::paintEvent(QPaintEvent* /*event*/) {
     QPainter stP(this);
@@ -105,7 +137,9 @@ void CVoiceBar::paintEvent(QPaintEvent* /*event*/) {
     const QRectF stR = rect();
     const qreal stCenterY = stR.center().y();
 
-    /* 播放/暂停图标 */
+    /**
+     * @brief  播放/暂停图标。
+     */
     const QPointF stIconCenter(kSidePadding + kPlayArea / 2.0, stCenterY);
     stP.setPen(Qt::NoPen);
     stP.setBrush(m_nHovered ? stAccent : (m_nOutgoing ? stWaveColor : stAccent));
@@ -121,7 +155,9 @@ void CVoiceBar::paintEvent(QPaintEvent* /*event*/) {
         stP.drawPath(stTriangle);
     }
 
-    /* 波形 */
+    /**
+     * @brief  波形。
+     */
     const qreal stWaveLeft = kSidePadding + kPlayArea + 8;
     const qreal stWaveWidth = stR.width() - stWaveLeft - 40;
     const qreal stStep = (kBarWidth + kBarGap);
@@ -134,7 +170,9 @@ void CVoiceBar::paintEvent(QPaintEvent* /*event*/) {
         stP.drawRoundedRect(stBar, 1.2, 1.2);
     }
 
-    /* 时长 */
+    /**
+     * @brief  时长。
+     */
     stP.setPen(m_nOutgoing ? QColor("#4F7F35") : QColor("#8A94A6"));
     QFont stF = font();
     stF.setPointSizeF(8.5);
@@ -144,22 +182,22 @@ void CVoiceBar::paintEvent(QPaintEvent* /*event*/) {
                Qt::AlignRight | Qt::AlignVCenter, strText);
 }
 
-/*
- * 功能描述:  执行mousepress 事件。
- * 作者:      JaTin
- * param [in]   pEvent           事件，类型 QMouseEvent*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      执行 mousepress 事件。
+ * @param[in] pEvent         事件；类型 QMouseEvent*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CVoiceBar::mousePressEvent(QMouseEvent* pEvent) {
     if (pEvent->button() == Qt::LeftButton) emit playRequested();
     QWidget::mousePressEvent(pEvent);
 }
 
-/*
- * 功能描述:  进入事件。
- * 作者:      JaTin
- * param [in]   pEvent           事件，类型 QEnterEvent*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      进入事件。
+ * @param[in] pEvent         事件；类型 QEnterEvent*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CVoiceBar::enterEvent(QEnterEvent* pEvent) {
     m_nHovered = true;
@@ -167,11 +205,11 @@ void CVoiceBar::enterEvent(QEnterEvent* pEvent) {
     QWidget::enterEvent(pEvent);
 }
 
-/*
- * 功能描述:  退出事件。
- * 作者:      JaTin
- * param [in]   pEvent           事件，类型 QEvent*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      退出事件。
+ * @param[in] pEvent         事件；类型 QEvent*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CVoiceBar::leaveEvent(QEvent* pEvent) {
     m_nHovered = false;

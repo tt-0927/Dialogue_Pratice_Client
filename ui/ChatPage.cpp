@@ -1,9 +1,9 @@
-/*
- * 文件名:    ChatPage.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  聊天界面的实现：控件构建、信号接线与渲染。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       ChatPage.cpp
+ * @brief      聊天界面的实现：控件构建、信号接线与渲染。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
 #include "ui/ChatPage.h"
@@ -43,23 +43,17 @@ namespace {
 const QString kTag = QStringLiteral("ui");
 const char* kComposerHint = "输入消息，Enter 发送，Shift+Enter 换行";
 
-/* 把时间戳格式化成 `HH:mm`。 */
-/*
- * 功能描述:  获取formattime。
- * 作者:      JaTin
- * param [in]   lTs              Unix 毫秒时间戳，类型 qint64。
- * return:    返回构造好的字符串；无内容时返回空字符串。
+/**
+ * @brief  把时间戳格式化成 `HH:mm`。
+ * @details 获取 formattime相关的数据并返回处理结果。
  */
 QString formatTime(qint64 lTs) {
     return QDateTime::fromMSecsSinceEpoch(lTs).toString(QStringLiteral("HH:mm"));
 }
 
-/* 把日期格式化成「今天 / 昨天 / M月d日」。 */
-/*
- * 功能描述:  获取formatdate。
- * 作者:      JaTin
- * param [in]   stDate           输入数据，类型 const QDate&。
- * return:    返回构造好的字符串；无内容时返回空字符串。
+/**
+ * @brief  把日期格式化成「今天 / 昨天 / M月d日」。
+ * @details 获取 formatdate相关的数据并返回处理结果。
  */
 QString formatDate(const QDate& stDate) {
     const QDate stToday = QDate::currentDate();
@@ -69,11 +63,9 @@ QString formatDate(const QDate& stDate) {
     return stDate.toString(QStringLiteral("yyyy年M月d日"));
 }
 
-/* 模型路径优先级：QSettings 覆盖 > 编译期默认（源码树 models/ 目录）。 */
-/*
- * 功能描述:  获取resolve 模型名文件路径；实现上读写本地持久化设置。
- * 作者:      JaTin
- * return:    返回构造好的字符串；无内容时返回空字符串。
+/**
+ * @brief  模型路径优先级：QSettings 覆盖 > 编译期默认（源码树 models/ 目录）。
+ * @details 获取 resolve 模型名文件路径；实现上读写本地持久化设置。
  */
 QString resolveModelPath() {
     const QString strConfigured = QSettings().value(QStringLiteral("voice/modelPath")).toString();
@@ -85,27 +77,25 @@ QString resolveModelPath() {
 #endif
 }
 
-/* namespace */
+/**
+ * @brief  namespace。
+ */
 }
 
-/* ---------------------------------------------------------------- ComposerEdit */
-
-/*
- * 功能描述:  构造 ComposerEdit 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget* parent) : QPlainTextEdit(。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief  ---------------------------------------------------------------- ComposerEdit。
+ * @details 构造 ComposerEdit 对象，完成成员初始化与依赖注入。
  */
 ComposerEdit::ComposerEdit(QWidget* pParent) : QPlainTextEdit(pParent) {
     setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
-/*
- * 功能描述:  执行密钥 press 事件。
- * 作者:      JaTin
- * param [in]   pEvent           事件，类型 QKeyEvent*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      执行密钥 press 事件。
+ * @param[in] pEvent         事件；类型 QKeyEvent*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ComposerEdit::keyPressEvent(QKeyEvent* pEvent) {
     const bool nIsEnter = (pEvent->key() == Qt::Key_Return || pEvent->key() == Qt::Key_Enter);
@@ -117,13 +107,9 @@ void ComposerEdit::keyPressEvent(QKeyEvent* pEvent) {
     QPlainTextEdit::keyPressEvent(pEvent);
 }
 
-/* ---------------------------------------------------------------- 构造 */
-
-/*
- * 功能描述:  构造 ChatPage 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget* parent) : QWidget(。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief  ---------------------------------------------------------------- 构造。
+ * @details 构造 ChatPage 对象，完成成员初始化与依赖注入。
  */
 ChatPage::ChatPage(QWidget* pParent) : QWidget(pParent) {
     setObjectName("AppRoot");
@@ -131,13 +117,16 @@ ChatPage::ChatPage(QWidget* pParent) : QWidget(pParent) {
     model_ = new business::ChatModel(this);
     m_pController = new business::ChatController(model_, this);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pRoot = new QHBoxLayout(this);
     pRoot->setContentsMargins(0, 0, 0, 0);
     pRoot->setSpacing(0);
 
-    /* ---- 左侧：聊天列 ---- */
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  ---- 左侧：聊天列 ---- 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pChatColumn = new QWidget(this);
     auto* pColumnLayout = new QVBoxLayout(pChatColumn);
     pColumnLayout->setContentsMargins(0, 0, 0, 0);
@@ -154,20 +143,24 @@ ChatPage::ChatPage(QWidget* pParent) : QWidget(pParent) {
 
     wireSignals();
 
-    /* 模型在后台线程加载，不阻塞界面 */
+    /**
+     * @brief  模型在后台线程加载，不阻塞界面。
+     */
     m_pVoice->start();
 }
 
 ChatPage::~ChatPage() = default;
 
-/*
- * 功能描述:  构建头部；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
- * 作者:      JaTin
- * param [in]   pColumnLayout    输入数据，类型 QVBoxLayout*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      构建头部；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
+ * @param[in] pColumnLayout  输入数据；类型 QVBoxLayout*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::buildHeader(QVBoxLayout* pColumnLayout) {
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pHeader = new QFrame(this);
     pHeader->setObjectName("ChatHeader");
     pHeader->setFixedHeight(64);
@@ -195,19 +188,25 @@ void ChatPage::buildHeader(QVBoxLayout* pColumnLayout) {
     pTitleColumn->setSpacing(1);
     pTitleColumn->setContentsMargins(0, 0, 0, 0);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pRoomTitle = new QLabel(pHeader);
     m_pRoomTitle->setStyleSheet(QStringLiteral("font-size: 11.5pt; font-weight: 700;"));
     pTitleColumn->addWidget(m_pRoomTitle);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pRoomSubtitle = new QLabel(pHeader);
     m_pRoomSubtitle->setObjectName("HintLabel");
     pTitleColumn->addWidget(m_pRoomSubtitle);
 
     pHeaderLayout->addLayout(pTitleColumn, 1);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pMemberBtn = new QPushButton(pHeader);
     m_pMemberBtn->setObjectName("LinkButton");
     m_pMemberBtn->setCursor(Qt::PointingHandCursor);
@@ -217,7 +216,9 @@ void ChatPage::buildHeader(QVBoxLayout* pColumnLayout) {
 
     connect(pBackBtn, &QPushButton::clicked, this, &ChatPage::backRequested);
     connect(m_pMemberBtn, &QPushButton::clicked, this, [this] {
-        /* 窄屏没有空间放侧栏，改成弹窗；宽屏保持原来的侧栏切换 */
+        /**
+         * @brief  窄屏没有空间放侧栏，改成弹窗；宽屏保持原来的侧栏切换。
+         */
         if (core::ui::isCompact(width())) {
             showMemberDialog();
             return;
@@ -226,28 +227,36 @@ void ChatPage::buildHeader(QVBoxLayout* pColumnLayout) {
     });
 }
 
-/*
- * 功能描述:  构建消息内容 area；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
- * 作者:      JaTin
- * param [in]   pColumnLayout    输入数据，类型 QVBoxLayout*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      构建消息内容 area；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
+ * @param[in] pColumnLayout  输入数据；类型 QVBoxLayout*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::buildMessageArea(QVBoxLayout* pColumnLayout) {
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pScroll = new QScrollArea(this);
     m_pScroll->setObjectName("ChatScroll");
     m_pScroll->setWidgetResizable(true);
     m_pScroll->setFrameShape(QFrame::NoFrame);
     m_pScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pCanvas = new QWidget();
     m_pCanvas->setObjectName("ChatCanvas");
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pChatLayout = new QVBoxLayout(m_pCanvas);
     m_pChatLayout->setContentsMargins(20, 16, 20, 16);
     m_pChatLayout->setSpacing(10);
-    /* 索引 0 固定为弹簧：消息贴底 */
+    /**
+     * @brief  索引 0 固定为弹簧：消息贴底。
+     */
     m_pChatLayout->addStretch(1);
 
 
@@ -256,28 +265,32 @@ void ChatPage::buildMessageArea(QVBoxLayout* pColumnLayout) {
 
     QScrollBar* pBar = m_pScroll->verticalScrollBar();
 
-    /* 内容或视口高度变化时决定要不要跟着贴底。 */
+    /**
+     * @brief  内容或视口高度变化时决定要不要跟着贴底。
+     */
     
-    /* 关键场景：建议条/译文卡弹出会把消息区变矮，maximum 随之增大。 */
-    /* 此时若用户本来就在底部，必须继续贴底，否则位置不变就会「停在中间」—— */
-    /* 表现为新到的消息明明渲染了却看不见，必须手动滚一下。 */
+    /**
+     * @brief  关键场景：建议条/译文卡弹出会把消息区变矮，maximum 随之增大。 此时若用户本来就在底部，必须继续贴底，否则位置不变就会「停在中间」—— 表现为新到的消息明明渲染了却看不见，必须手动滚一下。
+     */
     connect(pBar, &QScrollBar::rangeChanged, this, [this](int, int max) {
         if (m_nPendingScroll || m_nStickToBottom) {
             m_pScroll->verticalScrollBar()->setValue(max);
         }
     });
 
-    /* 用户手动滚动时记录是否停在底部（留 4px 容差，避免浮点/整型误差） */
+    /**
+     * @brief  用户手动滚动时记录是否停在底部（留 4px 容差，避免浮点/整型误差）。
+     */
     connect(pBar, &QScrollBar::valueChanged, this, [this](int value) {
         m_nStickToBottom = (value >= m_pScroll->verticalScrollBar()->maximum() - 4);
     });
 }
 
-/*
- * 功能描述:  构建composer；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
- * 作者:      JaTin
- * param [in]   pColumnLayout    输入数据，类型 QVBoxLayout*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      构建 composer；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
+ * @param[in] pColumnLayout  输入数据；类型 QVBoxLayout*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::buildComposer(QVBoxLayout* pColumnLayout) {
     m_pSuggestionBar = new CSuggestionBar(this);
@@ -286,13 +299,17 @@ void ChatPage::buildComposer(QVBoxLayout* pColumnLayout) {
     m_pTranslationCard = new CTranslationCard(this);
     pColumnLayout->addWidget(m_pTranslationCard);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pVoiceStatus = new QLabel(this);
     m_pVoiceStatus->setObjectName("VoiceStatus");
     m_pVoiceStatus->setVisible(false);
     pColumnLayout->addWidget(m_pVoiceStatus);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pComposerFrame = new QFrame(this);
     pComposerFrame->setObjectName("Composer");
     auto* pComposerLayout = new QHBoxLayout(pComposerFrame);
@@ -317,29 +334,38 @@ void ChatPage::buildComposer(QVBoxLayout* pColumnLayout) {
     connect(m_pComposer, &ComposerEdit::submit, this, &ChatPage::sendCurrentText);
 }
 
-/*
- * 功能描述:  构建成员 panel；实现上创建 Qt 控件并纳入父子对象树。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      构建成员 panel；实现上创建 Qt 控件并纳入父子对象树。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::buildMemberPanel() {
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pMemberPanel = new QFrame(this);
     m_pMemberPanel->setObjectName("MemberPanel");
     m_pMemberPanel->setFixedWidth(220);
     m_pMemberPanel->setVisible(false);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pPanelLayout = new QVBoxLayout(m_pMemberPanel);
     pPanelLayout->setContentsMargins(12, 14, 12, 14);
     pPanelLayout->setSpacing(8);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pMemberTitle = new QLabel(m_pMemberPanel);
     m_pMemberTitle->setStyleSheet(QStringLiteral("font-size: 11pt; font-weight: 700;"));
     pPanelLayout->addWidget(m_pMemberTitle);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pMemberScroll = new QScrollArea(m_pMemberPanel);
     pMemberScroll->setWidgetResizable(true);
     pMemberScroll->setFrameShape(QFrame::NoFrame);
@@ -348,7 +374,9 @@ void ChatPage::buildMemberPanel() {
 
     auto* pMemberCanvas = new QWidget();
     pMemberCanvas->setStyleSheet(QStringLiteral("background: transparent;"));
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pMemberListLayout = new QVBoxLayout(pMemberCanvas);
     m_pMemberListLayout->setContentsMargins(0, 0, 0, 0);
     m_pMemberListLayout->setSpacing(4);
@@ -358,15 +386,14 @@ void ChatPage::buildMemberPanel() {
     pPanelLayout->addWidget(pMemberScroll, 1);
 }
 
-/* ---------------------------------------------------------------- 接线 */
-
-/*
- * 功能描述:  执行wiresignals；实现上连接 Qt 信号与槽。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief  ---------------------------------------------------------------- 接线。
+ * @details 执行 wiresignals；实现上连接 Qt 信号与槽。
  */
 void ChatPage::wireSignals() {
-    /* ---- 模型 -> 视图 ---- */
+    /**
+     * @brief  ---- 模型 -> 视图 ----。
+     */
     connect(model_, &business::ChatModel::itemAppended, this, [this](const business::ChatItem_S& stItem) {
         renderItem(stItem);
         scrollToBottom();
@@ -375,7 +402,9 @@ void ChatPage::wireSignals() {
     connect(model_, &business::ChatModel::itemUpdated, this, &ChatPage::refreshBubble);
     connect(model_, &business::ChatModel::membersChanged, this, &ChatPage::rebuildMembers);
 
-    /* ---- 编排器 -> 视图 ---- */
+    /**
+     * @brief  ---- 编排器 -> 视图 ----。
+     */
     connect(m_pController, &business::ChatController::notice, this, &ChatPage::notice);
     connect(m_pController, &business::ChatController::voiceStatus, this, &ChatPage::showVoiceStatus);
     connect(m_pController, &business::ChatController::suggestionsReady, this,
@@ -387,7 +416,9 @@ void ChatPage::wireSignals() {
             [this] { m_pSuggestionBar->hideBar(); });
     connect(m_pController, &business::ChatController::inputTranslationReady, this,
             [this](const QString& source, const QString& english) {
-                /* 用户已经改了输入内容就丢弃这次结果 */
+                /**
+                 * @brief  用户已经改了输入内容就丢弃这次结果。
+                 */
                 if (source != m_pComposer->toPlainText().trimmed()) return;
                 m_pTranslationCard->showTranslation(english);
             });
@@ -399,7 +430,9 @@ void ChatPage::wireSignals() {
     connect(m_pController, &business::ChatController::sendVoiceRequested, this,
             &ChatPage::sendVoiceRequested);
 
-    /* ---- 语音输入 ---- */
+    /**
+     * @brief  ---- 语音输入 ----。
+     */
     m_pVoice = new CVoiceRecorder(this);
     m_pVoice->setModelPath(resolveModelPath());
     m_pController->setRecorder(m_pVoice);
@@ -432,7 +465,9 @@ void ChatPage::wireSignals() {
         showVoiceStatus(message, true, 3500);
     });
 
-    /* ---- 语音消息播放 ---- */
+    /**
+     * @brief  ---- 语音消息播放 ----。
+     */
     connect(CVoicePlayer::instance(), &CVoicePlayer::playingChanged, this, [this](bool playing) {
         const QByteArray byCurrent = CVoicePlayer::instance()->current();
         for (auto it = m_uBubbles.constBegin(); it != m_uBubbles.constEnd(); ++it) {
@@ -445,12 +480,16 @@ void ChatPage::wireSignals() {
         showVoiceStatus(reason, true, 3000);
     });
 
-    /* ---- 语音合成 ---- */
+    /**
+     * @brief  ---- 语音合成 ----。
+     */
     m_pTts = new CTtsService(this);
     m_pTts->setPaths(QString::fromUtf8(DP_PIPER_BIN), QString::fromUtf8(DP_PIPER_MODEL));
     connect(m_pTts, &CTtsService::speakingChanged, this, [this](bool speaking) {
         m_pTranslationCard->setPlaying(speaking);
-        /* 气泡里的播放按钮也要跟着变成暂停图标，否则用户看不出在播 */
+        /**
+         * @brief  气泡里的播放按钮也要跟着变成暂停图标，否则用户看不出在播。
+         */
         if (!speaking && m_stPlayingBubble != nullptr) {
             m_stPlayingBubble->setPlaying(false);
             m_stPlayingBubble = nullptr;
@@ -462,7 +501,9 @@ void ChatPage::wireSignals() {
         showVoiceStatus(reason, true, 3000);
     });
 
-    /* ---- 译文卡 / 建议条 ---- */
+    /**
+     * @brief  ---- 译文卡 / 建议条 ----。
+     */
     connect(m_pTranslationCard, &CTranslationCard::playRequested, this,
             [this](const QString& strText) { m_pTts->speak(strText); });
     connect(m_pTranslationCard, &CTranslationCard::useRequested, this, [this](const QString& strText) {
@@ -479,7 +520,9 @@ void ChatPage::wireSignals() {
     connect(m_pSuggestionBar, &CSuggestionBar::playRequested, this,
             [this](const QString& strText) { m_pTts->speak(strText); });
 
-    /* ---- 输入框 ---- */
+    /**
+     * @brief  ---- 输入框 ----。
+     */
     connect(m_pComposer, &QPlainTextEdit::textChanged, this, [this] {
         syncComposerState();
 
@@ -488,7 +531,9 @@ void ChatPage::wireSignals() {
             m_pTranslationCard->hideCard();
             return;
         }
-        /* 开始打字就把建议收起来，避免抢位置 */
+        /**
+         * @brief  开始打字就把建议收起来，避免抢位置。
+         */
         m_pSuggestionBar->hideBar();
 
         if (CTranslationService::looksChinese(strText)) {
@@ -500,15 +545,15 @@ void ChatPage::wireSignals() {
     });
 }
 
-/*
- * 功能描述:  进入房间。
- * 作者:      JaTin
- * param [in]   strRoom          房间号，类型 const QString&。
- * param [in]   nCreated         输入数据，类型 bool。
- * param [in]   aMembers         初始成员列表，类型 const QVector<MemberInfo_S>&。
- * param [in]   lSelfId          本人会话编号，类型 qint64。
- * param [in]   strSelfName      本人昵称，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      进入房间。
+ * @param[in] strRoom        房间号；类型 const QString&。
+ * @param[in] nCreated       输入数据；类型 bool。
+ * @param[in] aMembers       初始成员列表；类型 const QVector<MemberInfo_S>&。
+ * @param[in] lSelfId        本人会话编号；类型 qint64。
+ * @param[in] strSelfName    本人昵称；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 
 void ChatPage::enterRoom(const QString& strRoom, bool nCreated, const QVector<MemberInfo_S>& aMembers,
@@ -530,14 +575,14 @@ void ChatPage::enterRoom(const QString& strRoom, bool nCreated, const QVector<Me
     syncComposerState();
 }
 
-/*
- * 功能描述:  恢复房间。
- * 作者:      JaTin
- * param [in]   strRoom          房间号，类型 const QString&。
- * param [in]   aMembers         初始成员列表，类型 const QVector<MemberInfo_S>&。
- * param [in]   lSelfId          本人会话编号，类型 qint64。
- * param [in]   strSelfName      本人昵称，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      恢复房间。
+ * @param[in] strRoom        房间号；类型 const QString&。
+ * @param[in] aMembers       初始成员列表；类型 const QVector<MemberInfo_S>&。
+ * @param[in] lSelfId        本人会话编号；类型 qint64。
+ * @param[in] strSelfName    本人昵称；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::resumeRoom(const QString& strRoom, const QVector<MemberInfo_S>& aMembers,
                           qint64 lSelfId, const QString& strSelfName) {
@@ -551,15 +596,18 @@ void ChatPage::resumeRoom(const QString& strRoom, const QVector<MemberInfo_S>& a
     m_pComposer->setFocus();
 }
 
-/*
- * 功能描述:  清空房间。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      清空房间。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::clearRoom() {
     model_->clear();
 
-    /* 语音相关的运行态一并复位，避免播到一半切房间 */
+    /**
+     * @brief  语音相关的运行态一并复位，避免播到一半切房间。
+     */
     CVoicePlayer::instance()->stop();
     if (m_pTts != nullptr) m_pTts->stop();
 
@@ -572,34 +620,35 @@ void ChatPage::clearRoom() {
     syncComposerState();
 }
 
-/*
- * 功能描述:  应用remote 配置。
- * 作者:      JaTin
- * param [in]   byJson           JSON 对象，类型 const QByteArray&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      应用 remote 配置。
+ * @param[in] byJson         JSON 对象；类型 const QByteArray&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::applyRemoteConfig(const QByteArray& byJson) {
     if (m_pController != nullptr) m_pController->applyRemoteConfig(byJson);
 }
 
-/*
- * 功能描述:  获取房间。
- * 作者:      JaTin
- * return:    返回构造好的字符串；无内容时返回空字符串。
+/**
+ * @brief      获取房间。
+ * @note       本函数无输入参数。
+ * @return     返回构造好的字符串；无内容时返回空字符串。
+ * @author     JaTin
  */
 QString ChatPage::room() const {
     return model_ != nullptr ? model_->room() : QString();
 }
 
-/*
- * 功能描述:  追加chat。
- * 作者:      JaTin
- * param [in]   lSeq             全局消息序号，类型 qint64。
- * param [in]   lFrom            输入数据，类型 qint64。
- * param [in]   strName          名称或昵称，类型 const QString&。
- * param [in]   strText          消息文本，类型 const QString&。
- * param [in]   lTs              Unix 毫秒时间戳，类型 qint64。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      追加 chat。
+ * @param[in] lSeq           全局消息序号；类型 qint64。
+ * @param[in] lFrom          输入数据；类型 qint64。
+ * @param[in] strName        名称或昵称；类型 const QString&。
+ * @param[in] strText        消息文本；类型 const QString&。
+ * @param[in] lTs            Unix 毫秒时间戳；类型 qint64。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 
 void ChatPage::appendChat(qint64 lSeq, qint64 lFrom, const QString& strName, const QString& strText,
@@ -607,71 +656,69 @@ void ChatPage::appendChat(qint64 lSeq, qint64 lFrom, const QString& strName, con
     model_->appendChat(lSeq, lFrom, strName, strText, lTs);
 }
 
-/*
- * 功能描述:  追加语音消息。
- * 作者:      JaTin
- * param [in]   lSeq             全局消息序号，类型 qint64。
- * param [in]   lFrom            输入数据，类型 qint64。
- * param [in]   strName          名称或昵称，类型 const QString&。
- * param [in]   byAudio          Opus 编码的音频数据，类型 const QByteArray&。
- * param [in]   nDurationMs      语音时长，单位毫秒，类型 int。
- * param [in]   lTs              Unix 毫秒时间戳，类型 qint64。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      追加语音消息。
+ * @param[in] lSeq           全局消息序号；类型 qint64。
+ * @param[in] lFrom          输入数据；类型 qint64。
+ * @param[in] strName        名称或昵称；类型 const QString&。
+ * @param[in] byAudio        Opus 编码的音频数据；类型 const QByteArray&。
+ * @param[in] nDurationMs    语音时长，单位毫秒；类型 int。
+ * @param[in] lTs            Unix 毫秒时间戳；类型 qint64。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::appendVoice(qint64 lSeq, qint64 lFrom, const QString& strName,
                            const QByteArray& byAudio, int nDurationMs, qint64 lTs) {
     model_->appendVoice(lSeq, lFrom, strName, byAudio, nDurationMs, lTs);
 }
 
-/*
- * 功能描述:  合并历史消息。
- * 作者:      JaTin
- * param [in]   aMessages        消息记录，类型 const QVector<ChatMessage_S>&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      合并历史消息。
+ * @param[in] aMessages      消息记录；类型 const QVector<ChatMessage_S>&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::mergeHistory(const QVector<ChatMessage_S>& aMessages) {
     model_->mergeHistory(aMessages);
 }
 
-/*
- * 功能描述:  追加系统提示词文本。
- * 作者:      JaTin
- * param [in]   strText          消息文本，类型 const QString&。
- * param [in]   lTs              Unix 毫秒时间戳，类型 qint64。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      追加系统提示词文本。
+ * @param[in] strText        消息文本；类型 const QString&。
+ * @param[in] lTs            Unix 毫秒时间戳；类型 qint64。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::appendSystemText(const QString& strText, qint64 lTs) {
     model_->appendSystem(strText, lTs);
 }
 
-/*
- * 功能描述:  执行on 系统提示词事件。
- * 作者:      JaTin
- * param [in]   pEvent           事件，类型 const QString&。
- * param [in]   lUserId          用户编号，类型 qint64。
- * param [in]   strName          名称或昵称，类型 const QString&。
- * param [in]   strText          消息文本，类型 const QString&。
- * param [in]   lTs              Unix 毫秒时间戳，类型 qint64。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      执行 on 系统提示词事件。
+ * @param[in] pEvent         事件；类型 const QString&。
+ * @param[in] lUserId        用户编号；类型 qint64。
+ * @param[in] strName        名称或昵称；类型 const QString&。
+ * @param[in] strText        消息文本；类型 const QString&。
+ * @param[in] lTs            Unix 毫秒时间戳；类型 qint64。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::onSystemEvent(const QString& pEvent, qint64 lUserId, const QString& strName,
                              const QString& /*oldName*/, const QString& strText, qint64 lTs) {
     model_->applySystemEvent(pEvent, lUserId, strName, strText, lTs);
 }
 
-/* ---------------------------------------------------------------- 渲染 */
-
-/*
- * 功能描述:  绘制条目；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
- * 作者:      JaTin
- * param [in]   stItem           条目，类型 const business::ChatItem_S&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief  ---------------------------------------------------------------- 渲染。
+ * @details 绘制条目；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
  */
 void ChatPage::renderItem(const business::ChatItem_S& stItem) {
     appendDateSeparatorIfNeeded(stItem.ts);
 
     if (stItem.system) {
-        /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+        /**
+         * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+         */
         auto* pRow = new QWidget(m_pCanvas);
         auto* pRowLayout = new QHBoxLayout(pRow);
         pRowLayout->setContentsMargins(0, 2, 0, 2);
@@ -697,10 +744,14 @@ void ChatPage::renderItem(const business::ChatItem_S& stItem) {
     }
 
     const bool nOutgoing = model_->isSelf(stItem.from);
-    /* 气泡宽度跟着消息区走：窄屏按比例收缩，宽屏保持 520 上限 */
+    /**
+     * @brief  气泡宽度跟着消息区走：窄屏按比例收缩，宽屏保持 520 上限。
+     */
     const int nBubbleWidth = core::ui::bubbleMaxWidth(m_pCanvas->width());
 
-    /* ---- 语音消息 ---- */
+    /**
+     * @brief  ---- 语音消息 ----。
+     */
     if (stItem.kind == MessageKind_EN::Voice) {
         auto* pBubble = new CMessageBubble(stItem.name, QString(), formatTime(stItem.ts),
                                          nOutgoing, stItem.from, false, nBubbleWidth, m_pCanvas);
@@ -715,7 +766,9 @@ void ChatPage::renderItem(const business::ChatItem_S& stItem) {
         return;
     }
 
-    /* ---- 文本消息 ---- */
+    /**
+     * @brief  ---- 文本消息 ----。
+     */
     const bool nPlayable = !nOutgoing && CTranslationService::looksEnglish(stItem.text);
     auto* pBubble = new CMessageBubble(stItem.name, stItem.text, formatTime(stItem.ts),
                                      nOutgoing, stItem.from, nPlayable, nBubbleWidth, m_pCanvas);
@@ -733,11 +786,11 @@ void ChatPage::renderItem(const business::ChatItem_S& stItem) {
     refreshBubble(stItem.seq);
 }
 
-/*
- * 功能描述:  刷新消息气泡。
- * 作者:      JaTin
- * param [in]   lSeq             全局消息序号，类型 qint64。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      刷新消息气泡。
+ * @param[in] lSeq           全局消息序号；类型 qint64。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::refreshBubble(qint64 lSeq) {
     if (lSeq <= 0) return;
@@ -763,10 +816,11 @@ void ChatPage::refreshBubble(qint64 lSeq) {
     }
 }
 
-/*
- * 功能描述:  执行rebuild 视图。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      执行 rebuild 视图。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::rebuildView() {
     clearView();
@@ -777,16 +831,19 @@ void ChatPage::rebuildView() {
     scrollToBottom();
 }
 
-/*
- * 功能描述:  清空视图。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      清空视图。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::clearView() {
     m_uBubbles.clear();
     m_stPlayingBubble = nullptr;
     m_nStickToBottom = true;
-    /* 索引 0 是弹簧，必须保留 */
+    /**
+     * @brief  索引 0 是弹簧，必须保留。
+     */
     while (m_pChatLayout->count() > 1) {
         QLayoutItem* stItem = m_pChatLayout->takeAt(m_pChatLayout->count() - 1);
         if (stItem->widget() != nullptr) stItem->widget()->deleteLater();
@@ -794,18 +851,20 @@ void ChatPage::clearView() {
     }
 }
 
-/*
- * 功能描述:  追加dateseparatorifneeded；实现上创建 Qt 控件并纳入父子对象树。
- * 作者:      JaTin
- * param [in]   lTs              Unix 毫秒时间戳，类型 qint64。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      追加 dateseparatorifneeded；实现上创建 Qt 控件并纳入父子对象树。
+ * @param[in] lTs            Unix 毫秒时间戳；类型 qint64。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::appendDateSeparatorIfNeeded(qint64 lTs) {
     const QDate stDate = QDateTime::fromMSecsSinceEpoch(lTs).date();
     if (stDate == m_stLastDate) return;
     m_stLastDate = stDate;
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pRow = new QWidget(m_pCanvas);
     auto* pRowLayout = new QHBoxLayout(pRow);
     pRowLayout->setContentsMargins(0, 6, 0, 2);
@@ -822,19 +881,19 @@ void ChatPage::appendDateSeparatorIfNeeded(qint64 lTs) {
     pinHeight(pRow);
 }
 
-/*
- * 功能描述:  转换为scrollbottom；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      转换为 scrollbottom；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::scrollToBottom() {
     m_nPendingScroll = true;
     m_nStickToBottom = true;
 
-    /* QScrollArea 在 widgetResizable 下按 sizeHint 决定内容高度，而带 stretch 的 */
-    /* QVBoxLayout 在布局未结算时 sizeHint 偏小（自绘控件更明显），结果滚动条 */
-    /* maximum 恒为 0——消息加进去了却滚不到。这里直接累加每个子控件的实际高度， */
-    /* 不依赖 sizeHint，绕开这个坑。 */
+    /**
+     * @brief  QScrollArea 在 widgetResizable 下按 sizeHint 决定内容高度，而带 stretch 的 QVBoxLayout 在布局未结算时 sizeHint 偏小（自绘控件更明显），结果滚动条 maximum 恒为 0——消息加进去了却滚不到。这里直接累加每个子控件的实际高度， 不依赖 sizeHint，绕开这个坑。
+     */
     if (m_pCanvas != nullptr && m_pChatLayout != nullptr) {
         m_pChatLayout->activate();
 
@@ -861,23 +920,25 @@ void ChatPage::scrollToBottom() {
         }
     }
 
-    /* 布局是异步结算的：addWidget 之后要等一轮事件循环，viewport 高度才更新， */
-    /* 语音条这类自绘控件更晚。所以分多个时间点各贴一次底， */
-    /* 而不是只依赖单次 setValue（那样会停在中间）。 */
+    /**
+     * @brief  布局是异步结算的：addWidget 之后要等一轮事件循环，viewport 高度才更新， 语音条这类自绘控件更晚。所以分多个时间点各贴一次底， 而不是只依赖单次 setValue（那样会停在中间）。
+     */
     for (int nDelayMs : {0, 60, 200}) {
         QTimer::singleShot(nDelayMs, this, [this] {
             if (!m_nPendingScroll) return;
 
-            /* 优先让最后一个控件可见：QScrollArea 会自己完成必要的布局结算。 */
-            /* 注意不要再叠加 setValue(maximum())——此时 maximum() 可能仍是旧值， */
-            /* 会把刚滚下去的位置又拉回来，表现就是「停在中间看不到新消息」。 */
+            /**
+             * @brief  优先让最后一个控件可见：QScrollArea 会自己完成必要的布局结算。 注意不要再叠加 setValue(maximum())——此时 maximum() 可能仍是旧值， 会把刚滚下去的位置又拉回来，表现就是「停在中间看不到新消息」。
+             */
             if (m_pChatLayout != nullptr && m_pChatLayout->count() > 1) {
                 QLayoutItem* pLast = m_pChatLayout->itemAt(m_pChatLayout->count() - 1);
                 if (pLast != nullptr && pLast->widget() != nullptr) {
                     m_pScroll->ensureWidgetVisible(pLast->widget(), 0, 24);
                 }
             }
-            /* 兜底：按内容坐标滚到最底，覆盖 ensureWidgetVisible 判定「已可见」的情况 */
+            /**
+             * @brief  兜底：按内容坐标滚到最底，覆盖 ensureWidgetVisible 判定「已可见」的情况。
+             */
             if (m_pCanvas != nullptr) {
                 m_pScroll->ensureVisible(0, qMax(0, m_pCanvas->height() - 1), 0, 0);
             }
@@ -886,28 +947,33 @@ void ChatPage::scrollToBottom() {
     }
 
     if (m_pScrollSettleTimer == nullptr) {
-        /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+        /**
+         * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+         */
         m_pScrollSettleTimer = new QTimer(this);
         m_pScrollSettleTimer->setSingleShot(true);
         connect(m_pScrollSettleTimer, &QTimer::timeout, this, [this] {
             forceScrollToBottom();
-            /* 结算完成，之后不再强制贴底 */
+            /**
+             * @brief  结算完成，之后不再强制贴底。
+             */
             m_nPendingScroll = false;
         });
     }
     m_pScrollSettleTimer->start(450);
 }
 
-/*
- * 功能描述:  固定控件高度，避免内容变化时布局跳动。
- * 作者:      JaTin
- * param [in]   pWidget          控件，类型 QWidget*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      固定控件高度，避免内容变化时布局跳动。
+ * @param[in] pWidget        控件；类型 QWidget*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::pinHeight(QWidget* pWidget) {
     if (pWidget == nullptr) return;
-    /* 必须在 addWidget 之后调用：没有 parent 时 sizeHint 还没按可用宽度换行计算， */
-    /* 拿到的高度会偏小，钉死之后内容就被裁掉。 */
+    /**
+     * @brief  必须在 addWidget 之后调用：没有 parent 时 sizeHint 还没按可用宽度换行计算， 拿到的高度会偏小，钉死之后内容就被裁掉。
+     */
     if (QLayout* layout = pWidget->layout()) layout->activate();
     const int nHeight = pWidget->sizeHint().height();
     if (nHeight > 0) {
@@ -916,26 +982,25 @@ void ChatPage::pinHeight(QWidget* pWidget) {
     }
 }
 
-/*
- * 功能描述:  转换为forcescrollbottom。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      转换为 forcescrollbottom。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::forceScrollToBottom() {
-    /* 必须先把布局激活：刚 addWidget 时 maximum() 还是旧值， */
-    /* 直接 setValue 会停在中间（语音条这类高度延迟确定的控件尤其明显）。 */
+    /**
+     * @brief  必须先把布局激活：刚 addWidget 时 maximum() 还是旧值， 直接 setValue 会停在中间（语音条这类高度延迟确定的控件尤其明显）。
+     */
     if (m_pChatLayout != nullptr) m_pChatLayout->activate();
 
     QScrollBar* pBar = m_pScroll->verticalScrollBar();
     pBar->setValue(pBar->maximum());
 }
 
-/* ---------------------------------------------------------------- 交互 */
-
-/*
- * 功能描述:  发送current 文本。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief  ---------------------------------------------------------------- 交互。
+ * @details 发送 current 文本。
  */
 void ChatPage::sendCurrentText() {
     if (!m_pComposer->isEnabled()) return;
@@ -948,10 +1013,11 @@ void ChatPage::sendCurrentText() {
     m_pComposer->setFocus();
 }
 
-/*
- * 功能描述:  切换语音录制状态：空闲时开始采集，录制中则停止并送出音频。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      切换语音录制状态：空闲时开始采集，录制中则停止并送出音频。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::toggleRecording() {
     if (m_pVoice == nullptr) return;
@@ -961,16 +1027,18 @@ void ChatPage::toggleRecording() {
         return;
     }
 
-    /* 语音消息：录完直接把原始音频发出去，不再走「识别成文字填进输入框」 */
+    /**
+     * @brief  语音消息：录完直接把原始音频发出去，不再走「识别成文字填进输入框」。
+     */
     m_pVoice->startRecording(CVoiceRecorder::Purpose_EN::Send);
 }
 
-/*
- * 功能描述:  执行on 语音消息 recorded。
- * 作者:      JaTin
- * param [in]   byPcm            输入数据，类型 const QByteArray&。
- * param [in]   nDurationMs      语音时长，单位毫秒，类型 int。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      执行 on 语音消息 recorded。
+ * @param[in] byPcm          输入数据；类型 const QByteArray&。
+ * @param[in] nDurationMs    语音时长，单位毫秒；类型 int。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::onVoiceRecorded(const QByteArray& byPcm, int nDurationMs) {
     if (byPcm.isEmpty()) return;
@@ -978,11 +1046,11 @@ void ChatPage::onVoiceRecorded(const QByteArray& byPcm, int nDurationMs) {
     m_pController->sendVoice(byPcm, nDurationMs);
 }
 
-/*
- * 功能描述:  设置online。
- * 作者:      JaTin
- * param [in]   nOnline          输入数据，类型 bool。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      设置 online相关的数据并返回处理结果。
+ * @param[in] nOnline        输入数据；类型 bool。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::setOnline(bool nOnline) {
     m_pComposer->setEnabled(nOnline);
@@ -991,25 +1059,20 @@ void ChatPage::setOnline(bool nOnline) {
     updateComposerPlaceholder();
 }
 
-/*
- * 功能描述:  同步composer 状态。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      同步 composer 状态。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::syncComposerState() {
     if (m_pController == nullptr) return;
     m_pController->setComposerEmpty(m_pComposer->toPlainText().trimmed().isEmpty());
 }
 
-/* ---------------------------------------------------------------- 状态提示 */
-
-/*
- * 功能描述:  显示语音消息状态。
- * 作者:      JaTin
- * param [in]   strText          消息文本，类型 const QString&。
- * param [in]   nError           错误信息，类型 bool。
- * param [in]   nAutoHideMs      输入数据，类型 int。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief  ---------------------------------------------------------------- 状态提示。
+ * @details 显示语音消息状态。
  */
 void ChatPage::showVoiceStatus(const QString& strText, bool nError, int nAutoHideMs) {
     if (m_pVoiceStatus == nullptr) return;
@@ -1017,7 +1080,9 @@ void ChatPage::showVoiceStatus(const QString& strText, bool nError, int nAutoHid
     ++m_nVoiceStatusToken;
     const int nToken = m_nVoiceStatusToken;
 
-    /* 传空串表示清掉状态条 */
+    /**
+     * @brief  传空串表示清掉状态条。
+     */
     if (strText.isEmpty()) {
         m_pVoiceStatus->clear();
         m_pVoiceStatus->setVisible(false);
@@ -1038,12 +1103,9 @@ void ChatPage::showVoiceStatus(const QString& strText, bool nError, int nAutoHid
     }
 }
 
-/* ---------------------------------------------------------------- 成员 */
-
-/*
- * 功能描述:  更新头部。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief  ---------------------------------------------------------------- 成员。
+ * @details 更新头部。
  */
 void ChatPage::updateHeader() {
     const int nCount = (model_ != nullptr) ? model_->memberCount() : 0;
@@ -1054,10 +1116,11 @@ void ChatPage::updateHeader() {
     }
 }
 
-/*
- * 功能描述:  执行rebuild 成员列表。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      执行 rebuild 成员列表。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::rebuildMembers() {
     if (model_ == nullptr || m_pMemberListLayout == nullptr) return;
@@ -1077,12 +1140,12 @@ void ChatPage::rebuildMembers() {
     updateHeader();
 }
 
-/*
- * 功能描述:  创建成员 row；实现上创建 Qt 控件并纳入父子对象树。
- * 作者:      JaTin
- * param [in]   lUserId          用户编号，类型 qint64。
- * param [in]   strName          名称或昵称，类型 const QString&。
- * return:    成功返回对象指针；未找到或失败时返回 nullptr。
+/**
+ * @brief      创建成员 row；实现上创建 Qt 控件并纳入父子对象树。
+ * @param[in] lUserId        用户编号；类型 qint64。
+ * @param[in] strName        名称或昵称；类型 const QString&。
+ * @return     成功返回对象指针；未找到或失败时返回 nullptr。
+ * @author     JaTin
  */
 QWidget* ChatPage::createMemberRow(qint64 lUserId, const QString& strName) {
     auto* pRow = new QWidget();
@@ -1109,18 +1172,20 @@ QWidget* ChatPage::createMemberRow(qint64 lUserId, const QString& strName) {
     return pRow;
 }
 
-/*
- * 功能描述:  显示成员对话框；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      显示成员对话框；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::showMemberDialog() {
     if (model_ == nullptr) return;
 
     QDialog stDialog(this);
     stDialog.setWindowTitle(QStringLiteral("成员（%1）").arg(model_->memberCount()));
-    /* QDialog 是顶层窗口，全局 QSS 里的 QDialog 规则管不到它，必须实例上设， */
-    /* 否则在无窗口管理器的环境下会渲染成一块纯黑。 */
+    /**
+     * @brief  QDialog 是顶层窗口，全局 QSS 里的 QDialog 规则管不到它，必须实例上设， 否则在无窗口管理器的环境下会渲染成一块纯黑。
+     */
     stDialog.setStyleSheet(QStringLiteral("QDialog { background: #FFFFFF; }"));
     stDialog.setMinimumWidth(qBound(260, width() - 48, 360));
 
@@ -1157,26 +1222,29 @@ void ChatPage::showMemberDialog() {
     stDialog.exec();
 }
 
-/*
- * 功能描述:  重新计算尺寸事件。
- * 作者:      JaTin
- * param [in]   pEvent           事件，类型 QResizeEvent*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      重新计算尺寸事件。
+ * @param[in] pEvent         事件；类型 QResizeEvent*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::resizeEvent(QResizeEvent* pEvent) {
     QWidget::resizeEvent(pEvent);
     updateComposerPlaceholder();
 
-    /* 窄屏不再需要侧栏，宽屏恢复时也保持一致 */
+    /**
+     * @brief  窄屏不再需要侧栏，宽屏恢复时也保持一致。
+     */
     if (m_pMemberPanel != nullptr && core::ui::isCompact(width())) {
         m_pMemberPanel->setVisible(false);
     }
 }
 
-/*
- * 功能描述:  更新composerplaceholder。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      更新 composerplaceholder。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatPage::updateComposerPlaceholder() {
     if (m_pComposer == nullptr) return;
@@ -1186,7 +1254,9 @@ void ChatPage::updateComposerPlaceholder() {
         return;
     }
 
-    /* 窄屏放不下长提示，会折行并被裁切——换成短文案 */
+    /**
+     * @brief  窄屏放不下长提示，会折行并被裁切——换成短文案。
+     */
     m_pComposer->setPlaceholderText(
         core::ui::isCompact(width()) ? QStringLiteral("输入消息…")
                                      : QString::fromUtf8(kComposerHint));

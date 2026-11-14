@@ -1,15 +1,18 @@
-/*
- * 文件名:    Theme.h
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  Theme 头文件，声明相关类型与接口。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       Theme.h
+ * @brief      Theme 头文件，声明相关类型与接口。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* Theme.h */
+/**
+ * @brief  Theme.h。
+ */
 
-/* Telegram 风格的浅色主题：调色板 + 全局样式表。 */
-/* 所有颜色集中在此处，避免样式散落在各个页面里。 */
+/**
+ * @brief  Telegram 风格的浅色主题：调色板 + 全局样式表。 所有颜色集中在此处，避免样式散落在各个页面里。
+ */
 #pragma once
 
 #include <QColor>
@@ -17,22 +20,104 @@
 
 namespace theme {
 
-/* ---- 调色板 ---- */
+/**
+ * @brief      ---- 调色板 ----。
+ * @note       本函数无输入参数。
+ * @return     返回 const QColor 类型的处理结果。
+ * @author     JaTin
+ */
 inline const QColor accent        ("#3390EC");
+/**
+ * @brief      获取 accenthover相关的数据并返回处理结果。
+ * @note       本函数无输入参数。
+ * @return     返回 const QColor 类型的处理结果。
+ * @author     JaTin
+ */
 inline const QColor accentHover   ("#2A7FD6");
+/**
+ * @brief      获取 accentpressed相关的数据并返回处理结果。
+ * @note       本函数无输入参数。
+ * @return     返回 const QColor 类型的处理结果。
+ * @author     JaTin
+ */
 inline const QColor accentPressed ("#246FC0");
+/**
+ * @brief      获取文本 primary。
+ * @note       本函数无输入参数。
+ * @return     返回 const QColor 类型的处理结果。
+ * @author     JaTin
+ */
 inline const QColor textPrimary   ("#101828");
+/**
+ * @brief      获取文本 secondary。
+ * @note       本函数无输入参数。
+ * @return     返回 const QColor 类型的处理结果。
+ * @author     JaTin
+ */
 inline const QColor textSecondary ("#6B7785");
+/**
+ * @brief      获取 border相关的数据并返回处理结果。
+ * @note       本函数无输入参数。
+ * @return     返回 const QColor 类型的处理结果。
+ * @author     JaTin
+ */
 inline const QColor border        ("#E3E8EF");
+/**
+ * @brief      获取 surface相关的数据并返回处理结果。
+ * @note       本函数无输入参数。
+ * @return     返回 const QColor 类型的处理结果。
+ * @author     JaTin
+ */
 inline const QColor surface       ("#FFFFFF");
+/**
+ * @brief      获取 appbg相关的数据并返回处理结果。
+ * @note       本函数无输入参数。
+ * @return     返回 const QColor 类型的处理结果。
+ * @author     JaTin
+ */
 inline const QColor appBg         ("#F5F7FA");
+/**
+ * @brief      获取 chatbg相关的数据并返回处理结果。
+ * @note       本函数无输入参数。
+ * @return     返回 const QColor 类型的处理结果。
+ * @author     JaTin
+ */
 inline const QColor chatBg        ("#E9EEF3");
+/**
+ * @brief      获取消息气泡 out。
+ * @note       本函数无输入参数。
+ * @return     返回 const QColor 类型的处理结果。
+ * @author     JaTin
+ */
 inline const QColor bubbleOut     ("#EEFFDE");
+/**
+ * @brief      获取消息气泡 in。
+ * @note       本函数无输入参数。
+ * @return     返回 const QColor 类型的处理结果。
+ * @author     JaTin
+ */
 inline const QColor bubbleIn      ("#FFFFFF");
+/**
+ * @brief      获取 danger相关的数据并返回处理结果。
+ * @note       本函数无输入参数。
+ * @return     返回 const QColor 类型的处理结果。
+ * @author     JaTin
+ */
 inline const QColor danger        ("#E5484D");
+/**
+ * @brief      获取 success相关的数据并返回处理结果。
+ * @note       本函数无输入参数。
+ * @return     返回 const QColor 类型的处理结果。
+ * @author     JaTin
+ */
 inline const QColor success       ("#22C55E");
 
-/* Telegram 头像配色（按 userId 取模，保证同一用户颜色稳定）。 */
+/**
+ * @brief      Telegram 头像配色（按 userId 取模，保证同一用户颜色稳定）。
+ * @param[in] id             编号；类型 qint64。
+ * @return     返回 inline QColor 类型的处理结果。
+ * @author     JaTin
+ */
 inline QColor avatarColorFor(qint64 id) {
     static const char* palette[] = {
         "#E17076", "#FAA774", "#A695E7", "#7BC862",
@@ -40,9 +125,21 @@ inline QColor avatarColorFor(qint64 id) {
     };
     const int n = static_cast<int>(sizeof(palette) / sizeof(palette[0]));
     qint64 v = id < 0 ? -id : id;
+    /**
+     * @brief      获取颜色。
+     * @note       本函数无输入参数。
+     * @return     返回 return 类型的处理结果。
+     * @author     JaTin
+     */
     return QColor(palette[v % n]);
 }
 
+/**
+ * @brief      获取样式 sheet。
+ * @note       本函数无输入参数。
+ * @return     返回构造好的字符串；无内容时返回空字符串。
+ * @author     JaTin
+ */
 inline QString styleSheet() {
     return QStringLiteral(R"(
 * {
@@ -117,7 +214,9 @@ QLineEdit#Field:focus, QSpinBox#Field:focus, QPlainTextEdit#Field:focus {
 
 #Divider { background: #EDF1F6; max-height: 1px; min-height: 1px; border: none; }
 
-/* ---- 聊天页 ---- */
+/**
+ * @brief  ---- 聊天页 ----。
+ */
 #ChatHeader { background: #FFFFFF; border-bottom: 1px solid #E3E8EF; }
 #ChatScroll { background: #E9EEF3; border: none; }
 #ChatCanvas { background: #E9EEF3; }
@@ -193,5 +292,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: trans
 )");
 }
 
-/* namespace theme */
+/**
+ * @brief  namespace theme。
+ */
 }

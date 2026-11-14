@@ -1,12 +1,14 @@
-/*
- * 文件名:    SendButton.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  CSendButton 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       SendButton.cpp
+ * @brief      CSendButton 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* CSendButton.cpp */
+/**
+ * @brief  CSendButton.cpp。
+ */
 #include "ui/widgets/SendButton.h"
 
 #include "core/Theme.h"
@@ -15,11 +17,11 @@
 #include <QPainterPath>
 #include <QPaintEvent>
 
-/*
- * 功能描述:  构造 CSendButton 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget* parent) : QAbstractButton(。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      构造 CSendButton 对象，完成成员初始化与依赖注入。
+ * @param[in] pParent        Qt 父对象指针，用于对象树所有权管理；类型 QWidget* pParent) : QAbstractButton(。
+ * @return     构造/析构函数无返回值。
+ * @author     JaTin
  */
 CSendButton::CSendButton(QWidget* pParent) : QAbstractButton(pParent) {
     setCursor(Qt::PointingHandCursor);
@@ -27,11 +29,11 @@ CSendButton::CSendButton(QWidget* pParent) : QAbstractButton(pParent) {
     setToolTip(QStringLiteral("发送 (Enter)"));
 }
 
-/*
- * 功能描述:  进入事件。
- * 作者:      JaTin
- * param [in]   pEvent           事件，类型 QEnterEvent*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      进入事件。
+ * @param[in] pEvent         事件；类型 QEnterEvent*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CSendButton::enterEvent(QEnterEvent* pEvent) {
     m_nHovered = true;
@@ -39,11 +41,11 @@ void CSendButton::enterEvent(QEnterEvent* pEvent) {
     QAbstractButton::enterEvent(pEvent);
 }
 
-/*
- * 功能描述:  退出事件。
- * 作者:      JaTin
- * param [in]   pEvent           事件，类型 QEvent*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      退出事件。
+ * @param[in] pEvent         事件；类型 QEvent*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CSendButton::leaveEvent(QEvent* pEvent) {
     m_nHovered = false;
@@ -51,10 +53,11 @@ void CSendButton::leaveEvent(QEvent* pEvent) {
     QAbstractButton::leaveEvent(pEvent);
 }
 
-/*
- * 功能描述:  绘制事件。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      绘制事件。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CSendButton::paintEvent(QPaintEvent* /*event*/) {
     QPainter stP(this);
@@ -75,7 +78,9 @@ void CSendButton::paintEvent(QPaintEvent* /*event*/) {
     stP.setBrush(stBg);
     stP.drawEllipse(stR);
 
-    /* 纸飞机：以 40x40 为基准绘制 */
+    /**
+     * @brief  纸飞机：以 40x40 为基准绘制。
+     */
     const qreal stS = stR.width() / 40.0;
     stP.translate(stR.topLeft());
     stP.scale(stS, stS);

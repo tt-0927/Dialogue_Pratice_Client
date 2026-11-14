@@ -1,12 +1,14 @@
-/*
- * 文件名:    LoginPage.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  CLoginPage 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       LoginPage.cpp
+ * @brief      CLoginPage 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* CLoginPage.cpp */
+/**
+ * @brief  CLoginPage.cpp。
+ */
 #include "LoginPage.h"
 
 #include "Avatar.h"
@@ -23,21 +25,25 @@
 #include <QSpinBox>
 #include <QVBoxLayout>
 
-/*
- * 功能描述:  构造 CLoginPage 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget* parent) : QWidget(。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      构造 CLoginPage 对象，完成成员初始化与依赖注入。
+ * @param[in] pParent        Qt 父对象指针，用于对象树所有权管理；类型 QWidget* pParent) : QWidget(。
+ * @return     构造/析构函数无返回值。
+ * @author     JaTin
  */
 CLoginPage::CLoginPage(QWidget* pParent) : QWidget(pParent) {
     setObjectName("AppRoot");
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pRoot = new QVBoxLayout(this);
     pRoot->setContentsMargins(24, 24, 24, 24);
     pRoot->addStretch(1);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pCard = new QFrame(this);
     pCard->setObjectName("Card");
     pCard->setFixedWidth(420);
@@ -83,13 +89,17 @@ CLoginPage::CLoginPage(QWidget* pParent) : QWidget(pParent) {
     auto* pServerRow = new QHBoxLayout();
     pServerRow->setSpacing(8);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pHostEdit = new QLineEdit(pCard);
     m_pHostEdit->setObjectName("Field");
     m_pHostEdit->setPlaceholderText(QStringLiteral("192.168.80.128"));
     pServerRow->addWidget(m_pHostEdit, 1);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pPortSpin = new QSpinBox(pCard);
     m_pPortSpin->setObjectName("Field");
     m_pPortSpin->setRange(1, 65535);
@@ -103,14 +113,18 @@ CLoginPage::CLoginPage(QWidget* pParent) : QWidget(pParent) {
     pNameLabel->setObjectName("KeyLabel");
     pCardLayout->addWidget(pNameLabel);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pNameEdit = new QLineEdit(pCard);
     m_pNameEdit->setObjectName("Field");
     m_pNameEdit->setPlaceholderText(QStringLiteral("例如 alice，最多 24 字节"));
     m_pNameEdit->setMaxLength(24);
     pCardLayout->addWidget(m_pNameEdit);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pErrorLabel = new QLabel(pCard);
     m_pErrorLabel->setObjectName("ErrorText");
     m_pErrorLabel->setWordWrap(true);
@@ -119,7 +133,9 @@ CLoginPage::CLoginPage(QWidget* pParent) : QWidget(pParent) {
 
     pCardLayout->addSpacing(4);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pLoginBtn = new QPushButton(QStringLiteral("登  录"), pCard);
     m_pLoginBtn->setObjectName("PrimaryButton");
     m_pLoginBtn->setCursor(Qt::PointingHandCursor);
@@ -130,7 +146,9 @@ CLoginPage::CLoginPage(QWidget* pParent) : QWidget(pParent) {
     pRoot->addWidget(pCard, 0, Qt::AlignHCenter);
     pRoot->addStretch(1);
 
-    /* 恢复上次填写的服务器与昵称 */
+    /**
+     * @brief  恢复上次填写的服务器与昵称。
+     */
     QSettings aSettings;
     m_pHostEdit->setText(aSettings.value("server/host", QStringLiteral("192.168.80.128")).toString());
     m_pPortSpin->setValue(aSettings.value("server/port", 9000).toInt());
@@ -141,10 +159,11 @@ CLoginPage::CLoginPage(QWidget* pParent) : QWidget(pParent) {
     connect(m_pHostEdit, &QLineEdit::returnPressed, this, &CLoginPage::submit);
 }
 
-/*
- * 功能描述:  提交submit；实现上读写本地持久化设置。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      提交 submit；实现上读写本地持久化设置。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CLoginPage::submit() {
     clearError();
@@ -176,11 +195,11 @@ void CLoginPage::submit() {
     emit loginRequested(strHost, static_cast<quint16>(m_pPortSpin->value()), strName);
 }
 
-/*
- * 功能描述:  设置busy。
- * 作者:      JaTin
- * param [in]   nBusy            输入数据，类型 bool。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      设置 busy相关的数据并返回处理结果。
+ * @param[in] nBusy          输入数据；类型 bool。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CLoginPage::setBusy(bool nBusy) {
     m_pLoginBtn->setEnabled(!nBusy);
@@ -190,21 +209,22 @@ void CLoginPage::setBusy(bool nBusy) {
     m_pNameEdit->setEnabled(!nBusy);
 }
 
-/*
- * 功能描述:  显示错误。
- * 作者:      JaTin
- * param [in]   strMessage       消息内容，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      显示错误。
+ * @param[in] strMessage     消息内容；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CLoginPage::showError(const QString& strMessage) {
     m_pErrorLabel->setText(strMessage);
     m_pErrorLabel->setVisible(true);
 }
 
-/*
- * 功能描述:  清空错误。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      清空错误。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CLoginPage::clearError() {
     m_pErrorLabel->clear();

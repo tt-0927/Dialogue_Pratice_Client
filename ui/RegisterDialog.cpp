@@ -1,9 +1,9 @@
-/*
- * 文件名:    RegisterDialog.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  注册对话框的实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       RegisterDialog.cpp
+ * @brief      注册对话框的实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
 #include "ui/RegisterDialog.h"
@@ -23,34 +23,44 @@
 
 namespace {
 const QString kTag = QStringLiteral("ui");
-/* 连接 + 响应总超时（毫秒）。 */
+/**
+ * @brief  连接 + 响应总超时（毫秒）。
+ * @note   取值 12000。
+ */
 constexpr int kTimeoutMs = 12000;
-/* namespace */
+/**
+ * @brief  namespace。
+ */
 }
 
-/*
- * 功能描述:  构造 CRegisterDialog 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   strHost          服务器主机地址，类型 const QString&。
- * param [in]   uPort            服务器端口，类型 quint16。
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget*。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      构造 CRegisterDialog 对象，完成成员初始化与依赖注入。
+ * @param[in] strHost        服务器主机地址；类型 const QString&。
+ * @param[in] uPort          服务器端口；类型 quint16。
+ * @param[in] pParent        Qt 父对象指针，用于对象树所有权管理；类型 QWidget*。
+ * @return     构造/析构函数无返回值。
+ * @author     JaTin
  */
 CRegisterDialog::CRegisterDialog(const QString& strHost, quint16 uPort, QWidget* pParent)
     : QDialog(pParent), m_strHost(strHost), m_uPort(uPort) {
     setWindowTitle(QStringLiteral("注册新账号"));
     setModal(true);
-    /* 固定 420 在手机竖屏（360–420dp）会超出屏幕右侧， */
-    /* 按父窗口宽度自适应：窄屏取「父宽 - 两侧边距」。 */
+    /**
+     * @brief  固定 420 在手机竖屏（360–420dp）会超出屏幕右侧， 按父窗口宽度自适应：窄屏取「父宽 - 两侧边距」。
+     */
     const int nParentWidth = (pParent != nullptr) ? pParent->width() : 420;
     setMinimumWidth(qBound(300, nParentWidth - 48, 420));
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pRoot = new QVBoxLayout(this);
     pRoot->setContentsMargins(24, 20, 24, 20);
     pRoot->setSpacing(12);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pTitle = new QLabel(QStringLiteral("创建账号"), this);
     pTitle->setStyleSheet(QStringLiteral("font-size: 14pt; font-weight: 700;"));
     pRoot->addWidget(pTitle);
@@ -67,45 +77,57 @@ CRegisterDialog::CRegisterDialog(const QString& strHost, quint16 uPort, QWidget*
     pForm->setHorizontalSpacing(12);
     pForm->setVerticalSpacing(10);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pUserEdit = new QLineEdit(this);
     m_pUserEdit->setObjectName("Field");
     m_pUserEdit->setMaxLength(24);
     m_pUserEdit->setPlaceholderText(QStringLiteral("例如 alice"));
     pForm->addRow(QStringLiteral("登录名 *"), m_pUserEdit);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pPassEdit = new QLineEdit(this);
     m_pPassEdit->setObjectName("Field");
     m_pPassEdit->setEchoMode(QLineEdit::Password);
     m_pPassEdit->setPlaceholderText(QStringLiteral("至少 6 位"));
     pForm->addRow(QStringLiteral("密码 *"), m_pPassEdit);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pPass2Edit = new QLineEdit(this);
     m_pPass2Edit->setObjectName("Field");
     m_pPass2Edit->setEchoMode(QLineEdit::Password);
     m_pPass2Edit->setPlaceholderText(QStringLiteral("再输一次"));
     pForm->addRow(QStringLiteral("确认密码 *"), m_pPass2Edit);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pNickEdit = new QLineEdit(this);
     m_pNickEdit->setObjectName("Field");
     m_pNickEdit->setMaxLength(24);
     m_pNickEdit->setPlaceholderText(QStringLiteral("留空则与登录名相同"));
     pForm->addRow(QStringLiteral("昵称"), m_pNickEdit);
 
-    /* 用 QLineEdit + 校验器而不是 QSpinBox：后者套上 QSS padding 后， */
-    /* 上下按钮在窄屏会渲染成一条被裁切的残影（端口框踩过同样的坑）。 */
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  用 QLineEdit + 校验器而不是 QSpinBox：后者套上 QSS padding 后， 上下按钮在窄屏会渲染成一条被裁切的残影（端口框踩过同样的坑）。 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pAgeEdit = new QLineEdit(this);
     m_pAgeEdit->setObjectName("Field");
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pAgeEdit->setValidator(new QIntValidator(0, 150, m_pAgeEdit));
     m_pAgeEdit->setPlaceholderText(QStringLiteral("不填"));
     pForm->addRow(QStringLiteral("年龄"), m_pAgeEdit);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pDescEdit = new QPlainTextEdit(this);
     m_pDescEdit->setObjectName("Field");
     m_pDescEdit->setFixedHeight(64);
@@ -114,7 +136,9 @@ CRegisterDialog::CRegisterDialog(const QString& strHost, quint16 uPort, QWidget*
 
     pRoot->addLayout(pForm);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pStatusLabel = new QLabel(this);
     m_pStatusLabel->setWordWrap(true);
     m_pStatusLabel->setVisible(false);
@@ -123,13 +147,17 @@ CRegisterDialog::CRegisterDialog(const QString& strHost, quint16 uPort, QWidget*
     auto* pButtons = new QHBoxLayout();
     pButtons->addStretch(1);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pCancelBtn = new QPushButton(QStringLiteral("取消"), this);
     m_pCancelBtn->setObjectName("LinkButton");
     m_pCancelBtn->setCursor(Qt::PointingHandCursor);
     pButtons->addWidget(m_pCancelBtn);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pSubmitBtn = new QPushButton(QStringLiteral("注册"), this);
     m_pSubmitBtn->setDefault(true);
     m_pSubmitBtn->setCursor(Qt::PointingHandCursor);
@@ -137,7 +165,9 @@ CRegisterDialog::CRegisterDialog(const QString& strHost, quint16 uPort, QWidget*
 
     pRoot->addLayout(pButtons);
 
-    /* ---- 临时连接：注册发生在登录之前，用独立的 bridge，用完即销毁 ---- */
+    /**
+     * @brief  ---- 临时连接：注册发生在登录之前，用独立的 bridge，用完即销毁 ----。
+     */
     m_pBridge = new CProtocolBridge(this);
 
     connect(m_pBridge, &CProtocolBridge::connected, this, [this] {
@@ -164,7 +194,9 @@ CRegisterDialog::CRegisterDialog(const QString& strHost, quint16 uPort, QWidget*
         teardown();
     });
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pTimeoutTimer = new QTimer(this);
     m_pTimeoutTimer->setSingleShot(true);
     connect(m_pTimeoutTimer, &QTimer::timeout, this, [this] {
@@ -184,28 +216,31 @@ CRegisterDialog::CRegisterDialog(const QString& strHost, quint16 uPort, QWidget*
 
 CRegisterDialog::~CRegisterDialog() = default;
 
-/*
- * 功能描述:  获取username。
- * 作者:      JaTin
- * return:    返回构造好的字符串；无内容时返回空字符串。
+/**
+ * @brief      获取 username相关的数据并返回处理结果。
+ * @note       本函数无输入参数。
+ * @return     返回构造好的字符串；无内容时返回空字符串。
+ * @author     JaTin
  */
 QString CRegisterDialog::username() const {
     return m_pUserEdit != nullptr ? m_pUserEdit->text().trimmed() : QString();
 }
 
-/*
- * 功能描述:  获取密码。
- * 作者:      JaTin
- * return:    返回构造好的字符串；无内容时返回空字符串。
+/**
+ * @brief      获取密码。
+ * @note       本函数无输入参数。
+ * @return     返回构造好的字符串；无内容时返回空字符串。
+ * @author     JaTin
  */
 QString CRegisterDialog::password() const {
     return m_pPassEdit != nullptr ? m_pPassEdit->text() : QString();
 }
 
-/*
- * 功能描述:  提交submit。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      提交 submit。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CRegisterDialog::submit() {
     if (!m_pSubmitBtn->isEnabled()) return;
@@ -214,7 +249,9 @@ void CRegisterDialog::submit() {
     const QString strPassword = m_pPassEdit->text();
     const QString strConfirm = m_pPass2Edit->text();
 
-    /* 本地先挡一遍，省得为了一个笔误跑一趟网络 */
+    /**
+     * @brief  本地先挡一遍，省得为了一个笔误跑一趟网络。
+     */
     if (strUsername.size() < 3) {
         showError(QStringLiteral("登录名至少 3 个字符"));
         m_pUserEdit->setFocus();
@@ -240,11 +277,11 @@ void CRegisterDialog::submit() {
     m_pBridge->connectToServer(m_strHost, m_uPort);
 }
 
-/*
- * 功能描述:  设置busy。
- * 作者:      JaTin
- * param [in]   nBusy            输入数据，类型 bool。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      设置 busy相关的数据并返回处理结果。
+ * @param[in] nBusy          输入数据；类型 bool。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CRegisterDialog::setBusy(bool nBusy) {
     m_pUserEdit->setEnabled(!nBusy);
@@ -256,11 +293,11 @@ void CRegisterDialog::setBusy(bool nBusy) {
     m_pSubmitBtn->setEnabled(!nBusy);
 }
 
-/*
- * 功能描述:  显示错误。
- * 作者:      JaTin
- * param [in]   strText          消息文本，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      显示错误。
+ * @param[in] strText        消息文本；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CRegisterDialog::showError(const QString& strText) {
     m_pStatusLabel->setText(strText);
@@ -268,10 +305,11 @@ void CRegisterDialog::showError(const QString& strText) {
     m_pStatusLabel->setVisible(true);
 }
 
-/*
- * 功能描述:  拆卸teardown。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      拆卸 teardown。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CRegisterDialog::teardown() {
     if (m_pTimeoutTimer != nullptr) m_pTimeoutTimer->stop();

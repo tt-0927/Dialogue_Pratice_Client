@@ -1,12 +1,14 @@
-/*
- * 文件名:    VoiceInput.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  CVoiceInput 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       VoiceInput.cpp
+ * @brief      CVoiceInput 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* CVoiceInput.cpp */
+/**
+ * @brief  CVoiceInput.cpp。
+ */
 #include "VoiceInput.h"
 
 #include "WhisperWorker.h"
@@ -26,14 +28,9 @@
 
 namespace {
 
-/* 极简 WAV 解析：只接受 16 kHz / 单声道 / 16-bit，正好是 whisper 的输入要求。 */
-/*
- * 功能描述:  加载wavpcm16；失败时返回 false。
- * 作者:      JaTin
- * param [in]   strPath          文件路径，类型 const QString&。
- * param [out]  byPcm            输入数据，类型 QByteArray&。
- * param [out]  strError         错误信息，类型 QString&。
- * return:    成功返回 true；参数非法或执行失败时返回 false。
+/**
+ * @brief  极简 WAV 解析：只接受 16 kHz / 单声道 / 16-bit，正好是 whisper 的输入要求。
+ * @details 加载 wavpcm16；失败时返回 false。
  */
 bool loadWavPcm16(const QString& strPath, QByteArray& byPcm, QString& strError) {
     QFile stFile(strPath);
@@ -85,17 +82,21 @@ bool loadWavPcm16(const QString& strPath, QByteArray& byPcm, QString& strError) 
     return true;
 }
 
-/* namespace */
+/**
+ * @brief  namespace。
+ */
 }
 
-/*
- * 功能描述:  构造 CVoiceInput 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject* parent) : QObject(。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      构造 CVoiceInput 对象，完成成员初始化与依赖注入。
+ * @param[in] pParent        Qt 父对象指针，用于对象树所有权管理；类型 QObject* pParent) : QObject(。
+ * @return     构造/析构函数无返回值。
+ * @author     JaTin
  */
 CVoiceInput::CVoiceInput(QObject* pParent) : QObject(pParent) {
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pTick = new QTimer(this);
     m_pTick->setInterval(200);
     connect(m_pTick, &QTimer::timeout, this, [this] {
@@ -106,10 +107,11 @@ CVoiceInput::CVoiceInput(QObject* pParent) : QObject(pParent) {
     });
 }
 
-/*
- * 功能描述:  析构 CVoiceInput 对象，释放运行期持有的全部资源。
- * 作者:      JaTin
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      析构 CVoiceInput 对象，释放运行期持有的全部资源。
+ * @note       本函数无输入参数。
+ * @return     无返回值（构造函数或析构函数）。
+ * @author     JaTin
  */
 CVoiceInput::~CVoiceInput() {
     if (m_pThread != nullptr) {
@@ -118,15 +120,18 @@ CVoiceInput::~CVoiceInput() {
     }
 }
 
-/*
- * 功能描述:  启动start；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      启动 start；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CVoiceInput::start() {
     if (m_pWorker != nullptr) return;
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pThread = new QThread(this);
     m_pThread->setObjectName(QStringLiteral("whisper"));
 
@@ -152,16 +157,18 @@ void CVoiceInput::start() {
     QMetaObject::invokeMethod(m_pWorker, "initialize", Qt::QueuedConnection);
 }
 
-/*
- * 功能描述:  启动recording；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
- * 作者:      JaTin
- * param [in]   enPurpose        输入数据，类型 Purpose_EN。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      启动 recording；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
+ * @param[in] enPurpose      输入数据；类型 Purpose_EN。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CVoiceInput::startRecording(Purpose_EN enPurpose) {
     if (m_nRecording) return;
 
-    /* 发送模式不需要 whisper 模型，也不受「上一句还在识别」限制 */
+    /**
+     * @brief  发送模式不需要 whisper 模型，也不受「上一句还在识别」限制。
+     */
     if (enPurpose == Purpose_EN::Transcribe) {
         if (!m_nModelReady) {
             emit failed(QStringLiteral("语音模型还在加载，请稍候再试"));
@@ -190,9 +197,13 @@ void CVoiceInput::startRecording(Purpose_EN enPurpose) {
         return;
     }
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pSource = new QAudioSource(stDevice, stFormat, this);
-    /* 约 200 ms */
+    /**
+     * @brief  约 200 ms。
+     */
     m_pSource->setBufferSize(16000 * 2 / 5);
 
     m_pDevice = m_pSource->start();
@@ -211,10 +222,11 @@ void CVoiceInput::startRecording(Purpose_EN enPurpose) {
     emit recordingStarted();
 }
 
-/*
- * 功能描述:  执行on 音频数据 ready。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      执行 on 音频数据 ready。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CVoiceInput::onAudioReady() {
     if (m_pDevice == nullptr) return;
@@ -223,7 +235,9 @@ void CVoiceInput::onAudioReady() {
     if (byChunk.isEmpty()) return;
     m_byPcm.append(byChunk);
 
-    /* 供 UI 显示电平：RMS 映射到 0..100 */
+    /**
+     * @brief  供 UI 显示电平：RMS 映射到 0..100。
+     */
     const auto* pSamples = reinterpret_cast<const qint16*>(byChunk.constData());
     const int nCount = byChunk.size() / 2;
     double dSum = 0.0;
@@ -237,10 +251,11 @@ void CVoiceInput::onAudioReady() {
     emit recordingTick(static_cast<int>(m_stElapsed.elapsed() / 1000), nLevel);
 }
 
-/*
- * 功能描述:  停止recording。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      停止 recording。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CVoiceInput::stopRecording() {
     if (!m_nRecording) return;
@@ -248,7 +263,9 @@ void CVoiceInput::stopRecording() {
     m_pTick->stop();
 
     if (m_pDevice != nullptr) {
-        /* 收尾：把内核缓冲里剩下的读干净 */
+        /**
+         * @brief  收尾：把内核缓冲里剩下的读干净。
+         */
         m_byPcm.append(m_pDevice->readAll());
         m_pDevice = nullptr;
     }
@@ -264,7 +281,9 @@ void CVoiceInput::stopRecording() {
     }
 
     if (m_stPurpose == Purpose_EN::Send) {
-        /* 语音消息：直接把原始 PCM 交出去编码发送，不走识别 */
+        /**
+         * @brief  语音消息：直接把原始 PCM 交出去编码发送，不走识别。
+         */
         const int nDurationMs = static_cast<int>(m_byPcm.size() / 2) * 1000 / 16000;
         const QByteArray byCaptured = m_byPcm;
         m_byPcm.clear();
@@ -276,11 +295,11 @@ void CVoiceInput::stopRecording() {
     submit(m_byPcm);
 }
 
-/*
- * 功能描述:  转写文件。
- * 作者:      JaTin
- * param [in]   strWavPath       输入数据，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      转写文件。
+ * @param[in] strWavPath     输入数据；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CVoiceInput::transcribeFile(const QString& strWavPath) {
     if (!m_nModelReady) {
@@ -303,11 +322,11 @@ void CVoiceInput::transcribeFile(const QString& strWavPath) {
     submit(byPcm);
 }
 
-/*
- * 功能描述:  提交submit。
- * 作者:      JaTin
- * param [in]   byPcm            输入数据，类型 const QByteArray&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      提交 submit。
+ * @param[in] byPcm          输入数据；类型 const QByteArray&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CVoiceInput::submit(const QByteArray& byPcm) {
     if (m_pWorker == nullptr) {

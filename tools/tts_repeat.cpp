@@ -1,12 +1,14 @@
-/*
- * 文件名:    tts_repeat.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  tts_repeat 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       tts_repeat.cpp
+ * @brief      tts_repeat 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* 用真实 CTtsService 复现「反复快速点击播放」——每次都在上一段还没播完时打断 */
+/**
+ * @brief  用真实 CTtsService 复现「反复快速点击播放」——每次都在上一段还没播完时打断。
+ */
 #include "media/TtsService.h"
 
 #include <QGuiApplication>
@@ -16,12 +18,12 @@
 #include <cstdio>
 #include <cstring>
 
-/*
- * 功能描述:  程序入口：解析命令行参数、初始化服务端并运行事件循环。
- * 作者:      JaTin
- * param [in]   nArgc            输入数据，类型 int。
- * param [in]   strArgv          输入数据，类型 char**。
- * return:    返回处理结果码；0 表示成功，负值或 -1 表示失败。
+/**
+ * @brief      程序入口：解析命令行参数、初始化服务端并运行事件循环。
+ * @param[in] nArgc          输入数据；类型 int。
+ * @param[in] strArgv        输入数据；类型 char**。
+ * @return     返回处理结果码；0 表示成功，负值或 -1 表示失败。
+ * @author     JaTin
  */
 int main(int nArgc, char** strArgv) {
     if (qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM")) {
@@ -29,7 +31,9 @@ int main(int nArgc, char** strArgv) {
     }
     QGuiApplication stApp(nArgc, strArgv);
 
-    /* rapid 模式：同一句每 800ms 点一次，共 6 次（音频 2.1s，每次都打断上一段） */
+    /**
+     * @brief  rapid 模式：同一句每 800ms 点一次，共 6 次（音频 2.1s，每次都打断上一段）。
+     */
     const bool nRapid = (nArgc > 1 && std::strcmp(strArgv[1], "rapid") == 0);
     const int nIntervalMs = nRapid ? 800 : 4000;
     const int nTimes = nRapid ? 6 : 4;

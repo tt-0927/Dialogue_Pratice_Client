@@ -1,12 +1,14 @@
-/*
- * 文件名:    MicButton.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  CMicButton 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       MicButton.cpp
+ * @brief      CMicButton 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* CMicButton.cpp */
+/**
+ * @brief  CMicButton.cpp。
+ */
 #include "MicButton.h"
 
 #include "Theme.h"
@@ -14,11 +16,11 @@
 #include <QPainter>
 #include <QPaintEvent>
 
-/*
- * 功能描述:  构造 CMicButton 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget* parent) : QAbstractButton(。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      构造 CMicButton 对象，完成成员初始化与依赖注入。
+ * @param[in] pParent        Qt 父对象指针，用于对象树所有权管理；类型 QWidget* pParent) : QAbstractButton(。
+ * @return     构造/析构函数无返回值。
+ * @author     JaTin
  */
 CMicButton::CMicButton(QWidget* pParent) : QAbstractButton(pParent) {
     setCursor(Qt::PointingHandCursor);
@@ -26,11 +28,11 @@ CMicButton::CMicButton(QWidget* pParent) : QAbstractButton(pParent) {
     setToolTip(QStringLiteral("点击开始语音输入"));
 }
 
-/*
- * 功能描述:  设置recording。
- * 作者:      JaTin
- * param [in]   nRecording       输入数据，类型 bool。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      设置 recording相关的数据并返回处理结果。
+ * @param[in] nRecording     输入数据；类型 bool。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CMicButton::setRecording(bool nRecording) {
     if (m_nRecording == nRecording) return;
@@ -40,11 +42,11 @@ void CMicButton::setRecording(bool nRecording) {
     update();
 }
 
-/*
- * 功能描述:  进入事件。
- * 作者:      JaTin
- * param [in]   pEvent           事件，类型 QEnterEvent*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      进入事件。
+ * @param[in] pEvent         事件；类型 QEnterEvent*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CMicButton::enterEvent(QEnterEvent* pEvent) {
     m_nHovered = true;
@@ -52,11 +54,11 @@ void CMicButton::enterEvent(QEnterEvent* pEvent) {
     QAbstractButton::enterEvent(pEvent);
 }
 
-/*
- * 功能描述:  退出事件。
- * 作者:      JaTin
- * param [in]   pEvent           事件，类型 QEvent*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      退出事件。
+ * @param[in] pEvent         事件；类型 QEvent*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CMicButton::leaveEvent(QEvent* pEvent) {
     m_nHovered = false;
@@ -64,10 +66,11 @@ void CMicButton::leaveEvent(QEvent* pEvent) {
     QAbstractButton::leaveEvent(pEvent);
 }
 
-/*
- * 功能描述:  绘制事件。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      绘制事件。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CMicButton::paintEvent(QPaintEvent* /*event*/) {
     QPainter stP(this);
@@ -93,19 +96,25 @@ void CMicButton::paintEvent(QPaintEvent* /*event*/) {
 
     const QPointF stC = stR.center();
 
-    /* 麦克风头 */
+    /**
+     * @brief  麦克风头。
+     */
     stP.setBrush(stFg);
     stP.setPen(Qt::NoPen);
     stP.drawRoundedRect(QRectF(stC.x() - 4.0, stC.y() - 12.0, 8.0, 14.0), 4.0, 4.0);
 
-    /* 支架：下半圆弧 + 立杆 + 底座 */
+    /**
+     * @brief  支架：下半圆弧 + 立杆 + 底座。
+     */
     stP.setBrush(Qt::NoBrush);
     stP.setPen(QPen(stFg, 1.8, Qt::SolidLine, Qt::RoundCap));
     stP.drawArc(QRectF(stC.x() - 7.0, stC.y() - 8.0, 14.0, 14.0), 200 * 16, 140 * 16);
     stP.drawLine(QPointF(stC.x(), stC.y() + 6.0), QPointF(stC.x(), stC.y() + 10.5));
     stP.drawLine(QPointF(stC.x() - 4.0, stC.y() + 10.5), QPointF(stC.x() + 4.0, stC.y() + 10.5));
 
-    /* 录音中：右上角红点提示 */
+    /**
+     * @brief  录音中：右上角红点提示。
+     */
     if (m_nRecording) {
         stP.setPen(Qt::NoPen);
         stP.setBrush(QColor("#E5484D"));

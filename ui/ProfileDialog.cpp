@@ -1,12 +1,14 @@
-/*
- * 文件名:    ProfileDialog.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  CProfileDialog 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       ProfileDialog.cpp
+ * @brief      CProfileDialog 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* CProfileDialog.cpp */
+/**
+ * @brief  CProfileDialog.cpp。
+ */
 #include "ui/ProfileDialog.h"
 
 #include <QHBoxLayout>
@@ -17,14 +19,14 @@
 #include <QIntValidator>
 #include <QVBoxLayout>
 
-/*
- * 功能描述:  构造 CProfileDialog 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   strName          名称或昵称，类型 const QString&。
- * param [in]   nAge             年龄（0 到 150），类型 int。
- * param [in]   strDesc          个人简介，类型 const QString&。
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget*。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      构造 CProfileDialog 对象，完成成员初始化与依赖注入。
+ * @param[in] strName        名称或昵称；类型 const QString&。
+ * @param[in] nAge           年龄（0 到 150）；类型 int。
+ * @param[in] strDesc        个人简介；类型 const QString&。
+ * @param[in] pParent        Qt 父对象指针，用于对象树所有权管理；类型 QWidget*。
+ * @return     构造/析构函数无返回值。
+ * @author     JaTin
  */
 CProfileDialog::CProfileDialog(const QString& strName, int nAge, const QString& strDesc, QWidget* pParent)
     : QDialog(pParent) {
@@ -34,58 +36,79 @@ CProfileDialog::CProfileDialog(const QString& strName, int nAge, const QString& 
     setMaximumWidth(440);
     setStyleSheet(QStringLiteral("QDialog { background: #FFFFFF; }"));
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pRoot = new QVBoxLayout(this);
     pRoot->setContentsMargins(28, 24, 28, 22);
     pRoot->setSpacing(8);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pTitle = new QLabel(QStringLiteral("编辑个人信息"), this);
     pTitle->setStyleSheet(QStringLiteral("font-size: 14pt; font-weight: 700;"));
     pRoot->addWidget(pTitle);
     pRoot->addSpacing(6);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pNameLabel = new QLabel(QStringLiteral("姓名"), this);
     pNameLabel->setObjectName("KeyLabel");
     pRoot->addWidget(pNameLabel);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pNameEdit = new QLineEdit(strName, this);
     m_pNameEdit->setObjectName("Field");
     m_pNameEdit->setMaxLength(24);
     pRoot->addWidget(m_pNameEdit);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pAgeLabel = new QLabel(QStringLiteral("年龄"), this);
     pAgeLabel->setObjectName("KeyLabel");
     pRoot->addWidget(pAgeLabel);
 
-    /* QLineEdit + 校验器替代 QSpinBox：后者在 QSS padding 下文本会被裁切 */
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  QLineEdit + 校验器替代 QSpinBox：后者在 QSS padding 下文本会被裁切 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pAgeEdit = new QLineEdit(this);
     m_pAgeEdit->setObjectName("Field");
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pAgeEdit->setValidator(new QIntValidator(0, 150, m_pAgeEdit));
     m_pAgeEdit->setPlaceholderText(QStringLiteral("未填写"));
     if (nAge > 0) m_pAgeEdit->setText(QString::number(nAge));
     pRoot->addWidget(m_pAgeEdit);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pDescLabel = new QLabel(QStringLiteral("个人描述"), this);
     pDescLabel->setObjectName("KeyLabel");
     pRoot->addWidget(pDescLabel);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pDescEdit = new QPlainTextEdit(strDesc, this);
     m_pDescEdit->setObjectName("Field");
     m_pDescEdit->setPlaceholderText(QStringLiteral("一句话介绍自己，最多 200 字节"));
     m_pDescEdit->setFixedHeight(96);
-    /* Tab 切换控件而不是插入制表符 */
+    /**
+     * @brief  Tab 切换控件而不是插入制表符。
+     */
     m_pDescEdit->setTabChangesFocus(true);
     pRoot->addWidget(m_pDescEdit);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pErrorLabel = new QLabel(this);
     m_pErrorLabel->setObjectName("ErrorText");
     m_pErrorLabel->setWordWrap(true);
@@ -97,14 +120,18 @@ CProfileDialog::CProfileDialog(const QString& strName, int nAge, const QString& 
     auto* pButtonRow = new QHBoxLayout();
     pButtonRow->addStretch(1);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pCancelBtn = new QPushButton(QStringLiteral("取消"), this);
     pCancelBtn->setObjectName("GhostButton");
     pCancelBtn->setCursor(Qt::PointingHandCursor);
     pCancelBtn->setMinimumWidth(88);
     pButtonRow->addWidget(pCancelBtn);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pSaveBtn = new QPushButton(QStringLiteral("保存"), this);
     pSaveBtn->setObjectName("PrimaryButton");
     pSaveBtn->setCursor(Qt::PointingHandCursor);
@@ -118,25 +145,28 @@ CProfileDialog::CProfileDialog(const QString& strName, int nAge, const QString& 
     connect(pSaveBtn, &QPushButton::clicked, this, &CProfileDialog::submit);
 }
 
-/*
- * 功能描述:  显示事件。
- * 作者:      JaTin
- * param [in]   pEvent           事件，类型 QShowEvent*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      显示事件。
+ * @param[in] pEvent         事件；类型 QShowEvent*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProfileDialog::showEvent(QShowEvent* pEvent) {
     QDialog::showEvent(pEvent);
 
-    /* 手机竖屏放不下 440，按父窗口宽度收敛 */
+    /**
+     * @brief  手机竖屏放不下 440，按父窗口宽度收敛。
+     */
     const int nParentWidth = parentWidget() != nullptr ? parentWidget()->width() : 440;
     const int nTarget = qBound(280, qMin(440, nParentWidth - 48), 440);
     if (width() != nTarget) resize(nTarget, height());
 }
 
-/*
- * 功能描述:  提交submit。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      提交 submit。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProfileDialog::submit() {
     const QString strName = m_pNameEdit->text().trimmed();

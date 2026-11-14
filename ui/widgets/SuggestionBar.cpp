@@ -1,12 +1,14 @@
-/*
- * 文件名:    SuggestionBar.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  CSuggestionBar 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       SuggestionBar.cpp
+ * @brief      CSuggestionBar 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* CSuggestionBar.cpp */
+/**
+ * @brief  CSuggestionBar.cpp。
+ */
 #include "ui/widgets/SuggestionBar.h"
 
 #include "ui/widgets/PlayButton.h"
@@ -21,8 +23,10 @@
 
 namespace {
 
-/* 建议卡片：上行英文、下行中文，整块可点击（点击填入输入框）。 */
-/* 用 QFrame 而不是 QPushButton，因为按钮只能渲染单一样式的单行文本。 */
+/**
+ * @brief  建议卡片：上行英文、下行中文，整块可点击（点击填入输入框）。
+ * @details 用 QFrame 而不是 QPushButton，因为按钮只能渲染单一样式的单行文本。
+ */
 class CSuggestionChip : public QFrame {
 public:
     CSuggestionChip(const QString& english, const QString& chinese,
@@ -30,23 +34,31 @@ public:
         : QFrame(parent), onClick_(std::move(onClick)) {
         setObjectName(QStringLiteral("CSuggestionChip"));
         setCursor(Qt::PointingHandCursor);
-        /* 让 QSS 的 :hover 生效 */
+        /**
+         * @brief  让 QSS 的 :hover 生效。
+         */
         setAttribute(Qt::WA_Hover, true);
         setToolTip(QStringLiteral("点击填入输入框"));
 
-        /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+        /**
+         * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+         */
         auto* layout = new QVBoxLayout(this);
         layout->setContentsMargins(10, 6, 10, 6);
         layout->setSpacing(2);
 
-        /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+        /**
+         * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+         */
         auto* en = new QLabel(english, this);
         en->setObjectName(QStringLiteral("SuggestionEn"));
         en->setWordWrap(true);
         layout->addWidget(en);
 
         if (!chinese.isEmpty()) {
-            /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+            /**
+             * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+             */
             auto* zh = new QLabel(chinese, this);
             zh->setObjectName(QStringLiteral("SuggestionZh"));
             zh->setWordWrap(true);
@@ -64,40 +76,49 @@ private:
     std::function<void()> onClick_;
 };
 
-/* namespace */
+/**
+ * @brief  namespace。
+ */
 }
 
-/*
- * 功能描述:  构造 CSuggestionBar 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget* parent) : QFrame(。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      构造 CSuggestionBar 对象，完成成员初始化与依赖注入。
+ * @param[in] pParent        Qt 父对象指针，用于对象树所有权管理；类型 QWidget* pParent) : QFrame(。
+ * @return     构造/析构函数无返回值。
+ * @author     JaTin
  */
 CSuggestionBar::CSuggestionBar(QWidget* pParent) : QFrame(pParent) {
     setObjectName(QStringLiteral("CSuggestionBar"));
     setVisible(false);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pRoot = new QVBoxLayout(this);
     pRoot->setContentsMargins(14, 10, 14, 10);
     pRoot->setSpacing(6);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pTitle = new QLabel(QStringLiteral("建议回复"), this);
     m_pTitle->setStyleSheet(QStringLiteral("color:#7A8797; font-size:8.5pt;"));
     pRoot->addWidget(m_pTitle);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pList = new QVBoxLayout();
     m_pList->setContentsMargins(0, 0, 0, 0);
     m_pList->setSpacing(4);
     pRoot->addLayout(m_pList);
 }
 
-/*
- * 功能描述:  清空rows。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      清空 rows。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CSuggestionBar::clearRows() {
     while (m_pList->count() > 0) {
@@ -107,15 +128,18 @@ void CSuggestionBar::clearRows() {
     }
 }
 
-/*
- * 功能描述:  显示pending；实现上创建 Qt 控件并纳入父子对象树。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      显示 pending；实现上创建 Qt 控件并纳入父子对象树。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CSuggestionBar::showPending() {
     clearRows();
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     auto* pRow = new QWidget(this);
     auto* pLayout = new QHBoxLayout(pRow);
     pLayout->setContentsMargins(0, 0, 0, 0);
@@ -128,11 +152,11 @@ void CSuggestionBar::showPending() {
     setVisible(true);
 }
 
-/*
- * 功能描述:  显示智能建议列表；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
- * 作者:      JaTin
- * param [in]   aItems           条目列表，类型 const QVector<Suggestion_S>&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      显示智能建议列表；实现上连接 Qt 信号与槽、创建 Qt 控件并纳入父子对象树。
+ * @param[in] aItems         条目列表；类型 const QVector<Suggestion_S>&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CSuggestionBar::showSuggestions(const QVector<Suggestion_S>& aItems) {
     clearRows();
@@ -142,7 +166,9 @@ void CSuggestionBar::showSuggestions(const QVector<Suggestion_S>& aItems) {
     }
 
     for (const Suggestion_S& stItem : aItems) {
-        /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+        /**
+         * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+         */
         auto* pRow = new QWidget(this);
         auto* pLayout = new QHBoxLayout(pRow);
         pLayout->setContentsMargins(0, 0, 0, 0);
@@ -166,10 +192,11 @@ void CSuggestionBar::showSuggestions(const QVector<Suggestion_S>& aItems) {
     setVisible(true);
 }
 
-/*
- * 功能描述:  隐藏工具条。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      隐藏工具条。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CSuggestionBar::hideBar() {
     setVisible(false);

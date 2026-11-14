@@ -1,12 +1,14 @@
-/*
- * 文件名:    VoicePlayer.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  CVoicePlayer 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       VoicePlayer.cpp
+ * @brief      CVoicePlayer 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* CVoicePlayer.cpp */
+/**
+ * @brief  CVoicePlayer.cpp。
+ */
 #include "media/VoicePlayer.h"
 
 #include "media/VoiceCodec.h"
@@ -23,15 +25,9 @@
 
 namespace {
 
-/* 给 PCM 加 44 字节 WAV 头（QSoundEffect 只吃 WAV）。 */
-/*
- * 功能描述:  包装wav。
- * 作者:      JaTin
- * param [in]   byPcm            输入数据，类型 const QByteArray&。
- * param [in]   nSampleRate      输入数据，类型 int。
- * param [in]   nChannels        输入数据，类型 int。
- * param [in]   nBitsPerSample   输入数据，类型 int。
- * return:    返回字节数据；失败时返回空 QByteArray。
+/**
+ * @brief  给 PCM 加 44 字节 WAV 头（QSoundEffect 只吃 WAV）。
+ * @details 包装 wav。
  */
 QByteArray wrapWav(const QByteArray& byPcm, int nSampleRate, int nChannels, int nBitsPerSample) {
     const quint32 uDataSize = static_cast<quint32>(byPcm.size());
@@ -57,9 +53,13 @@ QByteArray wrapWav(const QByteArray& byPcm, int nSampleRate, int nChannels, int 
     stPut32(uRiffSize);
     byWav.append("WAVE", 4);
     byWav.append("fmt ", 4);
-    /* fmt 块长度 */
+    /**
+     * @brief  fmt 块长度。
+     */
     stPut32(16);
-    /* PCM */
+    /**
+     * @brief  PCM。
+     */
     stPut16(1);
     stPut16(static_cast<quint16>(nChannels));
     stPut32(static_cast<quint32>(nSampleRate));
@@ -73,17 +73,21 @@ QByteArray wrapWav(const QByteArray& byPcm, int nSampleRate, int nChannels, int 
     return byWav;
 }
 
-/* namespace */
+/**
+ * @brief  namespace。
+ */
 }
 
-/*
- * 功能描述:  构造 CVoicePlayer 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject* parent) : QObject(。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      构造 CVoicePlayer 对象，完成成员初始化与依赖注入。
+ * @param[in] pParent        Qt 父对象指针，用于对象树所有权管理；类型 QObject* pParent) : QObject(。
+ * @return     构造/析构函数无返回值。
+ * @author     JaTin
  */
 CVoicePlayer::CVoicePlayer(QObject* pParent) : QObject(pParent) {
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pEffect = new QSoundEffect(this);
     m_pEffect->setVolume(1.0);
 
@@ -108,21 +112,22 @@ CVoicePlayer::CVoicePlayer(QObject* pParent) : QObject(pParent) {
     });
 }
 
-/*
- * 功能描述:  获取instance。
- * 作者:      JaTin
- * return:    成功返回对象指针；未找到或失败时返回 nullptr。
+/**
+ * @brief      获取本类的进程内单例对象。
+ * @note       本函数无输入参数。
+ * @return     成功返回对象指针；未找到或失败时返回 nullptr。
+ * @author     JaTin
  */
 CVoicePlayer* CVoicePlayer::instance() {
     static CVoicePlayer stPlayer;
     return &stPlayer;
 }
 
-/*
- * 功能描述:  获取wav 文件路径 for。
- * 作者:      JaTin
- * param [in]   byContainer      容器，类型 const QByteArray&。
- * return:    返回构造好的字符串；无内容时返回空字符串。
+/**
+ * @brief      获取 wav 文件路径 for。
+ * @param[in] byContainer    容器；类型 const QByteArray&。
+ * @return     返回构造好的字符串；无内容时返回空字符串。
+ * @author     JaTin
  */
 QString CVoicePlayer::wavPathFor(const QByteArray& byContainer) const {
     const QString strDir =
@@ -134,16 +139,18 @@ QString CVoicePlayer::wavPathFor(const QByteArray& byContainer) const {
     return strDir + QLatin1Char('/') + QString::fromLatin1(byHash) + QStringLiteral(".wav");
 }
 
-/*
- * 功能描述:  播放play。
- * 作者:      JaTin
- * param [in]   byContainer      容器，类型 const QByteArray&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      播放 play。
+ * @param[in] byContainer    容器；类型 const QByteArray&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CVoicePlayer::play(const QByteArray& byContainer) {
     if (byContainer.isEmpty()) return;
 
-    /* 同一条再点一次：先停再从头播（QSoundEffect 的 play 在播放中不会重头） */
+    /**
+     * @brief  同一条再点一次：先停再从头播（QSoundEffect 的 play 在播放中不会重头）。
+     */
     if (current_ == byContainer && m_pEffect->status() == QSoundEffect::Ready) {
         m_pEffect->stop();
         m_pEffect->play();
@@ -180,10 +187,11 @@ void CVoicePlayer::play(const QByteArray& byContainer) {
     }
 }
 
-/*
- * 功能描述:  停止stop。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      停止 stop。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CVoicePlayer::stop() {
     m_nPendingPlay = false;
@@ -191,10 +199,11 @@ void CVoicePlayer::stop() {
     current_.clear();
 }
 
-/*
- * 功能描述:  判断playing。
- * 作者:      JaTin
- * return:    成功返回 true；参数非法或执行失败时返回 false。
+/**
+ * @brief      判断 playing相关的数据并返回处理结果。
+ * @note       本函数无输入参数。
+ * @return     成功返回 true；参数非法或执行失败时返回 false。
+ * @author     JaTin
  */
 bool CVoicePlayer::isPlaying() const {
     return speaking_;

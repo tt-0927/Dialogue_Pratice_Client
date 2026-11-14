@@ -1,12 +1,14 @@
-/*
- * 文件名:    PlayButton.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  CPlayButton 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       PlayButton.cpp
+ * @brief      CPlayButton 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* CPlayButton.cpp */
+/**
+ * @brief  CPlayButton.cpp。
+ */
 #include "ui/widgets/PlayButton.h"
 
 #include "core/Theme.h"
@@ -15,11 +17,11 @@
 #include <QPainterPath>
 #include <QPaintEvent>
 
-/*
- * 功能描述:  构造 CPlayButton 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QWidget* parent) : QAbstractButton(。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      构造 CPlayButton 对象，完成成员初始化与依赖注入。
+ * @param[in] pParent        Qt 父对象指针，用于对象树所有权管理；类型 QWidget* pParent) : QAbstractButton(。
+ * @return     构造/析构函数无返回值。
+ * @author     JaTin
  */
 CPlayButton::CPlayButton(QWidget* pParent) : QAbstractButton(pParent) {
     setCursor(Qt::PointingHandCursor);
@@ -27,11 +29,11 @@ CPlayButton::CPlayButton(QWidget* pParent) : QAbstractButton(pParent) {
     setToolTip(QStringLiteral("播放发音"));
 }
 
-/*
- * 功能描述:  设置playing。
- * 作者:      JaTin
- * param [in]   nPlaying         输入数据，类型 bool。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      设置 playing相关的数据并返回处理结果。
+ * @param[in] nPlaying       输入数据；类型 bool。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CPlayButton::setPlaying(bool nPlaying) {
     if (m_nPlaying == nPlaying) return;
@@ -40,11 +42,11 @@ void CPlayButton::setPlaying(bool nPlaying) {
     update();
 }
 
-/*
- * 功能描述:  进入事件。
- * 作者:      JaTin
- * param [in]   pEvent           事件，类型 QEnterEvent*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      进入事件。
+ * @param[in] pEvent         事件；类型 QEnterEvent*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CPlayButton::enterEvent(QEnterEvent* pEvent) {
     m_nHovered = true;
@@ -52,11 +54,11 @@ void CPlayButton::enterEvent(QEnterEvent* pEvent) {
     QAbstractButton::enterEvent(pEvent);
 }
 
-/*
- * 功能描述:  退出事件。
- * 作者:      JaTin
- * param [in]   pEvent           事件，类型 QEvent*。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      退出事件。
+ * @param[in] pEvent         事件；类型 QEvent*。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CPlayButton::leaveEvent(QEvent* pEvent) {
     m_nHovered = false;
@@ -64,10 +66,11 @@ void CPlayButton::leaveEvent(QEvent* pEvent) {
     QAbstractButton::leaveEvent(pEvent);
 }
 
-/*
- * 功能描述:  绘制事件。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      绘制事件。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CPlayButton::paintEvent(QPaintEvent* /*event*/) {
     QPainter stP(this);
@@ -87,13 +90,17 @@ void CPlayButton::paintEvent(QPaintEvent* /*event*/) {
     stP.setBrush(isEnabled() ? stAccent : QColor("#B9C2CE"));
 
     if (m_nPlaying) {
-        /* 播放中：两根竖条（暂停） */
+        /**
+         * @brief  播放中：两根竖条（暂停）。
+         */
         stP.drawRoundedRect(QRectF(stC.x() - 4.0, stC.y() - 4.5, 2.6, 9.0), 1.0, 1.0);
         stP.drawRoundedRect(QRectF(stC.x() + 1.4, stC.y() - 4.5, 2.6, 9.0), 1.0, 1.0);
         return;
     }
 
-    /* 待播放：三角形 */
+    /**
+     * @brief  待播放：三角形。
+     */
     QPainterPath stTriangle;
     stTriangle.moveTo(stC.x() - 3.2, stC.y() - 5.0);
     stTriangle.lineTo(stC.x() + 5.2, stC.y());

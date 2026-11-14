@@ -1,12 +1,14 @@
-/*
- * 文件名:    TtsService.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  CTtsService 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       TtsService.cpp
+ * @brief      CTtsService 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* CTtsService.cpp */
+/**
+ * @brief  CTtsService.cpp。
+ */
 #include "TtsService.h"
 
 #include <QCryptographicHash>
@@ -20,18 +22,23 @@
 #include <QtDebug>
 
 namespace {
-/* 小于这个值说明是半成品 */
+/**
+ * @brief  小于这个值说明是半成品
+ * @note   取值 44。
+ */
 constexpr qint64 kWavHeaderSize = 44;
 }
 
-/*
- * 功能描述:  构造 CTtsService 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject* parent) : QObject(。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      构造 CTtsService 对象，完成成员初始化与依赖注入。
+ * @param[in] pParent        Qt 父对象指针，用于对象树所有权管理；类型 QObject* pParent) : QObject(。
+ * @return     构造/析构函数无返回值。
+ * @author     JaTin
  */
 CTtsService::CTtsService(QObject* pParent) : QObject(pParent) {
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pEffect = new QSoundEffect(this);
     m_pEffect->setVolume(1.0);
 
@@ -41,7 +48,9 @@ CTtsService::CTtsService(QObject* pParent) : QObject(pParent) {
             emit failed(QStringLiteral("音频加载失败"));
             return;
         }
-        /* setSource 是异步加载，加载完才能 play */
+        /**
+         * @brief  setSource 是异步加载，加载完才能 play。
+         */
         if (m_nPendingPlay && m_pEffect->status() == QSoundEffect::Ready) {
             m_nPendingPlay = false;
             m_pEffect->play();
@@ -57,10 +66,11 @@ CTtsService::CTtsService(QObject* pParent) : QObject(pParent) {
     });
 }
 
-/*
- * 功能描述:  析构 CTtsService 对象，释放运行期持有的全部资源。
- * 作者:      JaTin
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      析构 CTtsService 对象，释放运行期持有的全部资源。
+ * @note       本函数无输入参数。
+ * @return     无返回值（构造函数或析构函数）。
+ * @author     JaTin
  */
 CTtsService::~CTtsService() {
     if (m_pProcess != nullptr) {
@@ -70,33 +80,34 @@ CTtsService::~CTtsService() {
     cleanupPartFile();
 }
 
-/*
- * 功能描述:  设置paths。
- * 作者:      JaTin
- * param [in]   strPiperBin      输入数据，类型 const QString&。
- * param [in]   strVoiceModel    输入数据，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      设置 paths相关的数据并返回处理结果。
+ * @param[in] strPiperBin    输入数据；类型 const QString&。
+ * @param[in] strVoiceModel  输入数据；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CTtsService::setPaths(const QString& strPiperBin, const QString& strVoiceModel) {
     m_strPiperBin = strPiperBin;
     m_strVoiceModel = strVoiceModel;
 }
 
-/*
- * 功能描述:  判断available。
- * 作者:      JaTin
- * return:    成功返回 true；参数非法或执行失败时返回 false。
+/**
+ * @brief      判断 available相关的数据并返回处理结果。
+ * @note       本函数无输入参数。
+ * @return     成功返回 true；参数非法或执行失败时返回 false。
+ * @author     JaTin
  */
 bool CTtsService::isAvailable() const {
     return !m_strPiperBin.isEmpty() && QFileInfo::exists(m_strPiperBin)
            && QFileInfo::exists(m_strVoiceModel);
 }
 
-/*
- * 功能描述:  获取缓存文件路径 for。
- * 作者:      JaTin
- * param [in]   strText          消息文本，类型 const QString&。
- * return:    返回构造好的字符串；无内容时返回空字符串。
+/**
+ * @brief      获取缓存文件路径 for。
+ * @param[in] strText        消息文本；类型 const QString&。
+ * @return     返回构造好的字符串；无内容时返回空字符串。
+ * @author     JaTin
  */
 QString CTtsService::cachePathFor(const QString& strText) const {
     const QString strDir =
@@ -108,11 +119,11 @@ QString CTtsService::cachePathFor(const QString& strText) const {
     return strDir + QLatin1Char('/') + QString::fromLatin1(byHash) + QStringLiteral(".wav");
 }
 
-/*
- * 功能描述:  调用本地语音合成把文本转换为音频并播放。
- * 作者:      JaTin
- * param [in]   strText          消息文本，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      调用本地语音合成把文本转换为音频并播放。
+ * @param[in] strText        消息文本；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CTtsService::speak(const QString& strText) {
     const QString strTrimmed = strText.trimmed();
@@ -123,7 +134,9 @@ void CTtsService::speak(const QString& strText) {
         return;
     }
 
-    /* 停掉上一段，也清掉正在合成的半成品 */
+    /**
+     * @brief  停掉上一段，也清掉正在合成的半成品。
+     */
     stop();
 
     m_strCurrentText = strTrimmed;
@@ -135,7 +148,9 @@ void CTtsService::speak(const QString& strText) {
     }
 
     const QString strWav = cachePathFor(strTrimmed);
-    /* 大小要过 WAV 头：历史版本可能留下被 kill 截断的半成品文件 */
+    /**
+     * @brief  大小要过 WAV 头：历史版本可能留下被 kill 截断的半成品文件。
+     */
     if (QFileInfo::exists(strWav) && QFileInfo(strWav).size() > kWavHeaderSize) {
         m_strCache.insert(strTrimmed, strWav);
         playFile(strWav);
@@ -147,13 +162,19 @@ void CTtsService::speak(const QString& strText) {
     m_strPendingText = strTrimmed;
 
     if (m_pProcess == nullptr) {
-        /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+        /**
+         * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+         */
         m_pProcess = new QProcess(this);
-        /* piper 需要同目录下的 espeak-ng-data，工作目录设成二进制所在目录 */
+        /**
+         * @brief  piper 需要同目录下的 espeak-ng-data，工作目录设成二进制所在目录。
+         */
         m_pProcess->setWorkingDirectory(QFileInfo(m_strPiperBin).absolutePath());
 
         connect(m_pProcess, &QProcess::finished, this, [this](int code, QProcess::ExitStatus status) {
-            /* 被 stop() 主动打断：pendingPart_ 已被清空，不报错 */
+            /**
+             * @brief  被 stop() 主动打断：pendingPart_ 已被清空，不报错。
+             */
             if (m_strPendingPart.isEmpty()) return;
 
             if (status != QProcess::NormalExit || code != 0) {
@@ -168,8 +189,9 @@ void CTtsService::speak(const QString& strText) {
                 return;
             }
 
-            /* 原子替换：先写 .part，成功后才改名成正式缓存。 */
-            /* 否则合成中途被打断会留下半个 WAV，下次被当成缓存命中，播出来只有半秒。 */
+            /**
+             * @brief  原子替换：先写 .part，成功后才改名成正式缓存。 否则合成中途被打断会留下半个 WAV，下次被当成缓存命中，播出来只有半秒。
+             */
             QFile::remove(m_strPendingFinal);
             if (!QFile::rename(m_strPendingPart, m_strPendingFinal)) {
                 cleanupPartFile();
@@ -197,15 +219,17 @@ void CTtsService::speak(const QString& strText) {
     m_pProcess->closeWriteChannel();
 }
 
-/*
- * 功能描述:  播放文件。
- * 作者:      JaTin
- * param [in]   strPath          文件路径，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      播放文件。
+ * @param[in] strPath        文件路径；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CTtsService::playFile(const QString& strPath) {
     if (m_strLoadedPath != strPath) {
-        /* 换文件：setSource 是异步的，等 Ready 再播 */
+        /**
+         * @brief  换文件：setSource 是异步的，等 Ready 再播。
+         */
         m_strLoadedPath = strPath;
         m_nPendingPlay = true;
         m_pEffect->setSource(QUrl::fromLocalFile(strPath));
@@ -216,21 +240,26 @@ void CTtsService::playFile(const QString& strPath) {
         return;
     }
 
-    /* 同一个文件再点：play() 在播放中不会重头，必须先 stop */
+    /**
+     * @brief  同一个文件再点：play() 在播放中不会重头，必须先 stop。
+     */
     m_pEffect->stop();
     m_pEffect->play();
 }
 
-/*
- * 功能描述:  停止stop。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      停止 stop。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CTtsService::stop() {
     m_nPendingPlay = false;
     if (m_pEffect != nullptr) m_pEffect->stop();
 
-    /* 先清空 pendingPart_ 再 kill，让 finished 回调知道这是主动取消 */
+    /**
+     * @brief  先清空 pendingPart_ 再 kill，让 finished 回调知道这是主动取消。
+     */
     const QString strPart = m_strPendingPart;
     m_strPendingPart.clear();
     m_strPendingFinal.clear();
@@ -242,10 +271,11 @@ void CTtsService::stop() {
     if (!strPart.isEmpty()) QFile::remove(strPart);
 }
 
-/*
- * 功能描述:  执行cleanuppart 文件。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      执行 cleanuppart 文件。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CTtsService::cleanupPartFile() {
     if (!m_strPendingPart.isEmpty()) {

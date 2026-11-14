@@ -1,41 +1,42 @@
-/*
- * 文件名:    SessionContext.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  会话状态单例的实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       SessionContext.cpp
+ * @brief      会话状态单例的实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
 #include "business/SessionContext.h"
 
 namespace business {
 
-/*
- * 功能描述:  获取instance。
- * 作者:      JaTin
- * return:    返回 CSessionContext& 类型的处理结果，具体含义见功能描述。
+/**
+ * @brief      获取本类的进程内单例对象。
+ * @note       本函数无输入参数。
+ * @return     返回 CSessionContext& CSessionContext:: 类型的对象引用或指针，调用方按接口约定使用。
+ * @author     JaTin
  */
 CSessionContext& CSessionContext::instance() {
     static CSessionContext stContext;
     return stContext;
 }
 
-/*
- * 功能描述:  构造 CSessionContext 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject* parent) : QObject(。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      构造 CSessionContext 对象，完成成员初始化与依赖注入。
+ * @param[in] pParent        Qt 父对象指针，用于对象树所有权管理；类型 QObject* pParent) : QObject(。
+ * @return     构造/析构函数无返回值。
+ * @author     JaTin
  */
 CSessionContext::CSessionContext(QObject* pParent) : QObject(pParent) {}
 
-/*
- * 功能描述:  设置个人资料。
- * 作者:      JaTin
- * param [in]   lUserId          用户编号，类型 qint64。
- * param [in]   strName          名称或昵称，类型 const QString&。
- * param [in]   nAge             年龄（0 到 150），类型 int。
- * param [in]   strDesc          个人简介，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      设置个人资料。
+ * @param[in] lUserId        用户编号；类型 qint64。
+ * @param[in] strName        名称或昵称；类型 const QString&。
+ * @param[in] nAge           年龄（0 到 150）；类型 int。
+ * @param[in] strDesc        个人简介；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CSessionContext::setProfile(qint64 lUserId, const QString& strName, int nAge,
                                 const QString& strDesc) {
@@ -51,10 +52,11 @@ void CSessionContext::setProfile(qint64 lUserId, const QString& strName, int nAg
     if (nChanged) emit profileChanged();
 }
 
-/*
- * 功能描述:  清空个人资料。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      清空个人资料。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CSessionContext::clearProfile() {
     const bool nHadProfile = (m_uUserId != 0) || !m_strName.isEmpty();
@@ -68,11 +70,11 @@ void CSessionContext::clearProfile() {
     if (nHadProfile) emit profileChanged();
 }
 
-/*
- * 功能描述:  设置房间。
- * 作者:      JaTin
- * param [in]   strRoom          房间号，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      设置房间。
+ * @param[in] strRoom        房间号；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CSessionContext::setRoom(const QString& strRoom) {
     if (strRoom == m_strRoom) return;
@@ -80,20 +82,21 @@ void CSessionContext::setRoom(const QString& strRoom) {
     emit roomChanged(m_strRoom);
 }
 
-/*
- * 功能描述:  清空房间。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      清空房间。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CSessionContext::clearRoom() {
     setRoom(QString());
 }
 
-/*
- * 功能描述:  设置online。
- * 作者:      JaTin
- * param [in]   nOnline          输入数据，类型 bool。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      设置 online相关的数据并返回处理结果。
+ * @param[in] nOnline        输入数据；类型 bool。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CSessionContext::setOnline(bool nOnline) {
     if (nOnline == m_nOnline) return;
@@ -101,5 +104,7 @@ void CSessionContext::setOnline(bool nOnline) {
     emit onlineChanged(m_nOnline);
 }
 
-/* namespace business */
+/**
+ * @brief  namespace business。
+ */
 }

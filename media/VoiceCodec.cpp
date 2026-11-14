@@ -1,12 +1,14 @@
-/*
- * 文件名:    VoiceCodec.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  CVoiceCodec 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       VoiceCodec.cpp
+ * @brief      CVoiceCodec 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* CVoiceCodec.cpp */
+/**
+ * @brief  CVoiceCodec.cpp。
+ */
 #include "media/VoiceCodec.h"
 
 #include <opus/opus.h>
@@ -23,15 +25,18 @@ namespace {
 QString g_lastError;
 
 constexpr char kMagic[4] = {'D', 'P', 'V', '1'};
-/* magic(4) + durationMs(4) */
+/**
+ * @brief  magic(4) + durationMs(4)
+ * @note   取值 8。
+ */
 constexpr int kHeaderBytes = 8;
 
-/*
- * 功能描述:  写入32。
- * 作者:      JaTin
- * param [out]  byOut            输入数据，类型 QByteArray&。
- * param [in]   uValue           待设置的数值，类型 quint32。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      写入32。
+ * @param[out] byOut          输入数据；类型 QByteArray&。
+ * @param[in] uValue         待设置的数值；类型 quint32。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void writeU32(QByteArray& byOut, quint32 uValue) {
     byOut.append(static_cast<char>(uValue & 0xFF));
@@ -40,23 +45,23 @@ void writeU32(QByteArray& byOut, quint32 uValue) {
     byOut.append(static_cast<char>((uValue >> 24) & 0xFF));
 }
 
-/*
- * 功能描述:  写入16。
- * 作者:      JaTin
- * param [out]  byOut            输入数据，类型 QByteArray&。
- * param [in]   uValue           待设置的数值，类型 quint16。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      写入16。
+ * @param[out] byOut          输入数据；类型 QByteArray&。
+ * @param[in] uValue         待设置的数值；类型 quint16。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void writeU16(QByteArray& byOut, quint16 uValue) {
     byOut.append(static_cast<char>(uValue & 0xFF));
     byOut.append(static_cast<char>((uValue >> 8) & 0xFF));
 }
 
-/*
- * 功能描述:  读取32。
- * 作者:      JaTin
- * param [in]   strP             输入数据，类型 const char*。
- * return:    返回计数或长度；无有效数据时返回 0。
+/**
+ * @brief      读取 32相关的数据并返回处理结果。
+ * @param[in] strP           输入数据；类型 const char*。
+ * @return     返回计数或长度；无有效数据时返回 0。
+ * @author     JaTin
  */
 quint32 readU32(const char* strP) {
     const auto* pB = reinterpret_cast<const unsigned char*>(strP);
@@ -64,45 +69,48 @@ quint32 readU32(const char* strP) {
            | (static_cast<quint32>(pB[2]) << 16) | (static_cast<quint32>(pB[3]) << 24);
 }
 
-/*
- * 功能描述:  读取16。
- * 作者:      JaTin
- * param [in]   strP             输入数据，类型 const char*。
- * return:    返回计数或长度；无有效数据时返回 0。
+/**
+ * @brief      读取 16相关的数据并返回处理结果。
+ * @param[in] strP           输入数据；类型 const char*。
+ * @return     返回计数或长度；无有效数据时返回 0。
+ * @author     JaTin
  */
 quint16 readU16(const char* strP) {
     const auto* pB = reinterpret_cast<const unsigned char*>(strP);
     return static_cast<quint16>(pB[0]) | (static_cast<quint16>(pB[1]) << 8);
 }
 
-/* namespace */
+/**
+ * @brief  namespace。
+ */
 }
 
-/*
- * 功能描述:  设置错误。
- * 作者:      JaTin
- * param [in]   strMessage       消息内容，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      设置错误。
+ * @param[in] strMessage     消息内容；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CVoiceCodec::setError(const QString& strMessage) {
     g_lastError = strMessage;
     qWarning() << "CVoiceCodec:" << strMessage;
 }
 
-/*
- * 功能描述:  获取last 错误。
- * 作者:      JaTin
- * return:    返回构造好的字符串；无内容时返回空字符串。
+/**
+ * @brief      获取 last 错误。
+ * @note       本函数无输入参数。
+ * @return     返回构造好的字符串；无内容时返回空字符串。
+ * @author     JaTin
  */
 QString CVoiceCodec::lastError() {
     return g_lastError;
 }
 
-/*
- * 功能描述:  编码encode；实现上调用 Opus 完成音频编解码。
- * 作者:      JaTin
- * param [in]   byPcm16          输入数据，类型 const QByteArray&。
- * return:    返回字节数据；失败时返回空 QByteArray。
+/**
+ * @brief      编码 encode；实现上调用 Opus 完成音频编解码。
+ * @param[in] byPcm16        输入数据；类型 const QByteArray&。
+ * @return     返回字节数据；失败时返回空 QByteArray。
+ * @author     JaTin
  */
 QByteArray CVoiceCodec::encode(const QByteArray& byPcm16) {
     g_lastError.clear();
@@ -122,7 +130,9 @@ QByteArray CVoiceCodec::encode(const QByteArray& byPcm16) {
     opus_encoder_ctl(pEncoder, OPUS_SET_COMPLEXITY(5));
     opus_encoder_ctl(pEncoder, OPUS_SET_SIGNAL(OPUS_SIGNAL_VOICE));
 
-    /* 16bit -> 采样点数；不足一帧的尾部补零 */
+    /**
+     * @brief  16bit -> 采样点数；不足一帧的尾部补零。
+     */
     const int nTotalSamples = static_cast<int>(byPcm16.size() / 2);
     const int nFrameCount = (nTotalSamples + kFrameSamples - 1) / kFrameSamples;
     const int nDurationMs = nTotalSamples * 1000 / kSampleRate;
@@ -144,7 +154,9 @@ QByteArray CVoiceCodec::encode(const QByteArray& byPcm16) {
         if (nRemain >= kFrameSamples) {
             pInput = pSamples + nOffset;
         } else {
-            /* 尾帧补零，Opus 要求整帧 */
+            /**
+             * @brief  尾帧补零，Opus 要求整帧。
+             */
             std::fill(aPadded.begin(), aPadded.end(), static_cast<opus_int16>(0));
             if (nRemain > 0) {
                 std::copy(pSamples + nOffset, pSamples + nOffset + nRemain, aPadded.begin());
@@ -166,11 +178,11 @@ QByteArray CVoiceCodec::encode(const QByteArray& byPcm16) {
     return byOut;
 }
 
-/*
- * 功能描述:  解码decode；实现上调用 Opus 完成音频编解码。
- * 作者:      JaTin
- * param [in]   byContainer      容器，类型 const QByteArray&。
- * return:    返回字节数据；失败时返回空 QByteArray。
+/**
+ * @brief      解码 decode；实现上调用 Opus 完成音频编解码。
+ * @param[in] byContainer    容器；类型 const QByteArray&。
+ * @return     返回字节数据；失败时返回空 QByteArray。
+ * @author     JaTin
  */
 QByteArray CVoiceCodec::decode(const QByteArray& byContainer) {
     g_lastError.clear();
@@ -190,7 +202,9 @@ QByteArray CVoiceCodec::decode(const QByteArray& byContainer) {
     const int nDurationMs = static_cast<int>(readU32(byContainer.constData() + 4));
     byPcm.reserve(nDurationMs * kSampleRate / 1000 * 2);
 
-    /* 留出 PLC 抖动余量 */
+    /**
+     * @brief  留出 PLC 抖动余量。
+     */
     QVector<opus_int16> aFrame(kFrameSamples * 6, 0);
     int nOffset = kHeaderBytes;
 
@@ -217,7 +231,9 @@ QByteArray CVoiceCodec::decode(const QByteArray& byContainer) {
 
     opus_decoder_destroy(pDecoder);
 
-    /* 按头部声明的时长裁掉尾帧补的零 */
+    /**
+     * @brief  按头部声明的时长裁掉尾帧补的零。
+     */
     const int nWantedBytes = nDurationMs * kSampleRate / 1000 * 2;
     if (nWantedBytes > 0 && byPcm.size() > nWantedBytes) {
         byPcm.truncate(nWantedBytes);
@@ -225,11 +241,11 @@ QByteArray CVoiceCodec::decode(const QByteArray& byContainer) {
     return byPcm;
 }
 
-/*
- * 功能描述:  转换为wav。
- * 作者:      JaTin
- * param [in]   byPcm16          输入数据，类型 const QByteArray&。
- * return:    返回字节数据；失败时返回空 QByteArray。
+/**
+ * @brief      转换为 wav。
+ * @param[in] byPcm16        输入数据；类型 const QByteArray&。
+ * @return     返回字节数据；失败时返回空 QByteArray。
+ * @author     JaTin
  */
 QByteArray CVoiceCodec::toWav(const QByteArray& byPcm16) {
     const quint32 uDataSize = static_cast<quint32>(byPcm16.size());
@@ -254,13 +270,17 @@ QByteArray CVoiceCodec::toWav(const QByteArray& byPcm16) {
     byWav.append("WAVE", 4);
     byWav.append("fmt ", 4);
     stPut32(16);
-    /* PCM */
+    /**
+     * @brief  PCM。
+     */
     stPut16(1);
     stPut16(static_cast<quint16>(kChannels));
     stPut32(static_cast<quint32>(kSampleRate));
     stPut32(uByteRate);
     stPut16(uBlockAlign);
-    /* 16 bit */
+    /**
+     * @brief  16 bit。
+     */
     stPut16(16);
     byWav.append("data", 4);
     stPut32(uDataSize);
@@ -268,11 +288,11 @@ QByteArray CVoiceCodec::toWav(const QByteArray& byPcm16) {
     return byWav;
 }
 
-/*
- * 功能描述:  获取时长 ms。
- * 作者:      JaTin
- * param [in]   byContainer      容器，类型 const QByteArray&。
- * return:    返回处理结果码；0 表示成功，负值或 -1 表示失败。
+/**
+ * @brief      获取时长 ms。
+ * @param[in] byContainer    容器；类型 const QByteArray&。
+ * @return     返回处理结果码；0 表示成功，负值或 -1 表示失败。
+ * @author     JaTin
  */
 int CVoiceCodec::durationMs(const QByteArray& byContainer) {
     if (byContainer.size() < kHeaderBytes || std::memcmp(byContainer.constData(), kMagic, 4) != 0) {

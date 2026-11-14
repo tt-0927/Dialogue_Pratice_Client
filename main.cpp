@@ -1,14 +1,18 @@
-/*
- * 文件名:    main.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  main 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       main.cpp
+ * @brief      main 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* main.cpp */
+/**
+ * @brief  main.cpp。
+ */
 
-/* 客户端入口。除组装各层与解析命令行外不做任何业务逻辑。 */
+/**
+ * @brief  客户端入口。除组装各层与解析命令行外不做任何业务逻辑。
+ */
 #include "business/ChatModel.h"
 #include "core/AppConfig.h"
 #include "core/Theme.h"
@@ -27,13 +31,9 @@
 
 namespace {
 
-/* 诊断模式：只做「WAV -> 文本」，用来在没有麦克风的环境验证语音链路。 */
-/*
- * 功能描述:  运行语音消息 diagnostic；实现上连接 Qt 信号与槽。
- * 作者:      JaTin
- * param [in]   strWavPath       输入数据，类型 const QString&。
- * param [in]   strModelPath     输入数据，类型 const QString&。
- * return:    返回处理结果码；0 表示成功，负值或 -1 表示失败。
+/**
+ * @brief  诊断模式：只做「WAV -> 文本」，用来在没有麦克风的环境验证语音链路。
+ * @details 运行语音消息 diagnostic；实现上连接 Qt 信号与槽。
  */
 int runVoiceDiagnostic(const QString& strWavPath, const QString& strModelPath) {
     CVoiceRecorder stVoice;
@@ -66,14 +66,16 @@ int runVoiceDiagnostic(const QString& strWavPath, const QString& strModelPath) {
     return QCoreApplication::exec();
 }
 
-/* namespace */
+/**
+ * @brief  namespace。
+ */
 }
 
-/*
- * 功能描述:  程序入口：解析命令行参数、初始化服务端并运行事件循环。
- * 作者:      JaTin
- * param [in]   nArgc            输入数据，类型 int。
- * return:    返回处理结果码；0 表示成功，负值或 -1 表示失败。
+/**
+ * @brief      程序入口：解析命令行参数、初始化服务端并运行事件循环。
+ * @param[in] nArgc          输入数据；类型 int。
+ * @return     返回处理结果码；0 表示成功，负值或 -1 表示失败。
+ * @author     JaTin
  */
 int main(int nArgc, char* argv[]) {
     QApplication stApp(nArgc, argv);
@@ -146,8 +148,9 @@ int main(int nArgc, char* argv[]) {
     qRegisterMetaType<QVector<ChatMessage_S>>("QVector<ChatMessage_S>");
     qRegisterMetaType<Suggestion_S>();
     qRegisterMetaType<QVector<Suggestion_S>>("QVector<Suggestion_S>");
-    /* ChatModel 的 itemAppended 信号带这条结构；同线程直连虽不强制注册， */
-    /* 但注册后未来接队列连接或写测试时不会踩「未注册类型」的坑。 */
+    /**
+     * @brief  ChatModel 的 itemAppended 信号带这条结构；同线程直连虽不强制注册， 但注册后未来接队列连接或写测试时不会踩「未注册类型」的坑。
+     */
     qRegisterMetaType<business::ChatItem_S>();
     qRegisterMetaType<QVector<business::ChatItem_S>>("QVector<business::ChatItem_S>");
 

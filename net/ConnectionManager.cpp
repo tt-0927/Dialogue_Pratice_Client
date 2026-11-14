@@ -1,9 +1,9 @@
-/*
- * 文件名:    ConnectionManager.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  连接管理器的实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       ConnectionManager.cpp
+ * @brief      连接管理器的实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
 #include "net/ConnectionManager.h"
@@ -16,19 +16,23 @@
 namespace net {
 namespace {
 const QString kTag = QStringLiteral("net");
-/* namespace */
+/**
+ * @brief  namespace。
+ */
 }
 
-/*
- * 功能描述:  构造 ConnectionManager 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   pTransport       传输层，类型 ChatTransport*。
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject*。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      构造 ConnectionManager 对象，完成成员初始化与依赖注入。
+ * @param[in] pTransport     传输层；类型 ChatTransport*。
+ * @param[in] pParent        Qt 父对象指针，用于对象树所有权管理；类型 QObject*。
+ * @return     构造/析构函数无返回值。
+ * @author     JaTin
  */
 ConnectionManager::ConnectionManager(ChatTransport* pTransport, QObject* pParent)
     : QObject(pParent), m_pTransport(pTransport) {
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pTimer = new QTimer(this);
     m_pTimer->setSingleShot(true);
     connect(m_pTimer, &QTimer::timeout, this, &ConnectionManager::onTimerFired);
@@ -39,12 +43,12 @@ ConnectionManager::ConnectionManager(ChatTransport* pTransport, QObject* pParent
     }
 }
 
-/*
- * 功能描述:  建立连接to。
- * 作者:      JaTin
- * param [in]   strHost          服务器主机地址，类型 const QString&。
- * param [in]   uPort            服务器端口，类型 quint16。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      建立连接 to。
+ * @param[in] strHost        服务器主机地址；类型 const QString&。
+ * @param[in] uPort          服务器端口；类型 quint16。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ConnectionManager::connectTo(const QString& strHost, quint16 uPort) {
     m_strHost = strHost;
@@ -56,21 +60,22 @@ void ConnectionManager::connectTo(const QString& strHost, quint16 uPort) {
     m_pTransport->connectToServer(strHost, uPort);
 }
 
-/*
- * 功能描述:  断开连接from。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      断开连接 from。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ConnectionManager::disconnectFrom() {
     resetState();
     if (m_pTransport != nullptr) m_pTransport->disconnectFromServer();
 }
 
-/*
- * 功能描述:  通知disconnected。
- * 作者:      JaTin
- * param [in]   strReason        失败原因描述，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      通知 disconnected。
+ * @param[in] strReason      失败原因描述；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ConnectionManager::notifyDisconnected(const QString& strReason) {
     if (!m_nAutoReconnect) {
@@ -78,17 +83,20 @@ void ConnectionManager::notifyDisconnected(const QString& strReason) {
         resetState();
         return;
     }
-    /* socket error 可能先于 disconnected 到达 */
+    /**
+     * @brief  socket error 可能先于 disconnected 到达。
+     */
     if (m_nReconnecting) return;
 
     DP_LOG_WARN(kTag, QStringLiteral("disconnected: %1").arg(strReason));
     scheduleRetry();
 }
 
-/*
- * 功能描述:  重试schedule。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      重试 schedule。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ConnectionManager::scheduleRetry() {
     if (m_nAttempt >= kMaxAttempts) {
@@ -106,10 +114,11 @@ void ConnectionManager::scheduleRetry() {
     m_pTimer->start(kIntervalMs);
 }
 
-/*
- * 功能描述:  执行on 定时器 fired。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      执行 on 定时器 fired。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ConnectionManager::onTimerFired() {
     if (m_pTransport == nullptr || m_strHost.isEmpty()) {
@@ -122,24 +131,28 @@ void ConnectionManager::onTimerFired() {
     m_pTransport->connectToServer(m_strHost, m_uPort);
 }
 
-/*
- * 功能描述:  执行on 传输层 connected。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      执行 on 传输层 connected。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ConnectionManager::onTransportConnected() {
     if (!m_nReconnecting) return;
 
-    /* 重连成功：停掉定时器，把「重新登录 + 回房」交给外部处理。 */
+    /**
+     * @brief  重连成功：停掉定时器，把「重新登录 + 回房」交给外部处理。
+     */
     m_pTimer->stop();
     DP_LOG_INFO(kTag, QStringLiteral("reconnected after %1 attempt(s)").arg(m_nAttempt));
     emit reconnected();
 }
 
-/*
- * 功能描述:  标记指定消息为历史补回状态，避免重复触发翻译。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      标记指定消息为历史补回状态，避免重复触发翻译。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ConnectionManager::markRestored() {
     const bool nWasReconnecting = m_nReconnecting;
@@ -151,10 +164,11 @@ void ConnectionManager::markRestored() {
     }
 }
 
-/*
- * 功能描述:  重置状态。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      重置状态。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ConnectionManager::resetState() {
     m_pTimer->stop();
@@ -162,5 +176,7 @@ void ConnectionManager::resetState() {
     m_nAttempt = 0;
 }
 
-/* namespace net */
+/**
+ * @brief  namespace net。
+ */
 }

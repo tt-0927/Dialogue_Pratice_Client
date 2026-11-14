@@ -1,12 +1,14 @@
-/*
- * 文件名:    MessageStore.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  CMessageStore 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       MessageStore.cpp
+ * @brief      CMessageStore 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* CMessageStore.cpp */
+/**
+ * @brief  CMessageStore.cpp。
+ */
 #include "MessageStore.h"
 
 #include <QDateTime>
@@ -20,10 +22,11 @@
 
 #include <algorithm>
 
-/*
- * 功能描述:  析构 CMessageStore 对象，释放运行期持有的全部资源。
- * 作者:      JaTin
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      析构 CMessageStore 对象，释放运行期持有的全部资源。
+ * @note       本函数无输入参数。
+ * @return     无返回值（构造函数或析构函数）。
+ * @author     JaTin
  */
 CMessageStore::~CMessageStore() {
     if (m_nOpened) {
@@ -32,12 +35,12 @@ CMessageStore::~CMessageStore() {
     }
 }
 
-/*
- * 功能描述:  获取open；失败时返回 false。
- * 作者:      JaTin
- * param [in]   strPath          文件路径，类型 const QString&。
- * param [in]   pError           错误信息，类型 QString*。
- * return:    成功返回 true；参数非法或执行失败时返回 false。
+/**
+ * @brief      获取 open；失败时返回 false。
+ * @param[in] strPath        文件路径；类型 const QString&。
+ * @param[in] pError         错误信息；类型 QString*。
+ * @return     成功返回 true；参数非法或执行失败时返回 false。
+ * @author     JaTin
  */
 bool CMessageStore::open(const QString& strPath, QString* pError) {
     m_strPath = strPath;
@@ -58,8 +61,9 @@ bool CMessageStore::open(const QString& strPath, QString* pError) {
     }
 
     QSqlQuery query(stDb);
-    /* 同一台机器可能同时开多个客户端（测试双人对话），共用同一个 db 文件。 */
-    /* WAL + busy_timeout 让并发写入排队而不是立刻报 database is locked。 */
+    /**
+     * @brief  同一台机器可能同时开多个客户端（测试双人对话），共用同一个 db 文件。 WAL + busy_timeout 让并发写入排队而不是立刻报 database is locked。
+     */
     query.exec(QStringLiteral("PRAGMA journal_mode=WAL"));
     query.exec(QStringLiteral("PRAGMA busy_timeout=3000"));
 
@@ -85,13 +89,13 @@ bool CMessageStore::open(const QString& strPath, QString* pError) {
     return true;
 }
 
-/*
- * 功能描述:  保存save。
- * 作者:      JaTin
- * param [in]   strSource        配置来源路径，类型 const QString&。
- * param [in]   strRoom          房间号，类型 const QString&。
- * param [in]   stMessage        消息内容，类型 const ChatMessage_S&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      保存 save。
+ * @param[in] strSource      配置来源路径；类型 const QString&。
+ * @param[in] strRoom        房间号；类型 const QString&。
+ * @param[in] stMessage      消息内容；类型 const ChatMessage_S&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CMessageStore::save(const QString& strSource, const QString& strRoom, const ChatMessage_S& stMessage) {
     if (!m_nOpened) return;
@@ -111,13 +115,13 @@ void CMessageStore::save(const QString& strSource, const QString& strRoom, const
     query.exec();
 }
 
-/*
- * 功能描述:  加载recent。
- * 作者:      JaTin
- * param [in]   strSource        配置来源路径，类型 const QString&。
- * param [in]   strRoom          房间号，类型 const QString&。
- * param [in]   nLimit           输入数据，类型 int。
- * return:    返回 QVector<ChatMessage_S> 类型的处理结果，具体含义见功能描述。
+/**
+ * @brief      加载 recent相关的数据并返回处理结果。
+ * @param[in] strSource      配置来源路径；类型 const QString&。
+ * @param[in] strRoom        房间号；类型 const QString&。
+ * @param[in] nLimit         输入数据；类型 int。
+ * @return     返回 QVector<ChatMessage_S> CMessageStore:: 类型的处理结果。
+ * @author     JaTin
  */
 QVector<ChatMessage_S> CMessageStore::loadRecent(const QString& strSource, const QString& strRoom, int nLimit) {
     QVector<ChatMessage_S> aResult;
@@ -147,17 +151,19 @@ QVector<ChatMessage_S> CMessageStore::loadRecent(const QString& strSource, const
         aResult.append(stMessage);
     }
 
-    /* 查询是倒序，翻回正序给界面 */
+    /**
+     * @brief  查询是倒序，翻回正序给界面。
+     */
     std::reverse(aResult.begin(), aResult.end());
     return aResult;
 }
 
-/*
- * 功能描述:  清空房间。
- * 作者:      JaTin
- * param [in]   strSource        配置来源路径，类型 const QString&。
- * param [in]   strRoom          房间号，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      清空房间。
+ * @param[in] strSource      配置来源路径；类型 const QString&。
+ * @param[in] strRoom        房间号；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CMessageStore::clearRoom(const QString& strSource, const QString& strRoom) {
     if (!m_nOpened) return;
@@ -169,13 +175,13 @@ void CMessageStore::clearRoom(const QString& strSource, const QString& strRoom) 
     query.exec();
 }
 
-/*
- * 功能描述:  清理超出保留上限的本地历史记录，控制数据库体积。
- * 作者:      JaTin
- * param [in]   strSource        配置来源路径，类型 const QString&。
- * param [in]   strRoom          房间号，类型 const QString&。
- * param [in]   nKeep            输入数据，类型 int。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      清理超出保留上限的本地历史记录，控制数据库体积。
+ * @param[in] strSource      配置来源路径；类型 const QString&。
+ * @param[in] strRoom        房间号；类型 const QString&。
+ * @param[in] nKeep          输入数据；类型 int。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CMessageStore::prune(const QString& strSource, const QString& strRoom, int nKeep) {
     if (!m_nOpened) return;

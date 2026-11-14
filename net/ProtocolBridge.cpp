@@ -1,12 +1,14 @@
-/*
- * 文件名:    ProtocolBridge.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  CProtocolBridge 实现文件，包含相关接口的具体实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       ProtocolBridge.cpp
+ * @brief      CProtocolBridge 实现文件，包含相关接口的具体实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
-/* CProtocolBridge.cpp */
+/**
+ * @brief  CProtocolBridge.cpp。
+ */
 #include "net/ProtocolBridge.h"
 
 #include "common/Base64.h"
@@ -15,12 +17,12 @@
 
 namespace {
 
-/*
- * 功能描述:  获取jstr。
- * 作者:      JaTin
- * param [in]   stJ              输入数据，类型 const dp::Json&。
- * param [in]   strKey           缓存键，类型 const char*。
- * return:    返回构造好的字符串；无内容时返回空字符串。
+/**
+ * @brief      获取 jstr相关的数据并返回处理结果。
+ * @param[in] stJ            输入数据；类型 const dp::Json&。
+ * @param[in] strKey         缓存键；类型 const char*。
+ * @return     返回构造好的字符串；无内容时返回空字符串。
+ * @author     JaTin
  */
 QString jstr(const dp::Json& stJ, const char* strKey) {
     const auto stIt = stJ.find(strKey);
@@ -28,13 +30,13 @@ QString jstr(const dp::Json& stJ, const char* strKey) {
     return QString::fromStdString(stIt->get<std::string>());
 }
 
-/*
- * 功能描述:  获取jint。
- * 作者:      JaTin
- * param [in]   stJ              输入数据，类型 const dp::Json&。
- * param [in]   strKey           缓存键，类型 const char*。
- * param [in]   lDef             输入数据，类型 qint64。
- * return:    返回处理结果码；0 表示成功，负值或 -1 表示失败。
+/**
+ * @brief      获取 jint相关的数据并返回处理结果。
+ * @param[in] stJ            输入数据；类型 const dp::Json&。
+ * @param[in] strKey         缓存键；类型 const char*。
+ * @param[in] lDef           输入数据；类型 qint64。
+ * @return     返回处理结果码；0 表示成功，负值或 -1 表示失败。
+ * @author     JaTin
  */
 qint64 jint(const dp::Json& stJ, const char* strKey, qint64 lDef = 0) {
     const auto stIt = stJ.find(strKey);
@@ -42,13 +44,13 @@ qint64 jint(const dp::Json& stJ, const char* strKey, qint64 lDef = 0) {
     return static_cast<qint64>(stIt->get<long long>());
 }
 
-/*
- * 功能描述:  获取jbool。
- * 作者:      JaTin
- * param [in]   stJ              输入数据，类型 const dp::Json&。
- * param [in]   strKey           缓存键，类型 const char*。
- * param [in]   lDef             输入数据，类型 bool。
- * return:    成功返回 true；参数非法或执行失败时返回 false。
+/**
+ * @brief      获取 jbool相关的数据并返回处理结果。
+ * @param[in] stJ            输入数据；类型 const dp::Json&。
+ * @param[in] strKey         缓存键；类型 const char*。
+ * @param[in] lDef           输入数据；类型 bool。
+ * @return     成功返回 true；参数非法或执行失败时返回 false。
+ * @author     JaTin
  */
 bool jbool(const dp::Json& stJ, const char* strKey, bool lDef = false) {
     const auto stIt = stJ.find(strKey);
@@ -56,17 +58,21 @@ bool jbool(const dp::Json& stJ, const char* strKey, bool lDef = false) {
     return stIt->get<bool>();
 }
 
-/* namespace */
+/**
+ * @brief  namespace。
+ */
 }
 
-/*
- * 功能描述:  构造 CProtocolBridge 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject* parent) : ChatTransport(。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      构造 CProtocolBridge 对象，完成成员初始化与依赖注入。
+ * @param[in] pParent        Qt 父对象指针，用于对象树所有权管理；类型 QObject* pParent) : ChatTransport(。
+ * @return     构造/析构函数无返回值。
+ * @author     JaTin
  */
 CProtocolBridge::CProtocolBridge(QObject* pParent) : ChatTransport(pParent) {
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pSocket = new QTcpSocket(this);
 
     connect(m_pSocket, &QTcpSocket::readyRead, this, &CProtocolBridge::onReadyRead);
@@ -74,9 +80,13 @@ CProtocolBridge::CProtocolBridge(QObject* pParent) : ChatTransport(pParent) {
     connect(m_pSocket, &QTcpSocket::disconnected, this, &CProtocolBridge::onDisconnected);
     connect(m_pSocket, &QAbstractSocket::errorOccurred, this, &CProtocolBridge::onSocketError);
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pPingTimer = new QTimer(this);
-    /* 服务端 90s 无帧判定掉线，30s 心跳留足余量 */
+    /**
+     * @brief  服务端 90s 无帧判定掉线，30s 心跳留足余量。
+     */
     m_pPingTimer->setInterval(30000);
     connect(m_pPingTimer, &QTimer::timeout, this, [this] {
         if (m_pSocket->state() == QAbstractSocket::ConnectedState) {
@@ -84,7 +94,9 @@ CProtocolBridge::CProtocolBridge(QObject* pParent) : ChatTransport(pParent) {
         }
     });
 
-    /* 特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。 */
+    /**
+     * @brief  特例：Qt 父子对象所有权，控件由父对象自动回收；若改用智能指针会造成双重释放，故按规范保留 new。
+     */
     m_pConnectTimer = new QTimer(this);
     m_pConnectTimer->setSingleShot(true);
     m_pConnectTimer->setInterval(6000);
@@ -96,12 +108,12 @@ CProtocolBridge::CProtocolBridge(QObject* pParent) : ChatTransport(pParent) {
     });
 }
 
-/*
- * 功能描述:  建立连接to 服务端。
- * 作者:      JaTin
- * param [in]   strHost          服务器主机地址，类型 const QString&。
- * param [in]   uPort            服务器端口，类型 quint16。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      建立连接 to 服务端。
+ * @param[in] strHost        服务器主机地址；类型 const QString&。
+ * @param[in] uPort          服务器端口；类型 quint16。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProtocolBridge::connectToServer(const QString& strHost, quint16 uPort) {
     if (m_pSocket->state() != QAbstractSocket::UnconnectedState) {
@@ -113,10 +125,11 @@ void CProtocolBridge::connectToServer(const QString& strHost, quint16 uPort) {
     m_pConnectTimer->start();
 }
 
-/*
- * 功能描述:  断开连接from 服务端。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      断开连接 from 服务端。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProtocolBridge::disconnectFromServer() {
     if (m_pSocket->state() == QAbstractSocket::ConnectedState) {
@@ -126,19 +139,21 @@ void CProtocolBridge::disconnectFromServer() {
     }
 }
 
-/*
- * 功能描述:  判断connected。
- * 作者:      JaTin
- * return:    成功返回 true；参数非法或执行失败时返回 false。
+/**
+ * @brief      判断 connected相关的数据并返回处理结果。
+ * @note       本函数无输入参数。
+ * @return     成功返回 true；参数非法或执行失败时返回 false。
+ * @author     JaTin
  */
 bool CProtocolBridge::isConnected() const {
     return m_pSocket->state() == QAbstractSocket::ConnectedState;
 }
 
-/*
- * 功能描述:  连接建立后恢复房间上下文并拉取历史消息。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      连接建立后恢复房间上下文并拉取历史消息。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProtocolBridge::onConnected() {
     m_nConnecting = false;
@@ -147,10 +162,11 @@ void CProtocolBridge::onConnected() {
     emit connected();
 }
 
-/*
- * 功能描述:  连接断开时清理会话状态并提示用户重新连接。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      连接断开时清理会话状态并提示用户重新连接。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProtocolBridge::onDisconnected() {
     m_pPingTimer->stop();
@@ -158,15 +174,17 @@ void CProtocolBridge::onDisconnected() {
     emit disconnected();
 }
 
-/*
- * 功能描述:  执行on 套接字错误。
- * 作者:      JaTin
- * param [in]   stError          错误信息，类型 QAbstractSocket::SocketError。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      执行 on 套接字错误。
+ * @param[in] stError        错误信息；类型 QAbstractSocket::SocketError。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProtocolBridge::onSocketError(QAbstractSocket::SocketError stError) {
     if (stError == QAbstractSocket::RemoteHostClosedError) {
-        /* 交给 disconnected() 统一处理，避免重复提示 */
+        /**
+         * @brief  交给 disconnected() 统一处理，避免重复提示。
+         */
         return;
     }
     if (m_nConnecting) {
@@ -176,10 +194,11 @@ void CProtocolBridge::onSocketError(QAbstractSocket::SocketError stError) {
     emit networkError(m_pSocket->errorString());
 }
 
-/*
- * 功能描述:  读取onready。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      读取 onready相关的数据并返回处理结果。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProtocolBridge::onReadyRead() {
     const QByteArray byData = m_pSocket->readAll();
@@ -199,11 +218,11 @@ void CProtocolBridge::onReadyRead() {
     }
 }
 
-/*
- * 功能描述:  处理协议帧。
- * 作者:      JaTin
- * param [in]   stFrame          协议帧，类型 const dp::Frame_S&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      处理协议帧。
+ * @param[in] stFrame        协议帧；类型 const dp::Frame_S&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProtocolBridge::handleFrame(const dp::Frame_S& stFrame) {
     dp::Json stJ = dp::Json::object();
@@ -217,8 +236,9 @@ void CProtocolBridge::handleFrame(const dp::Frame_S& stFrame) {
 
     switch (stFrame.op) {
         case dp::OpCode_EN::LoginResp: {
-            /* 服务端统一下发的 LLM 配置（可选）：先发配置，再发登录成功， */
-            /* 保证外部处理 loginSucceeded 时配置已经就位。 */
+            /**
+             * @brief  服务端统一下发的 LLM 配置（可选）：先发配置，再发登录成功， 保证外部处理 loginSucceeded 时配置已经就位。
+             */
             const auto stLlmIt = stJ.find("llmConfig");
             if (stLlmIt != stJ.end() && stLlmIt->is_object()) {
                 emit llmConfigReceived(QByteArray::fromStdString(stLlmIt->dump()));
@@ -279,7 +299,9 @@ void CProtocolBridge::handleFrame(const dp::Frame_S& stFrame) {
                     stMsg.name = jstr(stM, "name");
                     stMsg.ts = jint(stM, "ts");
 
-                    /* kind 缺省视为 text，兼容没有该字段的旧服务端 */
+                    /**
+                     * @brief  kind 缺省视为 text，兼容没有该字段的旧服务端。
+                     */
                     const std::string strKind = jstr(stM, "kind").toStdString();
                     if (strKind == "voice") {
                         stMsg.kind = MessageKind_EN::Voice;
@@ -310,7 +332,9 @@ void CProtocolBridge::handleFrame(const dp::Frame_S& stFrame) {
 
         case dp::OpCode_EN::Pong:
         case dp::OpCode_EN::RoomList:
-            /* 心跳应答 / 房间列表：客户端当前界面暂不展示 */
+            /**
+             * @brief  心跳应答 / 房间列表：客户端当前界面暂不展示。
+             */
             break;
 
         default:
@@ -318,12 +342,12 @@ void CProtocolBridge::handleFrame(const dp::Frame_S& stFrame) {
     }
 }
 
-/*
- * 功能描述:  发送JSON 对象；实现上向目标会话或整个房间下发数据。
- * 作者:      JaTin
- * param [in]   enOp             协议操作码，类型 dp::OpCode_EN。
- * param [in]   stPayload        协议载荷内容，类型 const dp::Json&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      发送 JSON 对象；实现上向目标会话或整个房间下发数据。
+ * @param[in] enOp           协议操作码；类型 dp::OpCode_EN。
+ * @param[in] stPayload      协议载荷内容；类型 const dp::Json&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProtocolBridge::sendJson(dp::OpCode_EN enOp, const dp::Json& stPayload) {
     if (m_pSocket->state() != QAbstractSocket::ConnectedState) return;
@@ -331,14 +355,14 @@ void CProtocolBridge::sendJson(dp::OpCode_EN enOp, const dp::Json& stPayload) {
     m_pSocket->write(stFrame.data(), static_cast<qint64>(stFrame.size()));
 }
 
-/*
- * 功能描述:  完成登录login；实现上向目标会话或整个房间下发数据。
- * 作者:      JaTin
- * param [in]   strName          名称或昵称，类型 const QString&。
- * param [in]   strPassword      登录密码，类型 const QString&。
- * param [in]   nAge             年龄（0 到 150），类型 int。
- * param [in]   strDesc          个人简介，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      完成登录 login；实现上向目标会话或整个房间下发数据。
+ * @param[in] strName        名称或昵称；类型 const QString&。
+ * @param[in] strPassword    登录密码；类型 const QString&。
+ * @param[in] nAge           年龄（0 到 150）；类型 int。
+ * @param[in] strDesc        个人简介；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProtocolBridge::login(const QString& strName, const QString& strPassword, int nAge,
                           const QString& strDesc) {
@@ -346,18 +370,20 @@ void CProtocolBridge::login(const QString& strName, const QString& strPassword, 
     stJ["name"] = strName.toStdString();
     stJ["age"] = nAge;
     stJ["desc"] = strDesc.toStdString();
-    /* 空密码不带字段：服务端据此区分「账号登录」与「匿名登录」 */
+    /**
+     * @brief  空密码不带字段：服务端据此区分「账号登录」与「匿名登录」。
+     */
     if (!strPassword.isEmpty()) stJ["password"] = strPassword.toStdString();
     sendJson(dp::OpCode_EN::Login, stJ);
 }
 
-/*
- * 功能描述:  更新个人资料；实现上向目标会话或整个房间下发数据。
- * 作者:      JaTin
- * param [in]   strName          名称或昵称，类型 const QString&。
- * param [in]   nAge             年龄（0 到 150），类型 int。
- * param [in]   strDesc          个人简介，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      更新个人资料；实现上向目标会话或整个房间下发数据。
+ * @param[in] strName        名称或昵称；类型 const QString&。
+ * @param[in] nAge           年龄（0 到 150）；类型 int。
+ * @param[in] strDesc        个人简介；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProtocolBridge::updateProfile(const QString& strName, int nAge, const QString& strDesc) {
     dp::Json stJ = dp::Json::object();
@@ -367,33 +393,35 @@ void CProtocolBridge::updateProfile(const QString& strName, int nAge, const QStr
     sendJson(dp::OpCode_EN::UpdateProfile, stJ);
 }
 
-/*
- * 功能描述:  注册账号；实现上向目标会话或整个房间下发数据。
- * 作者:      JaTin
- * param [in]   strUsername      登录用户名，类型 const QString&。
- * param [in]   strPassword      登录密码，类型 const QString&。
- * param [in]   strNickname      用户昵称，类型 const QString&。
- * param [in]   nAge             年龄（0 到 150），类型 int。
- * param [in]   strDesc          个人简介，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      注册账号；实现上向目标会话或整个房间下发数据。
+ * @param[in] strUsername    登录用户名；类型 const QString&。
+ * @param[in] strPassword    登录密码；类型 const QString&。
+ * @param[in] strNickname    用户昵称；类型 const QString&。
+ * @param[in] nAge           年龄（0 到 150）；类型 int。
+ * @param[in] strDesc        个人简介；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProtocolBridge::registerAccount(const QString& strUsername, const QString& strPassword,
                                      const QString& strNickname, int nAge, const QString& strDesc) {
     dp::Json stJ = dp::Json::object();
     stJ["username"] = strUsername.toStdString();
     stJ["password"] = strPassword.toStdString();
-    /* 可选项：空值不发，让服务端用默认规则填充 */
+    /**
+     * @brief  可选项：空值不发，让服务端用默认规则填充。
+     */
     if (!strNickname.isEmpty()) stJ["nickname"] = strNickname.toStdString();
     if (nAge > 0) stJ["age"] = nAge;
     if (!strDesc.isEmpty()) stJ["desc"] = strDesc.toStdString();
     sendJson(dp::OpCode_EN::Register, stJ);
 }
 
-/*
- * 功能描述:  加入房间；实现上向目标会话或整个房间下发数据。
- * 作者:      JaTin
- * param [in]   strRoom          房间号，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      加入房间；实现上向目标会话或整个房间下发数据。
+ * @param[in] strRoom        房间号；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProtocolBridge::joinRoom(const QString& strRoom) {
     dp::Json stJ = dp::Json::object();
@@ -401,20 +429,21 @@ void CProtocolBridge::joinRoom(const QString& strRoom) {
     sendJson(dp::OpCode_EN::JoinRoom, stJ);
 }
 
-/*
- * 功能描述:  退出房间；实现上向目标会话或整个房间下发数据。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      退出房间；实现上向目标会话或整个房间下发数据。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProtocolBridge::leaveRoom() {
     sendJson(dp::OpCode_EN::LeaveRoom, dp::Json::object());
 }
 
-/*
- * 功能描述:  发送chat；实现上向目标会话或整个房间下发数据。
- * 作者:      JaTin
- * param [in]   strText          消息文本，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      发送 chat；实现上向目标会话或整个房间下发数据。
+ * @param[in] strText        消息文本；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProtocolBridge::sendChat(const QString& strText) {
     dp::Json stJ = dp::Json::object();
@@ -422,12 +451,12 @@ void CProtocolBridge::sendChat(const QString& strText) {
     sendJson(dp::OpCode_EN::Chat, stJ);
 }
 
-/*
- * 功能描述:  发送语音消息；实现上向目标会话或整个房间下发数据。
- * 作者:      JaTin
- * param [in]   byAudio          Opus 编码的音频数据，类型 const QByteArray&。
- * param [in]   nDurationMs      语音时长，单位毫秒，类型 int。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      发送语音消息；实现上向目标会话或整个房间下发数据。
+ * @param[in] byAudio        Opus 编码的音频数据；类型 const QByteArray&。
+ * @param[in] nDurationMs    语音时长，单位毫秒；类型 int。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void CProtocolBridge::sendVoice(const QByteArray& byAudio, int nDurationMs) {
     if (byAudio.isEmpty()) return;

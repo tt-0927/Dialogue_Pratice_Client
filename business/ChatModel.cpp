@@ -1,9 +1,9 @@
-/*
- * 文件名:    ChatModel.cpp
- * 创建日期:  2026-11-13
- * 作者:      JaTin
- * 功能描述:  聊天消息模型的实现。
- * 修改记录:  2026-11-13 JaTin 按 C/C++ 编码规范整改注释与命名。
+/**
+ * @file       ChatModel.cpp
+ * @brief      聊天消息模型的实现。
+ * @author     JaTin
+ * @date       2026-11-13
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
  */
 
 #include "business/ChatModel.h"
@@ -14,22 +14,22 @@
 
 namespace business {
 
-/*
- * 功能描述:  构造 ChatModel 对象，完成成员初始化与依赖注入。
- * 作者:      JaTin
- * param [in]   pParent          Qt 父对象指针，用于对象树所有权管理，类型 QObject* parent) : QObject(。
- * return:    无返回值（构造函数或析构函数）。
+/**
+ * @brief      构造 ChatModel 对象，完成成员初始化与依赖注入。
+ * @param[in] pParent        Qt 父对象指针，用于对象树所有权管理；类型 QObject* pParent) : QObject(。
+ * @return     构造/析构函数无返回值。
+ * @author     JaTin
  */
 ChatModel::ChatModel(QObject* pParent) : QObject(pParent) {}
 
-/*
- * 功能描述:  进入房间。
- * 作者:      JaTin
- * param [in]   strRoom          房间号，类型 const QString&。
- * param [in]   lSelfId          本人会话编号，类型 qint64。
- * param [in]   strSelfName      本人昵称，类型 const QString&。
- * param [in]   aMembers         初始成员列表，类型 const QVector<MemberInfo_S>&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      进入房间。
+ * @param[in] strRoom        房间号；类型 const QString&。
+ * @param[in] lSelfId        本人会话编号；类型 qint64。
+ * @param[in] strSelfName    本人昵称；类型 const QString&。
+ * @param[in] aMembers       初始成员列表；类型 const QVector<MemberInfo_S>&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 
 void ChatModel::enterRoom(const QString& strRoom, qint64 lSelfId, const QString& strSelfName,
@@ -51,21 +51,23 @@ void ChatModel::enterRoom(const QString& strRoom, qint64 lSelfId, const QString&
     emit membersChanged();
 }
 
-/*
- * 功能描述:  恢复房间。
- * 作者:      JaTin
- * param [in]   strRoom          房间号，类型 const QString&。
- * param [in]   lSelfId          本人会话编号，类型 qint64。
- * param [in]   strSelfName      本人昵称，类型 const QString&。
- * param [in]   aMembers         初始成员列表，类型 const QVector<MemberInfo_S>&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      恢复房间。
+ * @param[in] strRoom        房间号；类型 const QString&。
+ * @param[in] lSelfId        本人会话编号；类型 qint64。
+ * @param[in] strSelfName    本人昵称；类型 const QString&。
+ * @param[in] aMembers       初始成员列表；类型 const QVector<MemberInfo_S>&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatModel::resumeRoom(const QString& strRoom, qint64 lSelfId, const QString& strSelfName,
                            const QVector<MemberInfo_S>& aMembers) {
     m_strRoom = strRoom;
     m_uSelfId = lSelfId;
     m_strSelfName = strSelfName;
-    /* 重连后服务端会分配新 id，旧消息仍应显示为自己发的 */
+    /**
+     * @brief  重连后服务端会分配新 id，旧消息仍应显示为自己发的。
+     */
     if (lSelfId != 0) m_uSelfIds.insert(lSelfId);
 
     m_uMembers.clear();
@@ -76,10 +78,11 @@ void ChatModel::resumeRoom(const QString& strRoom, qint64 lSelfId, const QString
     emit membersChanged();
 }
 
-/*
- * 功能描述:  清空clear。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      清空 clear。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatModel::clear() {
     m_strRoom.clear();
@@ -94,14 +97,9 @@ void ChatModel::clear() {
     emit membersChanged();
 }
 
-/* ---------------------------------------------------------------- 写入 */
-
-/*
- * 功能描述:  确保成员。
- * 作者:      JaTin
- * param [in]   lUserId          用户编号，类型 qint64。
- * param [in]   strName          名称或昵称，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief  ---------------------------------------------------------------- 写入。
+ * @details 确保成员。
  */
 void ChatModel::ensureMember(qint64 lUserId, const QString& strName) {
     if (lUserId == 0 || m_uMembers.contains(lUserId)) return;
@@ -109,37 +107,41 @@ void ChatModel::ensureMember(qint64 lUserId, const QString& strName) {
     emit membersChanged();
 }
 
-/*
- * 功能描述:  执行adoptlegacyself 编号。
- * 作者:      JaTin
- * param [in]   lFrom            输入数据，类型 qint64。
- * param [in]   strName          名称或昵称，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      执行 adoptlegacyself 编号。
+ * @param[in] lFrom          输入数据；类型 qint64。
+ * @param[in] strName        名称或昵称；类型 const QString&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatModel::adoptLegacySelfId(qint64 lFrom, const QString& strName) {
     if (lFrom == 0 || m_uSelfIds.contains(lFrom)) return;
-    /* 同名、且不在当前成员表 -> 视为本人上一次连接留下的 id */
+    /**
+     * @brief  同名、且不在当前成员表 -> 视为本人上一次连接留下的 id。
+     */
     if (!strName.isEmpty() && strName == m_strSelfName && !m_uMembers.contains(lFrom)) {
         m_uSelfIds.insert(lFrom);
     }
 }
 
-/*
- * 功能描述:  追加chat；失败时返回 false。
- * 作者:      JaTin
- * param [in]   lSeq             全局消息序号，类型 qint64。
- * param [in]   lFrom            输入数据，类型 qint64。
- * param [in]   strName          名称或昵称，类型 const QString&。
- * param [in]   strText          消息文本，类型 const QString&。
- * param [in]   lTs              Unix 毫秒时间戳，类型 qint64。
- * return:    成功返回 true；参数非法或执行失败时返回 false。
+/**
+ * @brief      追加 chat；失败时返回 false。
+ * @param[in] lSeq           全局消息序号；类型 qint64。
+ * @param[in] lFrom          输入数据；类型 qint64。
+ * @param[in] strName        名称或昵称；类型 const QString&。
+ * @param[in] strText        消息文本；类型 const QString&。
+ * @param[in] lTs            Unix 毫秒时间戳；类型 qint64。
+ * @return     成功返回 true；参数非法或执行失败时返回 false。
+ * @author     JaTin
  */
 bool ChatModel::appendChat(qint64 lSeq, qint64 lFrom, const QString& strName, const QString& strText,
                            qint64 lTs) {
     if (lTs <= 0) lTs = QDateTime::currentMSecsSinceEpoch();
 
     if (lSeq > 0) {
-        /* 历史补发与实时推送可能重叠 */
+        /**
+         * @brief  历史补发与实时推送可能重叠。
+         */
         if (m_uSeqs.contains(lSeq)) return false;
         m_uSeqs.insert(lSeq);
     }
@@ -159,16 +161,16 @@ bool ChatModel::appendChat(qint64 lSeq, qint64 lFrom, const QString& strName, co
     return true;
 }
 
-/*
- * 功能描述:  追加语音消息；失败时返回 false。
- * 作者:      JaTin
- * param [in]   lSeq             全局消息序号，类型 qint64。
- * param [in]   lFrom            输入数据，类型 qint64。
- * param [in]   strName          名称或昵称，类型 const QString&。
- * param [in]   byAudio          Opus 编码的音频数据，类型 const QByteArray&。
- * param [in]   nDurationMs      语音时长，单位毫秒，类型 int。
- * param [in]   lTs              Unix 毫秒时间戳，类型 qint64。
- * return:    成功返回 true；参数非法或执行失败时返回 false。
+/**
+ * @brief      追加语音消息；失败时返回 false。
+ * @param[in] lSeq           全局消息序号；类型 qint64。
+ * @param[in] lFrom          输入数据；类型 qint64。
+ * @param[in] strName        名称或昵称；类型 const QString&。
+ * @param[in] byAudio        Opus 编码的音频数据；类型 const QByteArray&。
+ * @param[in] nDurationMs    语音时长，单位毫秒；类型 int。
+ * @param[in] lTs            Unix 毫秒时间戳；类型 qint64。
+ * @return     成功返回 true；参数非法或执行失败时返回 false。
+ * @author     JaTin
  */
 bool ChatModel::appendVoice(qint64 lSeq, qint64 lFrom, const QString& strName,
                             const QByteArray& byAudio, int nDurationMs, qint64 lTs) {
@@ -197,11 +199,11 @@ bool ChatModel::appendVoice(qint64 lSeq, qint64 lFrom, const QString& strName,
     return true;
 }
 
-/*
- * 功能描述:  合并历史消息。
- * 作者:      JaTin
- * param [in]   aMessages        消息记录，类型 const QVector<ChatMessage_S>&。
- * return:    返回处理结果码；0 表示成功，负值或 -1 表示失败。
+/**
+ * @brief      合并历史消息。
+ * @param[in] aMessages      消息记录；类型 const QVector<ChatMessage_S>&。
+ * @return     返回处理结果码；0 表示成功，负值或 -1 表示失败。
+ * @author     JaTin
  */
 int ChatModel::mergeHistory(const QVector<ChatMessage_S>& aMessages) {
     if (aMessages.isEmpty()) return 0;
@@ -242,12 +244,12 @@ int ChatModel::mergeHistory(const QVector<ChatMessage_S>& aMessages) {
     return nAdded;
 }
 
-/*
- * 功能描述:  追加系统提示词。
- * 作者:      JaTin
- * param [in]   strText          消息文本，类型 const QString&。
- * param [in]   lTs              Unix 毫秒时间戳，类型 qint64。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      追加系统提示词。
+ * @param[in] strText        消息文本；类型 const QString&。
+ * @param[in] lTs            Unix 毫秒时间戳；类型 qint64。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatModel::appendSystem(const QString& strText, qint64 lTs) {
     if (strText.isEmpty()) return;
@@ -262,15 +264,15 @@ void ChatModel::appendSystem(const QString& strText, qint64 lTs) {
     emit itemAppended(stItem);
 }
 
-/*
- * 功能描述:  应用系统提示词事件。
- * 作者:      JaTin
- * param [in]   strEvent         事件，类型 const QString&。
- * param [in]   lUserId          用户编号，类型 qint64。
- * param [in]   strName          名称或昵称，类型 const QString&。
- * param [in]   strText          消息文本，类型 const QString&。
- * param [in]   lTs              Unix 毫秒时间戳，类型 qint64。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      应用系统提示词事件。
+ * @param[in] strEvent       事件；类型 const QString&。
+ * @param[in] lUserId        用户编号；类型 qint64。
+ * @param[in] strName        名称或昵称；类型 const QString&。
+ * @param[in] strText        消息文本；类型 const QString&。
+ * @param[in] lTs            Unix 毫秒时间戳；类型 qint64。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatModel::applySystemEvent(const QString& strEvent, qint64 lUserId, const QString& strName,
                                  const QString& strText, qint64 lTs) {
@@ -285,20 +287,17 @@ void ChatModel::applySystemEvent(const QString& strEvent, qint64 lUserId, const 
         }
     }
 
-    /* welcome / left 只影响状态，不产生可见消息 */
+    /**
+     * @brief  welcome / left 只影响状态，不产生可见消息。
+     */
     if (strEvent == QStringLiteral("welcome") || strEvent == QStringLiteral("left")) return;
 
     appendSystem(strText, lTs);
 }
 
-/* ---------------------------------------------------------------- 状态回填 */
-
-/*
- * 功能描述:  设置译文。
- * 作者:      JaTin
- * param [in]   lSeq             全局消息序号，类型 qint64。
- * param [in]   strChinese       输入数据，类型 const QString&。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief  ---------------------------------------------------------------- 状态回填。
+ * @details 设置译文。
  */
 void ChatModel::setTranslation(qint64 lSeq, const QString& strChinese) {
     ChatItem_S* pItem = find(lSeq);
@@ -308,12 +307,12 @@ void ChatModel::setTranslation(qint64 lSeq, const QString& strChinese) {
     emit itemUpdated(lSeq);
 }
 
-/*
- * 功能描述:  设置译文状态。
- * 作者:      JaTin
- * param [in]   lSeq             全局消息序号，类型 qint64。
- * param [in]   nState           状态值，类型 int。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      设置译文状态。
+ * @param[in] lSeq           全局消息序号；类型 qint64。
+ * @param[in] nState         状态值；类型 int。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatModel::setTranslationState(qint64 lSeq, int nState) {
     ChatItem_S* pItem = find(lSeq);
@@ -322,13 +321,13 @@ void ChatModel::setTranslationState(qint64 lSeq, int nState) {
     emit itemUpdated(lSeq);
 }
 
-/*
- * 功能描述:  设置语音消息的转写文本及其状态。
- * 作者:      JaTin
- * param [in]   lSeq             全局消息序号，类型 qint64。
- * param [in]   strText          消息文本，类型 const QString&。
- * param [in]   nOk              输入数据，类型 bool。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      设置语音消息的转写文本及其状态。
+ * @param[in] lSeq           全局消息序号；类型 qint64。
+ * @param[in] strText        消息文本；类型 const QString&。
+ * @param[in] nOk            输入数据；类型 bool。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatModel::setTranscript(qint64 lSeq, const QString& strText, bool nOk) {
     ChatItem_S* pItem = find(lSeq);
@@ -343,12 +342,12 @@ void ChatModel::setTranscript(qint64 lSeq, const QString& strText, bool nOk) {
     emit itemUpdated(lSeq);
 }
 
-/*
- * 功能描述:  设置转写文本状态。
- * 作者:      JaTin
- * param [in]   lSeq             全局消息序号，类型 qint64。
- * param [in]   nState           状态值，类型 int。
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      设置转写文本状态。
+ * @param[in] lSeq           全局消息序号；类型 qint64。
+ * @param[in] nState         状态值；类型 int。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatModel::setTranscriptState(qint64 lSeq, int nState) {
     ChatItem_S* pItem = find(lSeq);
@@ -357,13 +356,9 @@ void ChatModel::setTranscriptState(qint64 lSeq, int nState) {
     emit itemUpdated(lSeq);
 }
 
-/* ---------------------------------------------------------------- 查询 */
-
-/*
- * 功能描述:  查找find。
- * 作者:      JaTin
- * param [in]   lSeq             全局消息序号，类型 qint64。
- * return:    成功返回对象指针；未找到或失败时返回 nullptr。
+/**
+ * @brief  ---------------------------------------------------------------- 查询。
+ * @details 查找 find。
  */
 ChatItem_S* ChatModel::find(qint64 lSeq) {
     for (ChatItem_S& stItem : m_aItems) {
@@ -372,11 +367,11 @@ ChatItem_S* ChatModel::find(qint64 lSeq) {
     return nullptr;
 }
 
-/*
- * 功能描述:  查找find。
- * 作者:      JaTin
- * param [in]   lSeq             全局消息序号，类型 qint64。
- * return:    成功返回对象指针；未找到或失败时返回 nullptr。
+/**
+ * @brief      查找 find。
+ * @param[in] lSeq           全局消息序号；类型 qint64。
+ * @return     成功返回对象指针；未找到或失败时返回 nullptr。
+ * @author     JaTin
  */
 const ChatItem_S* ChatModel::find(qint64 lSeq) const {
     for (const ChatItem_S& stItem : m_aItems) {
@@ -385,10 +380,11 @@ const ChatItem_S* ChatModel::find(qint64 lSeq) const {
     return nullptr;
 }
 
-/*
- * 功能描述:  执行sort 条目列表。
- * 作者:      JaTin
- * return:    无返回值；处理结果通过成员状态或信号对外体现。
+/**
+ * @brief      执行 sort 条目列表。
+ * @note       本函数无输入参数。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
  */
 void ChatModel::sortItems() {
     std::stable_sort(m_aItems.begin(), m_aItems.end(),
@@ -398,11 +394,11 @@ void ChatModel::sortItems() {
                      });
 }
 
-/*
- * 功能描述:  获取recent 上下文。
- * 作者:      JaTin
- * param [in]   nLimit           输入数据，类型 int。
- * return:    返回 QVector<ChatMessage_S> 类型的处理结果，具体含义见功能描述。
+/**
+ * @brief      获取 recent 上下文。
+ * @param[in] nLimit         输入数据；类型 int。
+ * @return     返回 QVector<ChatMessage_S> ChatModel:: 类型的处理结果。
+ * @author     JaTin
  */
 QVector<ChatMessage_S> ChatModel::recentContext(int nLimit) const {
     QVector<ChatMessage_S> aContext;
@@ -421,5 +417,7 @@ QVector<ChatMessage_S> ChatModel::recentContext(int nLimit) const {
     return aContext;
 }
 
-/* namespace business */
+/**
+ * @brief  namespace business。
+ */
 }
