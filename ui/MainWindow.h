@@ -3,7 +3,8 @@
  * @brief      应用主窗口：三页调度（登录 → 主页 → 聊天）与连接状态提示。
  * @author     JaTin
  * @date       2026-11-13
- * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释；
+ *             2026-11-15 JaTin 增加头像透传与历史房间刷新。
  */
 
 #pragma once
@@ -81,10 +82,12 @@ private slots:
      * @param[in] name           名称或昵称；类型 const QString&。
      * @param[in] age            年龄（0 到 150）；类型 int。
      * @param[in] desc           个人简介；类型 const QString&。
+     * @param[in] avatar         头像图片二进制，空表示无自定义头像；类型 const QByteArray&。
      * @return     无返回值；处理结果通过成员状态或信号对外体现。
      * @author     JaTin
      */
-    void onLoginSucceeded(qint64 userId, const QString& name, int age, const QString& desc);
+    void onLoginSucceeded(qint64 userId, const QString& name, int age, const QString& desc,
+                          const QByteArray& avatar);
 
     /**
      * @brief      资料更新成功。
@@ -92,10 +95,20 @@ private slots:
      * @param[in] name           名称或昵称；类型 const QString&。
      * @param[in] age            年龄（0 到 150）；类型 int。
      * @param[in] desc           个人简介；类型 const QString&。
+     * @param[in] avatar         头像图片二进制，空表示无自定义头像；类型 const QByteArray&。
      * @return     无返回值；处理结果通过成员状态或信号对外体现。
      * @author     JaTin
      */
-    void onProfileUpdated(qint64 userId, const QString& name, int age, const QString& desc);
+    void onProfileUpdated(qint64 userId, const QString& name, int age, const QString& desc,
+                          const QByteArray& avatar);
+
+    /**
+     * @brief      收到历史房间列表。
+     * @param[in] rooms          历史房间，按最近访问时间倒序；类型 const QVector<VisitedRoom_S>&。
+     * @return     无返回值；处理结果通过成员状态或信号对外体现。
+     * @author     JaTin
+     */
+    void onHistoryRoomsReceived(const QVector<VisitedRoom_S>& rooms);
 
     /**
      * @brief      进房成功。

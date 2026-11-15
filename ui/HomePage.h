@@ -3,26 +3,26 @@
  * @brief      CHomePage 头文件，声明相关类型与接口。
  * @author     JaTin
  * @date       2026-11-13
- * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释；
+ *             2026-11-15 JaTin 改为历史房间列表 + “＋”进房 + 单词练习占位。
  */
 
 /**
- * @brief  CHomePage.h。
- */
-
-/**
- * @brief  登录后的主页：个人信息卡 + 编辑资料 + 房间号输入 + 进入房间。
+ * @brief  登录后的主页：个人信息卡 + 编辑资料 + 对话练习（历史房间） + 单词练习占位。
  */
 #pragma once
 
 #include <QWidget>
 
+#include "business/ChatTypes.h"
+
 class CAvatar;
 class QFrame;
 class QLabel;
-class QResizeEvent;
-class QLineEdit;
+class QListWidget;
+class QListWidgetItem;
 class QPushButton;
+class QResizeEvent;
 
 /**
  * @brief   CHome页面。
@@ -46,10 +46,19 @@ public:
      * @param[in] name           名称或昵称；类型 const QString&。
      * @param[in] age            年龄（0 到 150）；类型 int。
      * @param[in] desc           个人简介；类型 const QString&。
+     * @param[in] avatar         头像图片二进制，空表示无自定义头像；类型 const QByteArray&。
      * @return     无返回值；处理结果通过成员状态或信号对外体现。
      * @author     JaTin
      */
-    void setProfile(qint64 id, const QString& name, int age, const QString& desc);
+    void setProfile(qint64 id, const QString& name, int age, const QString& desc,
+                    const QByteArray& avatar);
+    /**
+     * @brief      设置历史房间列表（对话练习区）。
+     * @param[in] rooms          历史房间，按最近访问时间倒序；类型 const QVector<VisitedRoom_S>&。
+     * @return     无返回值；处理结果通过成员状态或信号对外体现。
+     * @author     JaTin
+     */
+    void setHistoryRooms(const QVector<VisitedRoom_S>& rooms);
     /**
      * @brief      设置服务端文本。
      * @param[in] text           消息文本；类型 const QString&。
@@ -79,7 +88,7 @@ public:
      */
     void setBusy(bool busy);
     /**
-     * @brief      聚焦房间输入。
+     * @brief      聚焦历史房间列表。
      * @note       本函数无输入参数。
      * @return     无返回值；处理结果通过成员状态或信号对外体现。
      * @author     JaTin
@@ -102,6 +111,13 @@ signals:
      */
     void joinRoomRequested(const QString& room);
     /**
+     * @brief      请求刷新历史房间列表。
+     * @note       本函数无输入参数。
+     * @return     无返回值；处理结果通过成员状态或信号对外体现。
+     * @author     JaTin
+     */
+    void historyRoomsRequested();
+    /**
      * @brief      退出登录 requested。
      * @note       本函数无输入参数。
      * @return     无返回值；处理结果通过成员状态或信号对外体现。
@@ -118,15 +134,23 @@ protected:
      */
     void resizeEvent(QResizeEvent* event) override;
 
-private:
+private slots:
     /**
-     * @brief      提交房间。
+     * @brief      点击“＋”弹出房间号输入框并请求进房。
      * @note       本函数无输入参数。
      * @return     无返回值；处理结果通过成员状态或信号对外体现。
      * @author     JaTin
      */
-    void submitRoom();
+    void onAddRoomClicked();
+    /**
+     * @brief      点击历史房间条目请求进房。
+     * @param[in] item           被点击的条目；类型 QListWidgetItem*。
+     * @return     无返回值；处理结果通过成员状态或信号对外体现。
+     * @author     JaTin
+     */
+    void onRoomItemClicked(QListWidgetItem* item);
 
+private:
     /**
      * @brief  卡片。 初值 = nullptr。
      * @note   类型 QFrame*；类/结构体成员变量。
@@ -163,15 +187,25 @@ private:
      */
     QLabel*      m_pDescValue = nullptr;
     /**
-     * @brief  房间Edit。 初值 = nullptr。
-     * @note   类型 QLineEdit*；类/结构体成员变量。
-     */
-    QLineEdit*   m_pRoomEdit = nullptr;
-    /**
-     * @brief  Join按钮。 初值 = nullptr。
+     * @brief  “＋”加房按钮。 初值 = nullptr。
      * @note   类型 QPushButton*；类/结构体成员变量。
      */
-    QPushButton* m_pJoinBtn = nullptr;
+    QPushButton* m_pAddBtn = nullptr;
+    /**
+     * @brief  历史房间列表。 初值 = nullptr。
+     * @note   类型 QListWidget*；类/结构体成员变量。
+     */
+    QListWidget* m_pRoomList = nullptr;
+    /**
+     * @brief  历史房间为空时的提示。 初值 = nullptr。
+     * @note   类型 QLabel*；类/结构体成员变量。
+     */
+    QLabel*      m_pEmptyHint = nullptr;
+    /**
+     * @brief  单词练习占位按钮。 初值 = nullptr。
+     * @note   类型 QPushButton*；类/结构体成员变量。
+     */
+    QPushButton* m_pWordBtn = nullptr;
     /**
      * @brief  错误标签。 初值 = nullptr。
      * @note   类型 QLabel*；类/结构体成员变量。

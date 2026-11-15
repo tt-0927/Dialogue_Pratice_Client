@@ -3,7 +3,8 @@
  * @brief      CAvatar 头文件，声明相关类型与接口。
  * @author     JaTin
  * @date       2026-11-13
- * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释；
+ *             2026-11-15 JaTin 增加图片头像绘制。
  */
 
 /**
@@ -11,11 +12,12 @@
  */
 
 /**
- * @brief  圆形文字头像：取名字首字符，背景色按 userId 稳定映射（Telegram 风格）。
+ * @brief   圆形头像：优先绘制自定义图片（JPEG），无图时退回首字符文字， 背景色按 userId 稳定映射（Telegram 风格）。
  */
 #pragma once
 
 #include <QColor>
+#include <QPixmap>
 #include <QString>
 #include <QWidget>
 
@@ -58,6 +60,14 @@ public:
     void setFontPx(int px);
 
     /**
+     * @brief      设置自定义头像图片。
+     * @param[in] imageData      图片二进制（JPEG）；空串清除图片退回文字头像；类型 const QByteArray&。
+     * @return     无返回值；处理结果通过成员状态或信号对外体现。
+     * @author     JaTin
+     */
+    void setImage(const QByteArray& imageData);
+
+    /**
      * @brief      按编号稳定映射出一个头像背景色。
      * @param[in] id             编号；类型 qint64。
      * @return     返回 QColor 类型的处理结果。
@@ -75,6 +85,11 @@ protected:
     void paintEvent(QPaintEvent* event) override;
 
 private:
+    /**
+     * @brief  自定义头像图片，空表示未设置
+     * @note   类型 QPixmap；类/结构体成员变量。
+     */
+    QPixmap m_stImage;
     /**
      * @brief  消息文本。
      * @note   类型 QString；类/结构体成员变量。

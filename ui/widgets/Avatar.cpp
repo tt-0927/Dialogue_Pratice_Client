@@ -3,7 +3,8 @@
  * @brief      CAvatar 实现文件，包含相关接口的具体实现。
  * @author     JaTin
  * @date       2026-11-13
- * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释；
+ *             2026-11-15 JaTin 增加图片头像绘制。
  */
 
 /**
@@ -62,6 +63,28 @@ void CAvatar::setFontPx(int nPx) {
 }
 
 /**
+ * @brief      设置自定义头像图片。
+ * @param[in] byImageData    图片二进制（JPEG）；空串清除图片退回文字头像；类型 const QByteArray&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
+ */
+void CAvatar::setImage(const QByteArray& byImageData) {
+    if (byImageData.isEmpty()) {
+        m_stImage = QPixmap();
+    } else {
+        QPixmap stImage;
+        if (!stImage.loadFromData(byImageData)) {
+            /* 解码失败按无图处理，避免画出破图。 */
+            m_stImage = QPixmap();
+            update();
+            return;
+        }
+        m_stImage = stImage;
+    }
+    update();
+}
+
+/**
  * @brief      获取颜色 for 编号。
  * @param[in] lId            编号；类型 qint64。
  * @return     返回 QColor CAvatar:: 类型的处理结果。
@@ -83,6 +106,23 @@ void CAvatar::paintEvent(QPaintEvent* /*event*/) {
 
     const QRectF stR = rect().adjusted(0, 0, -1, -1);
     stP.setPen(Qt::NoPen);
+
+    /* 有自定义图片：裁剪成圆形绘制，覆盖背景色与文字。 */
+    if (!m_stImage.isNull()) {
+        QPainterPath stClip;
+        stClip.addEllipse(stR);
+        stP.save();
+        stP.setClipPath(stClip);
+        const QPixmap stScaled = m_stImage.scaled(
+            static_cast<int>(stR.width()), static_cast<int>(stR.height()),
+            Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+        const qreal nX = stR.center().x() - stScaled.width() / 2.0;
+        const qreal nY = stR.center().y() - stScaled.height() / 2.0;
+        stP.drawPixmap(QPointF(nX, nY), stScaled);
+        stP.restore();
+        return;
+    }
+
     stP.setBrush(m_stColor);
     stP.drawEllipse(stR);
 

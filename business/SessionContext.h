@@ -3,11 +3,13 @@
  * @brief      当前会话的全局状态：本人身份、所在房间、在线状态。
  * @author     JaTin
  * @date       2026-11-13
- * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释；
+ *             2026-11-15 JaTin 增加头像资料的保存。
  */
 
 #pragma once
 
+#include <QByteArray>
 #include <QObject>
 #include <QSet>
 #include <QString>
@@ -59,16 +61,23 @@ public:
     QString desc() const { return m_strDesc; }
 
     /**
+     * @brief  头像图片二进制（JPEG），空表示使用昵称首字默认头像。
+     */
+    QByteArray avatar() const { return m_byAvatar; }
+
+    /**
      * @brief      更新本人资料。
      * @details    每次登录都会把 id 记入历史集合——断线重连后 id 会变， 但旧消息的 `from` 仍是旧 id，判断「是不是我发的」必须看历史集合。
      * @param[in] userId         服务端分配的会话 id；类型 qint64。
      * @param[in] name           昵称；类型 const QString&。
      * @param[in] age            年龄，0 表示未填写；类型 int。
      * @param[in] desc           个人简介；类型 const QString&。
+     * @param[in] avatar         头像图片二进制，空表示无自定义头像；类型 const QByteArray&。
      * @return     无返回值；处理结果通过成员状态或信号对外体现。
      * @author     JaTin
      */
-    void setProfile(qint64 userId, const QString& name, int age, const QString& desc);
+    void setProfile(qint64 userId, const QString& name, int age, const QString& desc,
+                    const QByteArray& avatar);
 
     /**
      * @brief      清空本人身份（退出登录时调用）。
@@ -180,6 +189,11 @@ private:
      * @note   类型 QString；类/结构体成员变量。
      */
     QString       m_strDesc;
+    /**
+     * @brief  头像图片二进制，空表示使用默认首字头像
+     * @note   类型 QByteArray；类/结构体成员变量。
+     */
+    QByteArray    m_byAvatar;
     /**
      * @brief  本人历次使用的 id（重连后 id 会变）
      * @note   类型 QSet<qint64>；类/结构体成员变量。

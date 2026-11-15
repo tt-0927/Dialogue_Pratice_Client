@@ -3,7 +3,8 @@
  * @brief      ChatTypes 头文件，声明相关类型与接口。
  * @author     JaTin
  * @date       2026-11-13
- * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释；
+ *             2026-11-15 JaTin 增加历史房间条目类型。
  */
 
 /**
@@ -116,9 +117,38 @@ struct Suggestion_S {
     QString chinese;
 };
 
+/**
+ * @brief   一条历史房间条目（主页“对话练习”列表用）。
+ * @author  JaTin
+ */
+struct VisitedRoom_S {
+    /**
+     * @brief  房间号
+     * @note   类型 QString；类/结构体成员变量。
+     */
+    QString     room;
+    /**
+     * @brief  房间内最后一条消息的发送者；无消息时为空
+     * @note   类型 QString；类/结构体成员变量。
+     */
+    QString     lastSender;
+    /**
+     * @brief  房间内最后一条消息预览；语音消息为“[语音]”；无消息时为空
+     * @note   类型 QString；类/结构体成员变量。
+     */
+    QString     lastMessage;
+    /**
+     * @brief  最后一条消息时间戳；无消息时为 0
+     * @note   类型 qint64；类/结构体成员变量。
+     */
+    qint64      lastTs = 0;
+};
+
 Q_DECLARE_METATYPE(MemberInfo_S)
 Q_DECLARE_METATYPE(QVector<MemberInfo_S>)
 Q_DECLARE_METATYPE(ChatMessage_S)
 Q_DECLARE_METATYPE(QVector<ChatMessage_S>)
 Q_DECLARE_METATYPE(Suggestion_S)
 Q_DECLARE_METATYPE(QVector<Suggestion_S>)
+Q_DECLARE_METATYPE(VisitedRoom_S)
+Q_DECLARE_METATYPE(QVector<VisitedRoom_S>)

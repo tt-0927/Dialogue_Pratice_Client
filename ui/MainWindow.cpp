@@ -3,7 +3,8 @@
  * @brief      主窗口的实现：页面调度、连接状态提示、消息转发。
  * @author     JaTin
  * @date       2026-11-13
- * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释；
+ *             2026-11-15 JaTin 增加头像透传与历史房间刷新。
  */
 
 #include "ui/MainWindow.h"
@@ -158,6 +159,8 @@ CMainWindow::CMainWindow(QWidget* pParent) : QMainWindow(pParent) {
     connect(m_pBridge, &CProtocolBridge::profileUpdated, this, &CMainWindow::onProfileUpdated);
     connect(m_pBridge, &CProtocolBridge::roomJoined, this, &CMainWindow::onRoomJoined);
     connect(m_pBridge, &CProtocolBridge::historyReceived, this, &CMainWindow::onHistoryReceived);
+    connect(m_pBridge, &CProtocolBridge::historyRoomsReceived, this,
+            &CMainWindow::onHistoryRoomsReceived);
     connect(m_pBridge, &CProtocolBridge::chatReceived, this, &CMainWindow::onChatReceived);
     connect(m_pBridge, &CProtocolBridge::voiceReceived, this, &CMainWindow::onVoiceReceived);
     connect(m_pBridge, &CProtocolBridge::systemMessage, this, &CMainWindow::onSystemMessage);
@@ -226,16 +229,18 @@ void CMainWindow::onBridgeConnected() {
  * @param[in] strName        名称或昵称；类型 const QString&。
  * @param[in] nAge           年龄（0 到 150）；类型 int。
  * @param[in] strDesc        个人简介；类型 const QString&。
+ * @param[in] byAvatar       头像图片二进制，空表示无自定义头像；类型 const QByteArray&。
  * @return     无返回值；处理结果通过成员状态或信号对外体现。
  * @author     JaTin
  */
 void CMainWindow::onLoginSucceeded(qint64 lUserId, const QString& strName, int nAge,
-                                  const QString& strDesc) {
+                                  const QString& strDesc, const QByteArray& byAvatar) {
     business::CSessionContext& stCtx = business::CSessionContext::instance();
-    stCtx.setProfile(lUserId, strName, nAge, strDesc);
+    stCtx.setProfile(lUserId, strName, nAge, strDesc, byAvatar);
 
     m_pLoginPage->setBusy(false);
-    m_pHomePage->setProfile(stCtx.userId(), stCtx.name(), stCtx.age(), stCtx.desc());
+    m_pHomePage->setProfile(stCtx.userId(), stCtx.name(), stCtx.age(), stCtx.desc(),
+                            stCtx.avatar());
     m_pHomePage->setServerText(
         QStringLiteral("已连接 %1:%2").arg(m_pConnection->host()).arg(m_pConnection->port()));
 
@@ -254,6 +259,8 @@ void CMainWindow::onLoginSucceeded(qint64 lUserId, const QString& strName, int n
     m_pHomePage->clearError();
     m_pStack->setCurrentWidget(m_pHomePage);
     m_pHomePage->focusRoomInput();
+    /* 进入主页即拉取历史房间，填充“对话练习”列表。 */
+    m_pBridge->listHistoryRooms();
 
     DP_LOG_INFO(kTag, QStringLiteral("login ok, userId=%1").arg(lUserId));
     showBanner(QStringLiteral("登录成功，账号 ID %1").arg(lUserId), false);
@@ -320,6 +327,8 @@ void CMainWindow::onLeaveRoom() {
     m_pChatPage->clearRoom();
     m_pStack->setCurrentWidget(m_pHomePage);
     m_pHomePage->focusRoomInput();
+    /* 回到主页时刷新历史房间：本次进房可能产生了新记录。 */
+    m_pBridge->listHistoryRooms();
 }
 
 /**
@@ -420,12 +429,14 @@ void CMainWindow::onSystemMessage(const QString& pEvent, const QString& strRoom,
  */
 void CMainWindow::onEditProfile() {
     business::CSessionContext& stCtx = business::CSessionContext::instance();
-    auto* pDialog = new CProfileDialog(stCtx.name(), stCtx.age(), stCtx.desc(), this);
+    auto* pDialog = new CProfileDialog(stCtx.name(), stCtx.age(), stCtx.desc(), stCtx.avatar(),
+                                       this);
     pDialog->setAttribute(Qt::WA_DeleteOnClose);
 
     connect(pDialog, &CProfileDialog::saved, this,
-            [this](const QString& strName, int nAge, const QString& strDesc) {
-                m_pBridge->updateProfile(strName, nAge, strDesc);
+            [this](const QString& strName, int nAge, const QString& strDesc,
+                   const QByteArray& byAvatar) {
+                m_pBridge->updateProfile(strName, nAge, strDesc, byAvatar);
             });
 
     pDialog->exec();
@@ -437,16 +448,28 @@ void CMainWindow::onEditProfile() {
  * @param[in] strName        名称或昵称；类型 const QString&。
  * @param[in] nAge           年龄（0 到 150）；类型 int。
  * @param[in] strDesc        个人简介；类型 const QString&。
+ * @param[in] byAvatar       头像图片二进制，空表示无自定义头像；类型 const QByteArray&。
  * @return     无返回值；处理结果通过成员状态或信号对外体现。
  * @author     JaTin
  */
 void CMainWindow::onProfileUpdated(qint64 lUserId, const QString& strName, int nAge,
-                                  const QString& strDesc) {
+                                  const QString& strDesc, const QByteArray& byAvatar) {
     Q_UNUSED(lUserId)
     business::CSessionContext& stCtx = business::CSessionContext::instance();
-    stCtx.setProfile(stCtx.userId(), strName, nAge, strDesc);
-    m_pHomePage->setProfile(stCtx.userId(), stCtx.name(), stCtx.age(), stCtx.desc());
+    stCtx.setProfile(stCtx.userId(), strName, nAge, strDesc, byAvatar);
+    m_pHomePage->setProfile(stCtx.userId(), stCtx.name(), stCtx.age(), stCtx.desc(),
+                            stCtx.avatar());
     showBanner(QStringLiteral("个人信息已更新"), false);
+}
+
+/**
+ * @brief      收到历史房间列表后刷新主页“对话练习”区。
+ * @param[in] aRooms         历史房间，按最近访问时间倒序；类型 const QVector<VisitedRoom_S>&。
+ * @return     无返回值；处理结果通过成员状态或信号对外体现。
+ * @author     JaTin
+ */
+void CMainWindow::onHistoryRoomsReceived(const QVector<VisitedRoom_S>& aRooms) {
+    m_pHomePage->setHistoryRooms(aRooms);
 }
 
 /**

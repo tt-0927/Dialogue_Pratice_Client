@@ -3,7 +3,8 @@
  * @brief      ChatTransport 头文件，声明相关类型与接口。
  * @author     JaTin
  * @date       2026-11-13
- * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释；
+ *             2026-11-15 JaTin 增加头像参数与历史房间查询。
  */
 
 /**
@@ -62,10 +63,12 @@ public:
      * @param[in] name           名称或昵称；类型 const QString&。
      * @param[in] age            年龄（0 到 150）；类型 int。
      * @param[in] desc           个人简介；类型 const QString&。
+     * @param[in] avatar         头像图片二进制，空表示清除头像恢复首字默认图；类型 const QByteArray&。
      * @return     无返回值；处理结果通过成员状态或信号对外体现。
      * @author     JaTin
      */
-    virtual void updateProfile(const QString& name, int age, const QString& desc) = 0;
+    virtual void updateProfile(const QString& name, int age, const QString& desc,
+                               const QByteArray& avatar) = 0;
 
     /**
      * @brief 自助注册。
@@ -94,6 +97,14 @@ public:
      * @author     JaTin
      */
     virtual void leaveRoom() = 0;
+
+    /**
+     * @brief      查询当前账号的历史房间（仅进过房的记录，匿名返回空列表）。
+     * @note       本函数无输入参数。
+     * @return     无返回值；结果通过 historyRoomsReceived 信号对外体现。
+     * @author     JaTin
+     */
+    virtual void listHistoryRooms() = 0;
     /**
      * @brief      发送 chat。
      * @param[in] text           消息文本；类型 const QString&。
@@ -133,10 +144,12 @@ signals:
      * @param[in] name           名称或昵称；类型 const QString&。
      * @param[in] age            年龄（0 到 150）；类型 int。
      * @param[in] desc           个人简介；类型 const QString&。
+     * @param[in] avatar         头像图片二进制，空表示无自定义头像；类型 const QByteArray&。
      * @return     无返回值；处理结果通过成员状态或信号对外体现。
      * @author     JaTin
      */
-    void loginSucceeded(qint64 userId, const QString& name, int age, const QString& desc);
+    void loginSucceeded(qint64 userId, const QString& name, int age, const QString& desc,
+                        const QByteArray& avatar);
 
     /**
      * @brief  服务端下发的 LLM 配置（原始 JSON 字节流）。 传输层不解析结构，只负责搬运；客户端用 AppConfig::parse 处理。
@@ -159,10 +172,12 @@ signals:
      * @param[in] name           名称或昵称；类型 const QString&。
      * @param[in] age            年龄（0 到 150）；类型 int。
      * @param[in] desc           个人简介；类型 const QString&。
+     * @param[in] avatar         头像图片二进制，空表示无自定义头像；类型 const QByteArray&。
      * @return     无返回值；处理结果通过成员状态或信号对外体现。
      * @author     JaTin
      */
-    void profileUpdated(qint64 userId, const QString& name, int age, const QString& desc);
+    void profileUpdated(qint64 userId, const QString& name, int age, const QString& desc,
+                        const QByteArray& avatar);
 
     /**
      * @brief      执行房间 joined。
@@ -181,6 +196,14 @@ signals:
      * @author     JaTin
      */
     void historyReceived(const QString& room, const QVector<ChatMessage_S>& messages);
+
+    /**
+     * @brief      收到历史房间列表（主页“对话练习”展示用）。
+     * @param[in] rooms          历史房间列表，按最近访问时间倒序；类型 const QVector<VisitedRoom_S>&。
+     * @return     无返回值；处理结果通过成员状态或信号对外体现。
+     * @author     JaTin
+     */
+    void historyRoomsReceived(const QVector<VisitedRoom_S>& rooms);
 
     void chatReceived(qint64 seq, qint64 from, const QString& name, const QString& room,
                       const QString& text, qint64 ts);

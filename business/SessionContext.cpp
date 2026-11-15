@@ -3,7 +3,8 @@
  * @brief      会话状态单例的实现。
  * @author     JaTin
  * @date       2026-11-13
- * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释；
+ *             2026-11-15 JaTin 增加头像资料的保存。
  */
 
 #include "business/SessionContext.h"
@@ -35,19 +36,21 @@ CSessionContext::CSessionContext(QObject* pParent) : QObject(pParent) {}
  * @param[in] strName        名称或昵称；类型 const QString&。
  * @param[in] nAge           年龄（0 到 150）；类型 int。
  * @param[in] strDesc        个人简介；类型 const QString&。
+ * @param[in] byAvatar       头像图片二进制，空表示无自定义头像；类型 const QByteArray&。
  * @return     无返回值；处理结果通过成员状态或信号对外体现。
  * @author     JaTin
  */
 void CSessionContext::setProfile(qint64 lUserId, const QString& strName, int nAge,
-                                const QString& strDesc) {
+                                const QString& strDesc, const QByteArray& byAvatar) {
     if (lUserId != 0) m_uSelfIds.insert(lUserId);
 
     const bool nChanged = (lUserId != m_uUserId) || (strName != m_strName) || (nAge != m_nAge)
-                         || (strDesc != m_strDesc);
+                         || (strDesc != m_strDesc) || (byAvatar != m_byAvatar);
     m_uUserId = lUserId;
     m_strName = strName;
     m_nAge = nAge;
     m_strDesc = strDesc;
+    m_byAvatar = byAvatar;
 
     if (nChanged) emit profileChanged();
 }
@@ -65,6 +68,7 @@ void CSessionContext::clearProfile() {
     m_strName.clear();
     m_nAge = 0;
     m_strDesc.clear();
+    m_byAvatar.clear();
     m_uSelfIds.clear();
 
     if (nHadProfile) emit profileChanged();

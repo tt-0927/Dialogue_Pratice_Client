@@ -3,7 +3,8 @@
  * @brief      CProtocolBridge 实现文件，包含相关接口的具体实现。
  * @author     JaTin
  * @date       2026-11-13
- * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释；
+ *             2026-11-15 JaTin 增加头像传输与历史房间查询。
  */
 
 /**
@@ -56,6 +57,19 @@ bool jbool(const dp::Json& stJ, const char* strKey, bool lDef = false) {
     const auto stIt = stJ.find(strKey);
     if (stIt == stJ.end() || !stIt->is_boolean()) return lDef;
     return stIt->get<bool>();
+}
+
+/**
+ * @brief      从 JSON 里取出 Base64 头像并解码。
+ * @param[in] stJ            输入数据；类型 const dp::Json&。
+ * @return     解码后的图片二进制；字段缺失或非法时为空。
+ * @author     JaTin
+ */
+QByteArray javatar(const dp::Json& stJ) {
+    const auto stIt = stJ.find("avatar");
+    if (stIt == stJ.end() || !stIt->is_string()) return QByteArray();
+    const std::string strRaw = dp::base64Decode(stIt->get<std::string>());
+    return QByteArray(strRaw.data(), static_cast<int>(strRaw.size()));
 }
 
 /**
@@ -244,13 +258,15 @@ void CProtocolBridge::handleFrame(const dp::Frame_S& stFrame) {
                 emit llmConfigReceived(QByteArray::fromStdString(stLlmIt->dump()));
             }
             emit loginSucceeded(jint(stJ, "userId"), jstr(stJ, "name"),
-                                static_cast<int>(jint(stJ, "age")), jstr(stJ, "desc"));
+                                static_cast<int>(jint(stJ, "age")), jstr(stJ, "desc"),
+                                javatar(stJ));
             break;
         }
 
         case dp::OpCode_EN::ProfileResp:
             emit profileUpdated(jint(stJ, "userId"), jstr(stJ, "name"),
-                                static_cast<int>(jint(stJ, "age")), jstr(stJ, "desc"));
+                                static_cast<int>(jint(stJ, "age")), jstr(stJ, "desc"),
+                                javatar(stJ));
             break;
 
         case dp::OpCode_EN::RoomState: {
@@ -330,10 +346,28 @@ void CProtocolBridge::handleFrame(const dp::Frame_S& stFrame) {
             emit serverError(jstr(stJ, "code"), jstr(stJ, "text"));
             break;
 
+        case dp::OpCode_EN::HistoryRoomList: {
+            QVector<VisitedRoom_S> aRooms;
+            const auto stIt = stJ.find("rooms");
+            if (stIt != stJ.end() && stIt->is_array()) {
+                aRooms.reserve(static_cast<int>(stIt->size()));
+                for (const auto& stR : *stIt) {
+                    VisitedRoom_S stRoom;
+                    stRoom.room = jstr(stR, "room");
+                    stRoom.lastSender = jstr(stR, "lastSender");
+                    stRoom.lastMessage = jstr(stR, "lastMessage");
+                    stRoom.lastTs = jint(stR, "lastTs");
+                    if (!stRoom.room.isEmpty()) aRooms.push_back(stRoom);
+                }
+            }
+            emit historyRoomsReceived(aRooms);
+            break;
+        }
+
         case dp::OpCode_EN::Pong:
         case dp::OpCode_EN::RoomList:
             /**
-             * @brief  心跳应答 / 房间列表：客户端当前界面暂不展示。
+             * @brief  心跳应答 / 全服房间列表：客户端当前界面暂不展示。
              */
             break;
 
@@ -378,18 +412,27 @@ void CProtocolBridge::login(const QString& strName, const QString& strPassword, 
 }
 
 /**
- * @brief      更新个人资料；实现上向目标会话或整个房间下发数据。
+ * @brief      更新个人资料；头像为空时发 null 清除头像。
  * @param[in] strName        名称或昵称；类型 const QString&。
  * @param[in] nAge           年龄（0 到 150）；类型 int。
  * @param[in] strDesc        个人简介；类型 const QString&。
+ * @param[in] byAvatar       头像图片二进制，空表示清除；类型 const QByteArray&。
  * @return     无返回值；处理结果通过成员状态或信号对外体现。
  * @author     JaTin
  */
-void CProtocolBridge::updateProfile(const QString& strName, int nAge, const QString& strDesc) {
+void CProtocolBridge::updateProfile(const QString& strName, int nAge, const QString& strDesc,
+                                    const QByteArray& byAvatar) {
     dp::Json stJ = dp::Json::object();
     stJ["name"] = strName.toStdString();
     stJ["age"] = nAge;
     stJ["desc"] = strDesc.toStdString();
+    if (byAvatar.isEmpty()) {
+        /* 空头像发 null：服务端据此清除头像，而不是把它当成非法 Base64。 */
+        stJ["avatar"] = nullptr;
+    } else {
+        stJ["avatar"] = dp::base64Encode(
+            std::string(byAvatar.constData(), static_cast<size_t>(byAvatar.size())));
+    }
     sendJson(dp::OpCode_EN::UpdateProfile, stJ);
 }
 
@@ -437,6 +480,16 @@ void CProtocolBridge::joinRoom(const QString& strRoom) {
  */
 void CProtocolBridge::leaveRoom() {
     sendJson(dp::OpCode_EN::LeaveRoom, dp::Json::object());
+}
+
+/**
+ * @brief      查询当前账号的历史房间。
+ * @note       本函数无输入参数。
+ * @return     无返回值；结果通过 historyRoomsReceived 信号对外体现。
+ * @author     JaTin
+ */
+void CProtocolBridge::listHistoryRooms() {
+    sendJson(dp::OpCode_EN::ListHistoryRooms, dp::Json::object());
 }
 
 /**

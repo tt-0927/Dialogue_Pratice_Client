@@ -3,7 +3,8 @@
  * @brief      CProtocolBridge 头文件，声明相关类型与接口。
  * @author     JaTin
  * @date       2026-11-13
- * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释。
+ * @note       修改记录：2026-11-14 JaTin 统一为 Doxygen 风格注释；
+ *             2026-11-15 JaTin 增加头像参数与历史房间查询。
  */
 
 /**
@@ -70,10 +71,12 @@ public:
      * @param[in] name           名称或昵称；类型 const QString&。
      * @param[in] age            年龄（0 到 150）；类型 int。
      * @param[in] desc           个人简介；类型 const QString&。
+     * @param[in] avatar         头像图片二进制，空表示清除头像；类型 const QByteArray&。
      * @return     无返回值；处理结果通过成员状态或信号对外体现。
      * @author     JaTin
      */
-    void updateProfile(const QString& name, int age, const QString& desc) override;
+    void updateProfile(const QString& name, int age, const QString& desc,
+                       const QByteArray& avatar) override;
     void registerAccount(const QString& username, const QString& password,
                          const QString& nickname, int age, const QString& desc) override;
     /**
@@ -90,6 +93,14 @@ public:
      * @author     JaTin
      */
     void leaveRoom() override;
+
+    /**
+     * @brief      查询当前账号的历史房间。
+     * @note       本函数无输入参数。
+     * @return     无返回值；结果通过 historyRoomsReceived 信号对外体现。
+     * @author     JaTin
+     */
+    void listHistoryRooms() override;
     /**
      * @brief      发送 chat。
      * @param[in] text           消息文本；类型 const QString&。
